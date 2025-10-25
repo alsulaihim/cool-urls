@@ -29,6 +29,21 @@ export default function Dashboard() {
   const totalClicks = urls.reduce((sum: number, url: any) => sum + (url.clicks || 0), 0);
   const totalLinks = urls.length;
 
+  // Extract first name from email
+  const getFirstName = (email: string | null | undefined): string => {
+    if (!email) return 'User';
+
+    // Get part before @
+    const username = email.split('@')[0];
+
+    // If username contains dots or underscores, split and get first part
+    const parts = username.split(/[._-]/);
+    const firstName = parts[0];
+
+    // Capitalize first letter
+    return firstName.charAt(0).toUpperCase() + firstName.slice(1);
+  };
+
   const copyToClipboard = (shortCode: string, id: string) => {
     const baseUrl = window.location.origin;
     navigator.clipboard.writeText(`${baseUrl}/${shortCode}`);
@@ -114,7 +129,7 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h1 className="text-4xl md:text-5xl font-bold text-black mb-2">
-                  Welcome back, {user?.email?.split('@')[0] || 'User'}! 👋
+                  Welcome back, {getFirstName(user?.email)}! 👋
                 </h1>
                 <p className="text-gray-500">
                   Manage your shortened links and view analytics
