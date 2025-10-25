@@ -5,7 +5,16 @@
       "Bash(cat:*)",
       "Bash(test:*)",
       "Bash(npm run build:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git push:*)",
+      "Bash(railway whoami:*)",
+      "Bash(railway init:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []

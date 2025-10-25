@@ -12,6 +12,7 @@ import { SetupBanner } from '@/components/setup-banner';
 import { db } from '@/lib/instant';
 import { nanoid } from 'nanoid';
 import { v4 as uuidv4 } from 'uuid';
+import { getShortUrlBase, getDisplayDomain } from '@/lib/config';
 
 export default function Home() {
   const { user } = db.useAuth();
@@ -54,7 +55,7 @@ export default function Home() {
         })
       );
 
-      const baseUrl = window.location.origin;
+      const baseUrl = getShortUrlBase();
       setShortUrl(`${baseUrl}/${shortCode}`);
       setUrl('');
       setPrefix('');
@@ -138,7 +139,7 @@ export default function Home() {
                   />
                 </div>
                 <p className="mt-2 text-xs text-gray-500">
-                  Your short URL will look like: <span className="font-mono">{prefix || 'abc123'}-xyz789</span>
+                  Your short URL will look like: <span className="font-mono">{getDisplayDomain()}/{prefix || 'abc123'}-xyz789</span>
                 </p>
               </div>
 
