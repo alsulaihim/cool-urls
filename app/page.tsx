@@ -1,65 +1,298 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link2, Copy, CheckCircle2, Link as LinkIcon, BarChart3, LogIn } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { AuthHeader } from '@/components/auth/auth-header';
+import { SetupBanner } from '@/components/setup-banner';
+import { db } from '@/lib/instant';
+import { nanoid } from 'nanoid';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function Home() {
+  const { user } = db.useAuth();
+  const [url, setUrl] = useState('');
+  const [prefix, setPrefix] = useState('');
+  const [shortUrl, setShortUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setShortUrl('');
+
+    try {
+      // Validate URL
+      try {
+        new URL(url);
+      } catch {
+        setError('Invalid URL format');
+        setLoading(false);
+        return;
+      }
+
+      // Generate short code
+      const randomCode = nanoid(6);
+      const shortCode = prefix ? `${prefix}-${randomCode}` : randomCode;
+
+      // Save to InstantDB - use UUID for entity ID
+      await db.transact(
+        db.tx.urls[uuidv4()].update({
+          originalUrl: url,
+          shortCode,
+          prefix,
+          createdAt: Date.now(),
+          clicks: 0,
+          userId: user?.id || 'anonymous',
+        })
+      );
+
+      const baseUrl = window.location.origin;
+      setShortUrl(`${baseUrl}/${shortCode}`);
+      setUrl('');
+      setPrefix('');
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shortUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-white">
+      <AuthHeader />
+      <SetupBanner />
+
+      {/* Subtle gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-white pointer-events-none" />
+
+      <div className="relative z-10 container mx-auto px-4 py-16">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-16"
+        >
+          <h1 className="text-5xl md:text-6xl font-bold text-black mb-4 tracking-tight">
+            Cool URLs
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-gray-500 text-lg">
+            Create beautiful short links with custom prefixes
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        </motion.div>
+
+        {/* Main Card */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1 }}
+          className="max-w-2xl mx-auto"
+        >
+          <Card className="border border-gray-200 p-8 rounded-lg bg-white">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* URL Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Long URL
+                </label>
+                <div className="relative">
+                  <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://example.com/very/long/url"
+                    required
+                    className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Prefix Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Custom Prefix <span className="text-gray-400">(optional)</span>
+                </label>
+                <div className="relative">
+                  <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    value={prefix}
+                    onChange={(e) => setPrefix(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+                    placeholder="my-brand"
+                    maxLength={20}
+                    className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
+                  />
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Your short URL will look like: <span className="font-mono">{prefix || 'abc123'}-xyz789</span>
+                </p>
+              </div>
+
+              {/* Error Message */}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="bg-red-50 text-red-600 px-4 py-3 rounded-md text-sm border border-red-200"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 bg-black text-white font-medium hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Creating...
+                  </span>
+                ) : (
+                  'Shorten URL'
+                )}
+              </Button>
+            </form>
+
+            {/* Result */}
+            <AnimatePresence>
+              {shortUrl && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="mt-6 p-5 bg-gray-50 border border-gray-200 rounded-lg"
+                >
+                  <p className="text-sm font-medium text-gray-700 mb-3">
+                    ✓ Your short URL is ready!
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="text"
+                      value={shortUrl}
+                      readOnly
+                      className="flex-1 font-mono text-sm border-gray-300 bg-white focus-visible:ring-0"
+                    />
+                    <Button
+                      onClick={copyToClipboard}
+                      variant="outline"
+                      size="sm"
+                      className="px-4 h-9 border-gray-300 hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      {copied ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          Copy
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Card>
+
+          {/* Dashboard CTA - Show for signed-in users */}
+          {user && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-8"
+            >
+              <Link href="/dashboard">
+                <Card className="border border-gray-200 p-6 rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-black/5 rounded-lg">
+                        <BarChart3 className="w-6 h-6 text-black" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-black">View Your Dashboard</h3>
+                        <p className="text-sm text-gray-500">
+                          Track all your links and view analytics
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" className="text-black">
+                      Go to Dashboard →
+                    </Button>
+                  </div>
+                </Card>
+              </Link>
+            </motion.div>
+          )}
+
+          {/* Login CTA - Show for signed-out users */}
+          {!user && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-8"
+            >
+              <Card className="border border-gray-200 p-8 rounded-lg bg-gradient-to-br from-gray-50 to-white text-center">
+                <div className="max-w-md mx-auto">
+                  <div className="inline-flex p-4 bg-black/5 rounded-full mb-4">
+                    <LogIn className="w-8 h-8 text-black" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-black mb-2">
+                    Want to track your links?
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Sign in to access your personal dashboard, view analytics, and manage all your shortened URLs in one place.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button
+                      onClick={() => {
+                        const signInButton = document.querySelector('[data-auth-trigger]') as HTMLButtonElement;
+                        signInButton?.click();
+                      }}
+                      className="bg-black text-white hover:bg-gray-800 h-11 px-6"
+                    >
+                      <LogIn className="w-4 h-4 mr-2" />
+                      Sign In / Sign Up
+                    </Button>
+                    <Link href="/dashboard">
+                      <Button variant="outline" className="border-gray-300 hover:bg-gray-50 h-11 px-6 w-full sm:w-auto">
+                        <BarChart3 className="w-4 h-4 mr-2" />
+                        Preview Dashboard
+                      </Button>
+                    </Link>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-4">
+                    Free forever • No password needed • Magic link authentication
+                  </p>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+        </motion.div>
+      </div>
     </div>
   );
 }
