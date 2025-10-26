@@ -13,7 +13,10 @@ const db = init({
 async function getGeolocation(ip: string) {
   try {
     // For localhost/private IPs, return mock data for testing
-    if (ip === '127.0.0.1' || ip === 'localhost' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+    // Check for both IPv4 and IPv6 localhost, plus private IP ranges
+    if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' ||
+        ip.startsWith('192.168.') || ip.startsWith('10.') ||
+        ip.startsWith('172.') || ip.startsWith('::ffff:127.')) {
       console.log('[Geolocation] Using mock data for local IP:', ip);
       return {
         country: 'United States',
