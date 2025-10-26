@@ -247,22 +247,24 @@ export default function Dashboard() {
               </div>
 
               {urls.length === 0 ? (
-                <div className="p-12 text-center">
-                  <Link2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-2">No links yet</p>
-                  <p className="text-sm text-gray-400 mb-6">
+                <div className="p-8 sm:p-12 text-center">
+                  <Link2 className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                  <p className="text-gray-500 mb-2 text-sm sm:text-base">No links yet</p>
+                  <p className="text-xs sm:text-sm text-gray-400 mb-4 sm:mb-6 px-4">
                     Create your first shortened link to get started
                   </p>
                   <Link href="/">
-                    <Button className="bg-black text-white hover:bg-gray-800">
+                    <Button className="bg-black text-white hover:bg-gray-800 text-sm sm:text-base">
                       <Plus className="w-4 h-4 mr-2" />
                       Create Your First Link
                     </Button>
                   </Link>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <>
+                  {/* Desktop Table View - Hidden on mobile */}
+                  <div className="hidden lg:block overflow-x-auto">
+                    <table className="w-full">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -392,11 +394,11 @@ export default function Dashboard() {
                                       transition={{ duration: 0.3 }}
                                       className="overflow-hidden"
                                     >
-                                      <div className="p-6 space-y-6">
+                                      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                                         {/* Header with time range selector */}
-                                        <div className="flex items-center justify-between">
-                                          <h3 className="text-lg font-semibold text-black flex items-center gap-2">
-                                            <BarChart3 className="w-5 h-5" />
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                                          <h3 className="text-base sm:text-lg font-semibold text-black flex items-center gap-2">
+                                            <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />
                                             Analytics for {url.shortCode}
                                           </h3>
                                           <div className="flex gap-2">
@@ -406,23 +408,23 @@ export default function Dashboard() {
                                                 onClick={() => setTimeRange(range)}
                                                 variant={timeRange === range ? 'default' : 'outline'}
                                                 size="sm"
-                                                className={timeRange === range ? 'bg-black text-white' : ''}
+                                                className={`text-xs sm:text-sm ${timeRange === range ? 'bg-black text-white' : ''}`}
                                               >
-                                                {range === '24h' ? '24 Hours' : range === '7d' ? '7 Days' : '30 Days'}
+                                                {range === '24h' ? '24h' : range === '7d' ? '7d' : '30d'}
                                               </Button>
                                             ))}
                                           </div>
                                         </div>
 
                                         {/* Sparkline */}
-                                        <div className="bg-white rounded-lg border border-gray-200 p-4">
-                                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Click Trends</h4>
+                                        <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4">
+                                          <h4 className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">Click Trends</h4>
                                           <ClickSparkline data={urlAnalytics} timeRange={timeRange} />
                                         </div>
 
                                         {/* Map - Full Width */}
-                                        <div className="bg-white rounded-lg border border-gray-200 p-6">
-                                          <h4 className="text-lg font-semibold text-gray-900 mb-4">Geographic Distribution</h4>
+                                        <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6">
+                                          <h4 className="text-sm sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Geographic Distribution</h4>
                                           <ClickMap clicks={urlAnalytics} />
                                         </div>
 
@@ -442,6 +444,153 @@ export default function Dashboard() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Mobile Card View - Shown on mobile/tablet */}
+                <div className="lg:hidden divide-y divide-gray-200">
+                  {urls.map((url) => {
+                    const urlAnalytics = getAnalyticsForUrl(url);
+                    const isExpanded = expandedLinkId === url.id;
+
+                    return (
+                      <div key={url.id} className="p-4">
+                        {/* Card Header */}
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <code className="text-sm font-mono text-black font-semibold truncate">
+                                {url.shortCode}
+                              </code>
+                              <a
+                                href={`/${url.shortCode}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-gray-400 hover:text-black transition-colors shrink-0"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </a>
+                            </div>
+                            <p className="text-xs text-gray-500 truncate">
+                              {url.originalUrl}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Stats Row */}
+                        <div className="flex items-center gap-4 mb-3 text-xs text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <MousePointerClick className="w-3.5 h-3.5" />
+                            <span className="font-semibold text-black">{url.clicks || 0}</span>
+                            <span>clicks</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            <span>{new Date(url.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+
+                        {/* Actions Row */}
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={() => copyToClipboard(url.shortCode, url.id)}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 text-xs h-8"
+                          >
+                            {copiedId === url.id ? (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                                Copied
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5 mr-1" />
+                                Copy
+                              </>
+                            )}
+                          </Button>
+                          {url.clicks > 0 && (
+                            <Button
+                              onClick={() => toggleExpanded(url.id)}
+                              variant="outline"
+                              size="sm"
+                              className="text-xs h-8 px-3"
+                            >
+                              <BarChart3 className="w-3.5 h-3.5 mr-1" />
+                              {isExpanded ? 'Hide' : 'Analytics'}
+                            </Button>
+                          )}
+                          <Button
+                            onClick={() => handleDelete(url.id)}
+                            variant="outline"
+                            size="sm"
+                            disabled={deletingId === url.id}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 h-8 px-3"
+                          >
+                            {deletingId === url.id ? (
+                              <div className="w-3.5 h-3.5 border-2 border-red-600/30 border-t-red-600 rounded-full animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
+                          </Button>
+                        </div>
+
+                        {/* Analytics Section */}
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden mt-4"
+                            >
+                              <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+                                {/* Header with time range */}
+                                <div className="flex flex-col gap-3">
+                                  <h3 className="text-sm font-semibold text-black flex items-center gap-2">
+                                    <BarChart3 className="w-4 h-4" />
+                                    Analytics
+                                  </h3>
+                                  <div className="flex gap-2">
+                                    {(['24h', '7d', '30d'] as const).map((range) => (
+                                      <Button
+                                        key={range}
+                                        onClick={() => setTimeRange(range)}
+                                        variant={timeRange === range ? 'default' : 'outline'}
+                                        size="sm"
+                                        className={`flex-1 text-xs h-8 ${timeRange === range ? 'bg-black text-white' : ''}`}
+                                      >
+                                        {range === '24h' ? '24h' : range === '7d' ? '7d' : '30d'}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Sparkline */}
+                                <div className="bg-white rounded-lg border border-gray-200 p-3">
+                                  <h4 className="text-xs font-semibold text-gray-700 mb-2">Click Trends</h4>
+                                  <ClickSparkline data={urlAnalytics} timeRange={timeRange} />
+                                </div>
+
+                                {/* Map */}
+                                <div className="bg-white rounded-lg border border-gray-200 p-3">
+                                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Geographic Distribution</h4>
+                                  <ClickMap clicks={urlAnalytics} />
+                                </div>
+
+                                {/* Device Stats */}
+                                <div>
+                                  <DeviceStats clicks={urlAnalytics} />
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
               )}
             </Card>
           </motion.div>
