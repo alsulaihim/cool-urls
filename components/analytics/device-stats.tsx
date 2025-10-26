@@ -81,47 +81,47 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
       .slice(0, 5);
   })();
 
-  // Amber Obsidian Autumn color palette (updated for readability)
+  // Modern high-contrast color palette (perfect for black/white theme)
   const COLORS = [
-    '#D97706', // Dark Amber/Orange (more readable)
-    '#EA580C', // Dark Orange (more readable)
-    '#DC2626', // Dark Red (more readable)
-    '#475569', // Dark Blue-Gray (replaces cyan)
-    '#64748B', // Medium Blue-Gray (replaces light teal)
+    '#000000', // Pure Black - strongest contrast
+    '#3B82F6', // Bright Blue - vibrant and modern
+    '#10B981', // Emerald Green - fresh and clear
+    '#F59E0B', // Amber - warm accent
+    '#EF4444', // Red - strong accent
   ];
 
-  // Specific device colors using Amber Obsidian Autumn palette
+  // Specific device colors with high contrast
   const DEVICE_COLORS: Record<string, string> = {
-    'mobile': '#DC2626', // Dark Red - vibrant and readable
-    'tablet': '#EA580C', // Dark Orange - warm and readable
-    'desktop': '#D97706', // Dark Amber - prominent and readable
-    'unknown': '#64748B', // Medium Blue-Gray - subtle and readable
+    'mobile': '#3B82F6', // Bright Blue - most common device
+    'desktop': '#000000', // Pure Black - strong and prominent
+    'tablet': '#10B981', // Emerald Green - distinct
+    'unknown': '#9CA3AF', // Gray - subtle for unknown
   };
 
   const getDeviceIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case 'mobile':
         return (
-          <div className="w-8 h-8 border border-[#DC2626]/20 rounded-lg flex items-center justify-center">
-            <Smartphone className="w-4 h-4 text-[#DC2626]" strokeWidth={1.5} />
+          <div className="w-8 h-8 border border-[#3B82F6]/20 rounded-lg flex items-center justify-center bg-[#3B82F6]/5">
+            <Smartphone className="w-4 h-4 text-[#3B82F6]" strokeWidth={1.5} />
           </div>
         );
       case 'tablet':
         return (
-          <div className="w-8 h-8 border border-[#EA580C]/20 rounded-lg flex items-center justify-center">
-            <Tablet className="w-4 h-4 text-[#EA580C]" strokeWidth={1.5} />
+          <div className="w-8 h-8 border border-[#10B981]/20 rounded-lg flex items-center justify-center bg-[#10B981]/5">
+            <Tablet className="w-4 h-4 text-[#10B981]" strokeWidth={1.5} />
           </div>
         );
       case 'desktop':
         return (
-          <div className="w-8 h-8 border border-[#D97706]/20 rounded-lg flex items-center justify-center">
-            <Monitor className="w-4 h-4 text-[#D97706]" strokeWidth={1.5} />
+          <div className="w-8 h-8 border border-black/20 rounded-lg flex items-center justify-center bg-black/5">
+            <Monitor className="w-4 h-4 text-black" strokeWidth={1.5} />
           </div>
         );
       default:
         return (
-          <div className="w-8 h-8 border border-[#64748B]/20 rounded-lg flex items-center justify-center">
-            <Monitor className="w-4 h-4 text-[#64748B]" strokeWidth={1.5} />
+          <div className="w-8 h-8 border border-gray-300/20 rounded-lg flex items-center justify-center bg-gray-100/5">
+            <Monitor className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
           </div>
         );
     }
@@ -142,7 +142,7 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: COLORS[idx % COLORS.length], opacity: 0.6 }}
+                  style={{ backgroundColor: COLORS[idx % COLORS.length], opacity: 0.9 }}
                 />
                 <span className="text-sm font-medium text-foreground truncate">{item.name}</span>
               </div>
@@ -153,7 +153,7 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
                     style={{
                       width: `${(item.value / Math.max(...data.map(d => d.value))) * 100}%`,
                       backgroundColor: COLORS[idx % COLORS.length],
-                      opacity: 0.6
+                      opacity: 0.9
                     }}
                   />
                 </div>
@@ -172,8 +172,8 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
       {deviceData.length > 0 && (
         <Card className="p-4 sm:p-6 border">
           <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 border border-[#EA580C]/20 rounded-lg flex items-center justify-center shrink-0">
-              <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 text-[#EA580C]" strokeWidth={1.5} />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 border border-[#3B82F6]/20 rounded-lg flex items-center justify-center shrink-0 bg-[#3B82F6]/5">
+              <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 text-[#3B82F6]" strokeWidth={1.5} />
             </div>
             <h4 className="font-semibold text-foreground text-base sm:text-lg">Device Distribution</h4>
           </div>
@@ -201,7 +201,7 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
                         <Cell
                           key={`cell-${index}`}
                           fill={color}
-                          fillOpacity={0.6}
+                          fillOpacity={0.9}
                           stroke="hsl(var(--background))"
                           strokeWidth={2}
                         />
@@ -215,9 +215,9 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
                         return (
                           <Card className="bg-background/95 backdrop-blur-sm border px-3 py-2">
                             <div className="flex items-center gap-2 mb-1">
-                              {deviceType === 'mobile' && <Smartphone className="w-3.5 h-3.5 text-[#DC2626]" strokeWidth={1.5} />}
-                              {deviceType === 'tablet' && <Tablet className="w-3.5 h-3.5 text-[#EA580C]" strokeWidth={1.5} />}
-                              {deviceType === 'desktop' && <Monitor className="w-3.5 h-3.5 text-[#D97706]" strokeWidth={1.5} />}
+                              {deviceType === 'mobile' && <Smartphone className="w-3.5 h-3.5 text-[#3B82F6]" strokeWidth={1.5} />}
+                              {deviceType === 'tablet' && <Tablet className="w-3.5 h-3.5 text-[#10B981]" strokeWidth={1.5} />}
+                              {deviceType === 'desktop' && <Monitor className="w-3.5 h-3.5 text-black" strokeWidth={1.5} />}
                               <p className="font-semibold text-foreground text-sm">{payload[0].name}</p>
                             </div>
                             <p className="text-muted-foreground text-xs">{payload[0].value} clicks</p>
@@ -247,7 +247,7 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
                       <div className="flex items-center gap-1.5">
                         <div
                           className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: color, opacity: 0.6 }}
+                          style={{ backgroundColor: color, opacity: 0.9 }}
                         />
                         <div className="h-1 w-16 rounded-full overflow-hidden bg-muted">
                           <div
@@ -255,7 +255,7 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
                             style={{
                               width: `${(item.value / Math.max(...deviceData.map(d => d.value))) * 100}%`,
                               backgroundColor: color,
-                              opacity: 0.6
+                              opacity: 0.9
                             }}
                           />
                         </div>
@@ -276,8 +276,8 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
           title="Top Operating Systems"
           data={osData}
           icon={
-            <div className="w-8 h-8 border border-[#475569]/20 rounded-lg flex items-center justify-center">
-              <Monitor className="w-4 h-4 text-[#475569]" strokeWidth={1.5} />
+            <div className="w-8 h-8 border border-black/20 rounded-lg flex items-center justify-center bg-black/5">
+              <Monitor className="w-4 h-4 text-black" strokeWidth={1.5} />
             </div>
           }
         />
@@ -285,8 +285,8 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
           title="Top Browsers"
           data={browserData}
           icon={
-            <div className="w-8 h-8 border border-[#D97706]/20 rounded-lg flex items-center justify-center">
-              <Globe className="w-4 h-4 text-[#D97706]" strokeWidth={1.5} />
+            <div className="w-8 h-8 border border-[#10B981]/20 rounded-lg flex items-center justify-center bg-[#10B981]/5">
+              <Globe className="w-4 h-4 text-[#10B981]" strokeWidth={1.5} />
             </div>
           }
         />
@@ -294,8 +294,8 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
           title="Top Countries"
           data={countryData}
           icon={
-            <div className="w-8 h-8 border border-[#DC2626]/20 rounded-lg flex items-center justify-center">
-              <MapPin className="w-4 h-4 text-[#DC2626]" strokeWidth={1.5} />
+            <div className="w-8 h-8 border border-[#F59E0B]/20 rounded-lg flex items-center justify-center bg-[#F59E0B]/5">
+              <MapPin className="w-4 h-4 text-[#F59E0B]" strokeWidth={1.5} />
             </div>
           }
         />
@@ -303,8 +303,8 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
           title="Top Cities"
           data={cityData}
           icon={
-            <div className="w-8 h-8 border border-[#EA580C]/20 rounded-lg flex items-center justify-center">
-              <MapPin className="w-4 h-4 text-[#EA580C]" strokeWidth={1.5} />
+            <div className="w-8 h-8 border border-[#EF4444]/20 rounded-lg flex items-center justify-center bg-[#EF4444]/5">
+              <MapPin className="w-4 h-4 text-[#EF4444]" strokeWidth={1.5} />
             </div>
           }
         />
