@@ -153,20 +153,20 @@ export default function Dashboard() {
 
       <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-white pointer-events-none" />
 
-      <div className="relative z-10 container mx-auto px-4 py-16">
+      <div className="relative z-10 container mx-auto px-3 sm:px-4 py-6 sm:py-12 md:py-16">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-12"
+            className="mb-6 sm:mb-10 md:mb-12"
           >
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h1 className="text-4xl md:text-5xl font-bold text-black mb-2">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-2">
                   Welcome back, {getDisplayName()}! 👋
                 </h1>
-                <p className="text-gray-500">
+                <p className="text-sm sm:text-base text-gray-500">
                   Manage your shortened links and view analytics
                 </p>
               </div>
@@ -194,40 +194,40 @@ export default function Dashboard() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-10 md:mb-12"
           >
-            <Card className="p-6 border border-gray-200 rounded-lg bg-white">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-black/5 rounded-lg">
-                  <Link2 className="w-6 h-6 text-black" />
+            <Card className="p-4 sm:p-6 border border-gray-200 rounded-lg bg-white">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="p-2 sm:p-3 bg-black/5 rounded-lg shrink-0">
+                  <Link2 className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Total Links</p>
-                  <p className="text-3xl font-bold text-black">{totalLinks}</p>
+                  <p className="text-xs sm:text-sm text-gray-500">Total Links</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-black">{totalLinks}</p>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-6 border border-gray-200 rounded-lg bg-white">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-black/5 rounded-lg">
-                  <MousePointerClick className="w-6 h-6 text-black" />
+            <Card className="p-4 sm:p-6 border border-gray-200 rounded-lg bg-white">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="p-2 sm:p-3 bg-black/5 rounded-lg shrink-0">
+                  <MousePointerClick className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Total Clicks</p>
-                  <p className="text-3xl font-bold text-black">{totalClicks}</p>
+                  <p className="text-xs sm:text-sm text-gray-500">Total Clicks</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-black">{totalClicks}</p>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-6 border border-gray-200 rounded-lg bg-white">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-black/5 rounded-lg">
-                  <Calendar className="w-6 h-6 text-black" />
+            <Card className="p-4 sm:p-6 border border-gray-200 rounded-lg bg-white sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="p-2 sm:p-3 bg-black/5 rounded-lg shrink-0">
+                  <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Member Since</p>
-                  <p className="text-lg font-bold text-black">
+                  <p className="text-xs sm:text-sm text-gray-500">Member Since</p>
+                  <p className="text-base sm:text-lg font-bold text-black">
                     {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                   </p>
                 </div>
@@ -242,8 +242,8 @@ export default function Dashboard() {
             transition={{ delay: 0.2 }}
           >
             <Card className="border border-gray-200 rounded-lg bg-white overflow-hidden">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-bold text-black">Your Links</h2>
+              <div className="p-4 sm:p-6 border-b border-gray-200">
+                <h2 className="text-lg sm:text-xl font-bold text-black">Your Links</h2>
               </div>
 
               {urls.length === 0 ? (

@@ -80,17 +80,17 @@ export default function Home() {
       {/* Subtle gradient background */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-white pointer-events-none" />
 
-      <div className="relative z-10 container mx-auto px-4 py-16">
+      <div className="relative z-10 container mx-auto px-3 sm:px-4 py-6 sm:py-12 md:py-16">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-16"
+          className="text-center mb-6 sm:mb-10 md:mb-16"
         >
-          <h1 className="text-5xl md:text-6xl font-bold text-black mb-4 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-2 sm:mb-4 tracking-tight">
             Cool URLs
           </h1>
-          <p className="text-gray-500 text-lg">
+          <p className="text-gray-500 text-sm sm:text-base md:text-lg px-2">
             Create beautiful short links with custom prefixes
           </p>
         </motion.div>
@@ -102,7 +102,7 @@ export default function Home() {
           transition={{ delay: 0.1 }}
           className="max-w-2xl mx-auto"
         >
-          <Card className="border border-gray-200 p-8 rounded-lg bg-white">
+          <Card className="border border-gray-200 p-4 sm:p-6 md:p-8 rounded-lg bg-white">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* URL Input */}
               <div>
@@ -138,8 +138,8 @@ export default function Home() {
                     className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
                   />
                 </div>
-                <p className="mt-2 text-xs text-gray-500">
-                  Your short URL will look like: <span className="font-mono">{getDisplayDomain()}/{prefix || 'abc123'}-xyz789</span>
+                <p className="mt-2 text-xs text-gray-500 break-all">
+                  Your short URL will look like: <span className="font-mono text-xs">{getDisplayDomain()}/{prefix || 'abc123'}-xyz789</span>
                 </p>
               </div>
 
@@ -186,28 +186,28 @@ export default function Home() {
                   <p className="text-sm font-medium text-gray-700 mb-3">
                     ✓ Your short URL is ready!
                   </p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <Input
                       type="text"
                       value={shortUrl}
                       readOnly
-                      className="flex-1 font-mono text-sm border-gray-300 bg-white focus-visible:ring-0"
+                      className="flex-1 font-mono text-xs sm:text-sm border-gray-300 bg-white focus-visible:ring-0"
                     />
                     <Button
                       onClick={copyToClipboard}
                       variant="outline"
                       size="sm"
-                      className="px-4 h-9 border-gray-300 hover:bg-gray-50 flex items-center gap-2"
+                      className="px-4 h-9 border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-2 whitespace-nowrap"
                     >
                       {copied ? (
                         <>
                           <CheckCircle2 className="w-4 h-4" />
-                          Copied
+                          <span>Copied</span>
                         </>
                       ) : (
                         <>
                           <Copy className="w-4 h-4" />
-                          Copy
+                          <span>Copy</span>
                         </>
                       )}
                     </Button>
@@ -223,23 +223,23 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="mt-8"
+              className="mt-6 sm:mt-8"
             >
               <Link href="/dashboard">
-                <Card className="border border-gray-200 p-6 rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 bg-black/5 rounded-lg">
-                        <BarChart3 className="w-6 h-6 text-black" />
+                <Card className="border border-gray-200 p-4 sm:p-6 rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="p-2 sm:p-3 bg-black/5 rounded-lg shrink-0">
+                        <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-black">View Your Dashboard</h3>
-                        <p className="text-sm text-gray-500">
+                        <h3 className="font-semibold text-black text-sm sm:text-base">View Your Dashboard</h3>
+                        <p className="text-xs sm:text-sm text-gray-500">
                           Track all your links and view analytics
                         </p>
                       </div>
                     </div>
-                    <Button variant="ghost" className="text-black">
+                    <Button variant="ghost" className="text-black text-sm sm:text-base self-stretch sm:self-auto">
                       Go to Dashboard →
                     </Button>
                   </div>
@@ -254,17 +254,17 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="mt-8"
+              className="mt-6 sm:mt-8"
             >
-              <Card className="border border-gray-200 p-8 rounded-lg bg-gradient-to-br from-gray-50 to-white text-center">
+              <Card className="border border-gray-200 p-6 sm:p-8 rounded-lg bg-gradient-to-br from-gray-50 to-white text-center">
                 <div className="max-w-md mx-auto">
-                  <div className="inline-flex p-4 bg-black/5 rounded-full mb-4">
-                    <LogIn className="w-8 h-8 text-black" />
+                  <div className="inline-flex p-3 sm:p-4 bg-black/5 rounded-full mb-3 sm:mb-4">
+                    <LogIn className="w-6 h-6 sm:w-8 sm:h-8 text-black" />
                   </div>
-                  <h3 className="text-2xl font-bold text-black mb-2">
+                  <h3 className="text-xl sm:text-2xl font-bold text-black mb-2">
                     Want to track your links?
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-2">
                     Sign in to access your personal dashboard, view analytics, and manage all your shortened URLs in one place.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -273,19 +273,19 @@ export default function Home() {
                         const signInButton = document.querySelector('[data-auth-trigger]') as HTMLButtonElement;
                         signInButton?.click();
                       }}
-                      className="bg-black text-white hover:bg-gray-800 h-11 px-6"
+                      className="bg-black text-white hover:bg-gray-800 h-11 px-6 w-full sm:w-auto"
                     >
                       <LogIn className="w-4 h-4 mr-2" />
                       Sign In / Sign Up
                     </Button>
-                    <Link href="/dashboard">
-                      <Button variant="outline" className="border-gray-300 hover:bg-gray-50 h-11 px-6 w-full sm:w-auto">
+                    <Link href="/dashboard" className="w-full sm:w-auto">
+                      <Button variant="outline" className="border-gray-300 hover:bg-gray-50 h-11 px-6 w-full">
                         <BarChart3 className="w-4 h-4 mr-2" />
                         Preview Dashboard
                       </Button>
                     </Link>
                   </div>
-                  <p className="text-xs text-gray-500 mt-4">
+                  <p className="text-xs text-gray-500 mt-4 px-2">
                     Free forever • No password needed • Magic link authentication
                   </p>
                 </div>

@@ -65,13 +65,13 @@ export function ClickMap({ clicks }: ClickMapProps) {
 
   if (locations.length === 0) {
     return (
-      <div className="w-full h-[400px] bg-[#D97706]/5 dark:bg-[#D97706]/3 rounded-lg flex items-center justify-center border border-[#D97706]/20 relative overflow-hidden">
-        <div className="text-center relative z-10">
-          <div className="mx-auto w-16 h-16 border border-[#EA580C]/20 rounded-full flex items-center justify-center mb-4">
-            <Globe2 className="w-8 h-8 text-[#EA580C]" strokeWidth={1.5} />
+      <div className="w-full h-[300px] sm:h-[400px] bg-[#D97706]/5 dark:bg-[#D97706]/3 rounded-lg flex items-center justify-center border border-[#D97706]/20 relative overflow-hidden">
+        <div className="text-center relative z-10 px-4">
+          <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 border border-[#EA580C]/20 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+            <Globe2 className="w-6 h-6 sm:w-8 sm:h-8 text-[#EA580C]" strokeWidth={1.5} />
           </div>
-          <p className="text-foreground font-semibold text-lg">No location data available</p>
-          <p className="text-muted-foreground text-sm mt-2">Click data will appear here once collected</p>
+          <p className="text-foreground font-semibold text-base sm:text-lg">No location data available</p>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-2">Click data will appear here once collected</p>
         </div>
       </div>
     );
@@ -80,7 +80,7 @@ export function ClickMap({ clicks }: ClickMapProps) {
   return (
     <>
       <LeafletMap
-        className="w-full h-[600px]"
+        className="w-full h-[350px] sm:h-[450px] md:h-[600px]"
         center={center}
         zoom={zoom}
         scrollWheelZoom={true}

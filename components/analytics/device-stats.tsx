@@ -167,18 +167,18 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Device Type Distribution Chart */}
       {deviceData.length > 0 && (
-        <Card className="p-6 border">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 border border-[#EA580C]/20 rounded-lg flex items-center justify-center">
-              <Smartphone className="w-5 h-5 text-[#EA580C]" strokeWidth={1.5} />
+        <Card className="p-4 sm:p-6 border">
+          <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 border border-[#EA580C]/20 rounded-lg flex items-center justify-center shrink-0">
+              <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 text-[#EA580C]" strokeWidth={1.5} />
             </div>
-            <h4 className="font-semibold text-foreground text-lg">Device Distribution</h4>
+            <h4 className="font-semibold text-foreground text-base sm:text-lg">Device Distribution</h4>
           </div>
-          <div className="flex flex-col lg:flex-row items-center gap-8">
-            <div className="w-full lg:w-1/2 h-64 relative">
+          <div className="flex flex-col lg:flex-row items-center gap-6 sm:gap-8">
+            <div className="w-full lg:w-1/2 h-56 sm:h-64 relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
