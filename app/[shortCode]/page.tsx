@@ -46,10 +46,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: 'Cool URLs',
       images: [
         {
-          url: '/og-image.png',
+          url: '/og-image.jpg',
           width: 1200,
           height: 630,
           alt: 'Cool URLs - URL Shortener',
+          type: 'image/jpeg',
         },
       ],
       type: 'website',
@@ -58,7 +59,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title,
       description,
-      images: ['/og-image.png'],
+      images: ['/og-image.jpg'],
     },
   };
 }

@@ -70,13 +70,21 @@ metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 Without the environment variable in Railway, it defaults to localhost, which makes the image URL:
 ```
-http://localhost:3000/og-image.png  ❌ Not accessible from internet
+http://localhost:3000/og-image.jpg  ❌ Not accessible from internet
 ```
 
 With the correct environment variable:
 ```
-https://cool-urls-dev.up.railway.app/og-image.png  ✅ Accessible from internet
+https://cool-urls-dev.up.railway.app/og-image.jpg  ✅ Accessible from internet
 ```
+
+### WhatsApp-Specific Requirements ✅
+
+WhatsApp has strict requirements for Open Graph images that we've now optimized for:
+- **Maximum file size**: 300KB (we optimized to **172KB** ✅)
+- **Recommended dimensions**: 1200x630 pixels (we use exactly this ✅)
+- **Format**: JPEG works better than PNG for WhatsApp
+- **File type declaration**: Must include `type: 'image/jpeg'` in metadata
 
 ## Quick Command Reference
 

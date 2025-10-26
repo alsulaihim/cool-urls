@@ -23,10 +23,11 @@ export const metadata: Metadata = {
     siteName: 'Cool URLs',
     images: [
       {
-        url: '/og-image.png',
+        url: '/og-image.jpg',
         width: 1200,
         height: 630,
         alt: 'Cool URLs - URL Shortener',
+        type: 'image/jpeg',
       },
     ],
     locale: 'en_US',
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "Cool URLs - URL Shortener",
     description: "Create beautiful short links with custom prefixes",
-    images: ['/og-image.png'],
+    images: ['/og-image.jpg'],
   },
   icons: {
     icon: '/favicon.ico',
