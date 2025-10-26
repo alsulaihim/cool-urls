@@ -11,6 +11,11 @@ const schema = i.schema({
       clicks: i.number(),
       userId: i.string(),
     }),
+    userProfiles: i.entity({
+      userId: i.string().unique().indexed(),
+      name: i.string(),
+      createdAt: i.number(),
+    }),
   },
 });
 

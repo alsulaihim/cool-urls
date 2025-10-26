@@ -9,10 +9,12 @@ import { motion } from 'framer-motion';
 import { Link2, MousePointerClick, Calendar, Copy, CheckCircle2, Trash2, ExternalLink, Plus, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useUserProfile } from '@/lib/useUserProfile';
 
 export default function Dashboard() {
   const { user, isLoading } = db.useAuth();
   const router = useRouter();
+  const { profile } = useUserProfile(user?.id);
 
   // Query URLs - we'll filter by user after fetching
   const { data, isLoading: urlsLoading } = db.useQuery({
@@ -29,18 +31,20 @@ export default function Dashboard() {
   const totalClicks = urls.reduce((sum: number, url: any) => sum + (url.clicks || 0), 0);
   const totalLinks = urls.length;
 
-  // Extract first name from email
-  const getFirstName = (email: string | null | undefined): string => {
-    if (!email) return 'User';
+  // Get user's display name (from profile or email)
+  const getDisplayName = (): string => {
+    // Use profile name if available
+    if (profile?.name) {
+      return profile.name;
+    }
 
-    // Get part before @
-    const username = email.split('@')[0];
+    // Fall back to extracting from email
+    if (!user?.email) return 'User';
 
-    // If username contains dots or underscores, split and get first part
+    const username = user.email.split('@')[0];
     const parts = username.split(/[._-]/);
     const firstName = parts[0];
 
-    // Capitalize first letter
     return firstName.charAt(0).toUpperCase() + firstName.slice(1);
   };
 
@@ -129,7 +133,7 @@ export default function Dashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h1 className="text-4xl md:text-5xl font-bold text-black mb-2">
-                  Welcome back, {getFirstName(user?.email)}! 👋
+                  Welcome back, {getDisplayName()}! 👋
                 </h1>
                 <p className="text-gray-500">
                   Manage your shortened links and view analytics

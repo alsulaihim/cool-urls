@@ -5,8 +5,9 @@ import { db } from '@/lib/instant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { X, Mail, Lock } from 'lucide-react';
+import { X, Mail, Lock, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { v4 as uuidv4 } from 'uuid';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,9 +16,11 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sentEmail, setSentEmail] = useState(false);
   const [error, setError] = useState('');
+  const [code, setCode] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,25 +37,44 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   };
 
-  const handleVerifyCode = async (code: string) => {
+  const handleCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      await db.auth.signInWithMagicCode({ email, code });
+      // Sign in with magic code
+      const result = await db.auth.signInWithMagicCode({ email, code });
+      
+      // Save the user's name to their profile if provided
+      if (result && name.trim()) {
+        // Wait a bit for auth to complete
+        setTimeout(async () => {
+          try {
+            await db.transact(
+              db.tx.userProfiles[uuidv4()].update({
+                userId: result.user.id,
+                name: name.trim(),
+                createdAt: Date.now(),
+              })
+            );
+          } catch (profileError) {
+            console.error('Error saving profile:', profileError);
+          }
+        }, 500);
+      }
+
       onClose();
+      // Reset form
+      setEmail('');
+      setName('');
+      setCode('');
+      setSentEmail(false);
     } catch (err: any) {
       setError(err.message || 'Invalid verification code');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const [code, setCode] = useState('');
-
-  const handleCodeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await handleVerifyCode(code);
   };
 
   if (!isOpen) return null;
@@ -77,7 +99,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <Card className="border border-gray-200 p-8 rounded-lg bg-white">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-black">
-                  {sentEmail ? 'Check your email' : 'Sign In'}
+                  {sentEmail ? 'Check your email' : 'Sign In / Sign Up'}
                 </h2>
                 <button
                   onClick={onClose}
@@ -89,6 +111,23 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
               {!sentEmail ? (
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      What shall we call you?
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Your first name"
+                        required
+                        className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Email Address
