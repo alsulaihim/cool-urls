@@ -4,8 +4,14 @@ Enhanced email templates for magic link authentication with InstantDB.
 
 ## Files
 
-- **magic-code.html** - HTML email template (modern, responsive design)
+### For InstantDB (Use These):
+- **magic-code-instantdb.html** ⭐ - InstantDB-ready HTML (no DOCTYPE/html/body tags)
+- **magic-code-simple.html** - Simplified version without gradients (more compatible)
 - **magic-code.txt** - Plain text fallback template
+
+### Reference Files:
+- **magic-code.html** - Full HTML document (for reference/standalone use)
+- **preview.html** - Preview file to see the template in browser
 
 ## Features
 
@@ -32,11 +38,14 @@ InstantDB uses custom email templates for magic link authentication. Here's how 
    - Look for "Email Templates" or "Magic Link Templates"
 
 3. **Upload/Paste the Template**
-   - Copy the content from `magic-code.html`
+   - **Try first:** Copy content from `magic-code-instantdb.html` ⭐
+   - **If that fails:** Use `magic-code-simple.html` instead
    - Paste it into the HTML template field
-   - Make sure to keep the `{code}` and `{app_title}` placeholders
+   - Make sure to keep the `{code}` placeholder
 
 4. **Save Changes**
+
+**Important:** InstantDB expects HTML content only (no DOCTYPE, html, head, or body tags). That's why we have the `-instantdb` version!
 
 ### Option 2: Via InstantDB Config (If Supported)
 
