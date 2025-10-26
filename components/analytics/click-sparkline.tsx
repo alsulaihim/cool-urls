@@ -64,8 +64,8 @@ export function ClickSparkline({ data, timeRange = '7d' }: ClickSparklineProps) 
     <div className="w-full">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 border border-[#EA580C]/20 rounded-lg flex items-center justify-center">
-            <Activity className="w-5 h-5 text-[#EA580C]" strokeWidth={1.5} />
+          <div className="w-10 h-10 border border-pink-500/20 rounded-lg flex items-center justify-center bg-pink-50">
+            <Activity className="w-5 h-5 text-pink-500" strokeWidth={1.5} />
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">Total Clicks</p>
@@ -75,19 +75,19 @@ export function ClickSparkline({ data, timeRange = '7d' }: ClickSparklineProps) 
         <div className="text-right">
           <p className="text-sm font-medium text-muted-foreground">Average</p>
           <div className="flex items-center gap-1">
-            <TrendingUp className="w-4 h-4 text-[#D97706]" strokeWidth={1.5} />
+            <TrendingUp className="w-4 h-4 text-pink-500" strokeWidth={1.5} />
             <p className="text-lg font-semibold text-foreground">{avgClicks.toFixed(1)}</p>
           </div>
         </div>
       </div>
-      <div className="w-full h-32 bg-[#D97706]/5 dark:bg-[#D97706]/3 rounded-lg p-2 border border-[#D97706]/20 dark:border-[#EA580C]/20">
+      <div className="w-full h-32 bg-pink-50 rounded-lg p-2 border border-pink-200">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData}>
             <defs>
               <linearGradient id="clickGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#D97706" stopOpacity={0.2}/>
-                <stop offset="50%" stopColor="#EA580C" stopOpacity={0.1}/>
-                <stop offset="95%" stopColor="#DC2626" stopOpacity={0.05}/>
+                <stop offset="5%" stopColor="#EC4899" stopOpacity={0.3}/>
+                <stop offset="50%" stopColor="#EC4899" stopOpacity={0.15}/>
+                <stop offset="95%" stopColor="#EC4899" stopOpacity={0.05}/>
               </linearGradient>
             </defs>
             <XAxis dataKey="time" hide />
@@ -97,9 +97,9 @@ export function ClickSparkline({ data, timeRange = '7d' }: ClickSparklineProps) 
                 if (active && payload && payload.length) {
                   const date = new Date(payload[0].payload.time);
                   return (
-                    <Card className="bg-background/95 backdrop-blur-sm border border-[#EA580C]/20 px-3 py-2 text-xs">
+                    <Card className="bg-background/95 backdrop-blur-sm border border-pink-200 px-3 py-2 text-xs">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="w-1.5 h-1.5 bg-[#EA580C] rounded-full"></div>
+                        <div className="w-1.5 h-1.5 bg-pink-500 rounded-full"></div>
                         <p className="font-semibold text-foreground text-sm">{payload[0].value} clicks</p>
                       </div>
                       <p className="text-muted-foreground text-xs">
@@ -114,7 +114,7 @@ export function ClickSparkline({ data, timeRange = '7d' }: ClickSparklineProps) 
             <Area
               type="monotone"
               dataKey="clicks"
-              stroke="#EA580C"
+              stroke="#EC4899"
               strokeWidth={2}
               fill="url(#clickGradient)"
               animationDuration={800}
