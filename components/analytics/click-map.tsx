@@ -1,29 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
-import 'leaflet/dist/leaflet.css';
-
-// Dynamically import Leaflet to avoid SSR issues
-const MapContainer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.MapContainer),
-  { ssr: false }
-);
-
-const TileLayer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.TileLayer),
-  { ssr: false }
-);
-
-const CircleMarker = dynamic(
-  () => import('react-leaflet').then((mod) => mod.CircleMarker),
-  { ssr: false }
-);
-
-const Popup = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Popup),
-  { ssr: false }
-);
+import {
+  Map as LeafletMap,
+  MapTileLayer,
+  MapMarker,
+  MapPopup
+} from '@/components/ui/map';
+import { MapPin, Globe2 } from 'lucide-react';
 
 interface ClickLocation {
   latitude: number;
@@ -43,23 +26,6 @@ interface ClickMapProps {
 }
 
 export function ClickMap({ clicks }: ClickMapProps) {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-
-    // Fix Leaflet's default icon issue with webpack
-    if (typeof window !== 'undefined') {
-      import('leaflet').then((L) => {
-        delete (L.Icon.Default.prototype as any)._getIconUrl;
-        L.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-        });
-      });
-    }
-  }, []);
 
   // Debug: Log the clicks data
   console.log('[ClickMap] Total clicks received:', clicks.length);
@@ -97,78 +63,68 @@ export function ClickMap({ clicks }: ClickMapProps) {
   const center: [number, number] = [20, 0]; // Center of world map
   const zoom = 2; // World view zoom level
 
-  if (!isMounted) {
-    return (
-      <div className="w-full h-[400px] bg-gray-100 rounded-lg flex items-center justify-center">
-        <p className="text-gray-500">Loading map...</p>
-      </div>
-    );
-  }
-
   if (locations.length === 0) {
     return (
-      <div className="w-full h-[400px] bg-gray-100 rounded-lg flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-500 font-medium">No location data available</p>
-          <p className="text-gray-400 text-sm mt-1">Click data will appear here once collected</p>
+      <div className="w-full h-[400px] bg-[#D97706]/5 dark:bg-[#D97706]/3 rounded-lg flex items-center justify-center border border-[#D97706]/20 relative overflow-hidden">
+        <div className="text-center relative z-10">
+          <div className="mx-auto w-16 h-16 border border-[#EA580C]/20 rounded-full flex items-center justify-center mb-4">
+            <Globe2 className="w-8 h-8 text-[#EA580C]" strokeWidth={1.5} />
+          </div>
+          <p className="text-foreground font-semibold text-lg">No location data available</p>
+          <p className="text-muted-foreground text-sm mt-2">Click data will appear here once collected</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-[600px] rounded-lg overflow-hidden border border-gray-200 relative bg-gray-800">
-      <MapContainer
+    <>
+      <LeafletMap
+        className="w-full h-[600px]"
         center={center}
         zoom={zoom}
         scrollWheelZoom={true}
         zoomControl={true}
-        style={{ height: '100%', width: '100%', backgroundColor: '#374151' }}
       >
-        {/* CartoDB Positron - Light gray lands on darker background */}
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          className="map-inverted"
-        />
+        <MapTileLayer />
         {locations.map((location, idx) => (
-          <CircleMarker
+          <MapMarker
             key={idx}
-            center={[location.latitude, location.longitude]}
-            radius={8}
-            fillColor="#10b981"
-            color="#059669"
-            weight={2}
-            opacity={0.9}
-            fillOpacity={0.7}
-            pathOptions={{
-              className: 'subtle-pulse-dot'
-            }}
+            position={[location.latitude, location.longitude]}
+            radius={7}
+            fillColor="#D97706"
+            color="#EA580C"
+            weight={1.5}
+            opacity={0.8}
+            fillOpacity={0.5}
+            className="subtle-pulse-dot"
           >
-            <Popup>
-              <div className="text-sm">
-                <p className="font-semibold text-gray-900">{location.count} click{location.count > 1 ? 's' : ''}</p>
-                {location.city && <p className="text-gray-700">{location.city}</p>}
-                {location.country && <p className="text-gray-600">{location.country}</p>}
+            <MapPopup>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 border border-[#EA580C]/20 rounded-full flex items-center justify-center">
+                    <MapPin className="w-4 h-4 text-[#EA580C]" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground text-base">
+                      {location.count} click{location.count > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+                {(location.city || location.country) && (
+                  <div className="pt-1 border-t border-border">
+                    {location.city && <p className="text-sm font-medium text-foreground">{location.city}</p>}
+                    {location.country && <p className="text-xs text-muted-foreground">{location.country}</p>}
+                  </div>
+                )}
               </div>
-            </Popup>
-          </CircleMarker>
+            </MapPopup>
+          </MapMarker>
         ))}
-      </MapContainer>
+      </LeafletMap>
 
-      {/* CSS for inverted map and subtle animated dots */}
+      {/* CSS for subtle animated dots */}
       <style jsx global>{`
-        /* Invert map tiles - light lands, dark oceans */
-        .map-inverted {
-          filter: invert(1) hue-rotate(180deg) brightness(1.2) contrast(0.9);
-        }
-
-        /* Keep controls normal */
-        .leaflet-control-zoom,
-        .leaflet-control-attribution {
-          filter: invert(1) hue-rotate(180deg);
-        }
-
         .leaflet-interactive.subtle-pulse-dot {
           animation: subtle-pulse 3s ease-in-out infinite;
         }
@@ -182,6 +138,6 @@ export function ClickMap({ clicks }: ClickMapProps) {
           }
         }
       `}</style>
-    </div>
+    </>
   );
 }

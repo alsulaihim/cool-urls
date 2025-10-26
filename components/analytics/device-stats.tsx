@@ -1,7 +1,8 @@
 'use client';
 
 import { Smartphone, Monitor, Tablet, Globe, MapPin } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Card } from '@/components/ui/card';
 
 interface ClickAnalytics {
   deviceType?: string;
@@ -80,56 +81,104 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
       .slice(0, 5);
   })();
 
-  const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
+  // Amber Obsidian Autumn color palette (updated for readability)
+  const COLORS = [
+    '#D97706', // Dark Amber/Orange (more readable)
+    '#EA580C', // Dark Orange (more readable)
+    '#DC2626', // Dark Red (more readable)
+    '#475569', // Dark Blue-Gray (replaces cyan)
+    '#64748B', // Medium Blue-Gray (replaces light teal)
+  ];
+
+  // Specific device colors using Amber Obsidian Autumn palette
+  const DEVICE_COLORS: Record<string, string> = {
+    'mobile': '#DC2626', // Dark Red - vibrant and readable
+    'tablet': '#EA580C', // Dark Orange - warm and readable
+    'desktop': '#D97706', // Dark Amber - prominent and readable
+    'unknown': '#64748B', // Medium Blue-Gray - subtle and readable
+  };
 
   const getDeviceIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case 'mobile':
-        return <Smartphone className="w-4 h-4" />;
+        return (
+          <div className="w-8 h-8 border border-[#DC2626]/20 rounded-lg flex items-center justify-center">
+            <Smartphone className="w-4 h-4 text-[#DC2626]" strokeWidth={1.5} />
+          </div>
+        );
       case 'tablet':
-        return <Tablet className="w-4 h-4" />;
+        return (
+          <div className="w-8 h-8 border border-[#EA580C]/20 rounded-lg flex items-center justify-center">
+            <Tablet className="w-4 h-4 text-[#EA580C]" strokeWidth={1.5} />
+          </div>
+        );
       case 'desktop':
-        return <Monitor className="w-4 h-4" />;
+        return (
+          <div className="w-8 h-8 border border-[#D97706]/20 rounded-lg flex items-center justify-center">
+            <Monitor className="w-4 h-4 text-[#D97706]" strokeWidth={1.5} />
+          </div>
+        );
       default:
-        return <Monitor className="w-4 h-4" />;
+        return (
+          <div className="w-8 h-8 border border-[#64748B]/20 rounded-lg flex items-center justify-center">
+            <Monitor className="w-4 h-4 text-[#64748B]" strokeWidth={1.5} />
+          </div>
+        );
     }
   };
 
   const StatCard = ({ title, data, icon }: { title: string; data: Array<{ name: string; value: number }>; icon?: React.ReactNode }) => (
-    <div className="bg-white border border-gray-200 rounded-lg p-4">
-      <div className="flex items-center gap-2 mb-3">
+    <Card className="p-5 border">
+      <div className="flex items-center gap-3 mb-4">
         {icon}
-        <h4 className="font-semibold text-gray-900">{title}</h4>
+        <h4 className="font-semibold text-foreground text-base">{title}</h4>
       </div>
       {data.length === 0 ? (
-        <p className="text-gray-400 text-sm">No data</p>
+        <p className="text-muted-foreground text-sm">No data</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {data.map((item, idx) => (
-            <div key={idx} className="flex items-center justify-between">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div key={idx} className="flex items-center justify-between group">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: COLORS[idx % COLORS.length] }}
+                  style={{ backgroundColor: COLORS[idx % COLORS.length], opacity: 0.6 }}
                 />
-                <span className="text-sm text-gray-700 truncate">{item.name}</span>
+                <span className="text-sm font-medium text-foreground truncate">{item.name}</span>
               </div>
-              <span className="text-sm font-semibold text-gray-900 ml-2">{item.value}</span>
+              <div className="flex items-center gap-2">
+                <div className="h-1 bg-muted rounded-full overflow-hidden w-16 hidden sm:block">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${(item.value / Math.max(...data.map(d => d.value))) * 100}%`,
+                      backgroundColor: COLORS[idx % COLORS.length],
+                      opacity: 0.6
+                    }}
+                  />
+                </div>
+                <span className="text-sm font-semibold text-foreground ml-2 min-w-[2rem] text-right">{item.value}</span>
+              </div>
             </div>
           ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 
   return (
     <div className="space-y-6">
       {/* Device Type Distribution Chart */}
       {deviceData.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h4 className="font-semibold text-gray-900 mb-4">Device Distribution</h4>
+        <Card className="p-6 border">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 border border-[#EA580C]/20 rounded-lg flex items-center justify-center">
+              <Smartphone className="w-5 h-5 text-[#EA580C]" strokeWidth={1.5} />
+            </div>
+            <h4 className="font-semibold text-foreground text-lg">Device Distribution</h4>
+          </div>
           <div className="flex flex-col lg:flex-row items-center gap-8">
-            <div className="w-full lg:w-1/2 h-64">
+            <div className="w-full lg:w-1/2 h-64 relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -138,31 +187,87 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
+                    outerRadius={85}
+                    innerRadius={45}
+                    fill="hsl(var(--primary))"
                     dataKey="value"
+                    paddingAngle={2}
+                    animationDuration={600}
                   >
-                    {deviceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
+                    {deviceData.map((entry, index) => {
+                      const deviceType = entry.name.toLowerCase();
+                      const color = DEVICE_COLORS[deviceType] || COLORS[index % COLORS.length];
+                      return (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={color}
+                          fillOpacity={0.6}
+                          stroke="hsl(var(--background))"
+                          strokeWidth={2}
+                        />
+                      );
+                    })}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const deviceType = payload[0].name.toLowerCase();
+                        return (
+                          <Card className="bg-background/95 backdrop-blur-sm border px-3 py-2">
+                            <div className="flex items-center gap-2 mb-1">
+                              {deviceType === 'mobile' && <Smartphone className="w-3.5 h-3.5 text-[#DC2626]" strokeWidth={1.5} />}
+                              {deviceType === 'tablet' && <Tablet className="w-3.5 h-3.5 text-[#EA580C]" strokeWidth={1.5} />}
+                              {deviceType === 'desktop' && <Monitor className="w-3.5 h-3.5 text-[#D97706]" strokeWidth={1.5} />}
+                              <p className="font-semibold text-foreground text-sm">{payload[0].name}</p>
+                            </div>
+                            <p className="text-muted-foreground text-xs">{payload[0].value} clicks</p>
+                          </Card>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
             <div className="w-full lg:w-1/2 space-y-3">
-              {deviceData.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    {getDeviceIcon(item.name)}
-                    <span className="font-medium text-gray-900">{item.name}</span>
+              {deviceData.map((item, idx) => {
+                const deviceType = item.name.toLowerCase();
+                const color = DEVICE_COLORS[deviceType] || COLORS[idx % COLORS.length];
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 rounded-lg border"
+                  >
+                    <div className="flex items-center gap-3">
+                      {getDeviceIcon(item.name)}
+                      <span className="font-medium text-foreground">{item.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: color, opacity: 0.6 }}
+                        />
+                        <div className="h-1 w-16 rounded-full overflow-hidden bg-muted">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${(item.value / Math.max(...deviceData.map(d => d.value))) * 100}%`,
+                              backgroundColor: color,
+                              opacity: 0.6
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <span className="text-lg font-semibold text-foreground min-w-[2.5rem] text-right">{item.value}</span>
+                    </div>
                   </div>
-                  <span className="text-lg font-bold text-gray-900">{item.value}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Stats Grid */}
@@ -170,22 +275,38 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
         <StatCard
           title="Top Operating Systems"
           data={osData}
-          icon={<Monitor className="w-4 h-4 text-gray-600" />}
+          icon={
+            <div className="w-8 h-8 border border-[#475569]/20 rounded-lg flex items-center justify-center">
+              <Monitor className="w-4 h-4 text-[#475569]" strokeWidth={1.5} />
+            </div>
+          }
         />
         <StatCard
           title="Top Browsers"
           data={browserData}
-          icon={<Globe className="w-4 h-4 text-gray-600" />}
+          icon={
+            <div className="w-8 h-8 border border-[#D97706]/20 rounded-lg flex items-center justify-center">
+              <Globe className="w-4 h-4 text-[#D97706]" strokeWidth={1.5} />
+            </div>
+          }
         />
         <StatCard
           title="Top Countries"
           data={countryData}
-          icon={<MapPin className="w-4 h-4 text-gray-600" />}
+          icon={
+            <div className="w-8 h-8 border border-[#DC2626]/20 rounded-lg flex items-center justify-center">
+              <MapPin className="w-4 h-4 text-[#DC2626]" strokeWidth={1.5} />
+            </div>
+          }
         />
         <StatCard
           title="Top Cities"
           data={cityData}
-          icon={<MapPin className="w-4 h-4 text-gray-600" />}
+          icon={
+            <div className="w-8 h-8 border border-[#EA580C]/20 rounded-lg flex items-center justify-center">
+              <MapPin className="w-4 h-4 text-[#EA580C]" strokeWidth={1.5} />
+            </div>
+          }
         />
       </div>
     </div>
