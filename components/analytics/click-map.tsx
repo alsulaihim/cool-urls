@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import 'leaflet/dist/leaflet.css';
 
 // Dynamically import Leaflet to avoid SSR issues
 const MapContainer = dynamic(
@@ -46,6 +47,18 @@ export function ClickMap({ clicks }: ClickMapProps) {
 
   useEffect(() => {
     setIsMounted(true);
+
+    // Fix Leaflet's default icon issue with webpack
+    if (typeof window !== 'undefined') {
+      import('leaflet').then((L) => {
+        delete (L.Icon.Default.prototype as any)._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        });
+      });
+    }
   }, []);
 
   // Group clicks by location
@@ -136,11 +149,6 @@ export function ClickMap({ clicks }: ClickMapProps) {
           </CircleMarker>
         ))}
       </MapContainer>
-
-      {/* Import Leaflet CSS */}
-      <style jsx global>{`
-        @import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
-      `}</style>
     </div>
   );
 }
