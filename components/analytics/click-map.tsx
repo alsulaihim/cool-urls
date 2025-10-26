@@ -117,18 +117,19 @@ export function ClickMap({ clicks }: ClickMapProps) {
   }
 
   return (
-    <div className="w-full h-[600px] rounded-lg overflow-hidden border border-gray-200 relative">
+    <div className="w-full h-[600px] rounded-lg overflow-hidden border border-gray-200 relative bg-gray-800">
       <MapContainer
         center={center}
         zoom={zoom}
         scrollWheelZoom={true}
         zoomControl={true}
-        style={{ height: '100%', width: '100%' }}
+        style={{ height: '100%', width: '100%', backgroundColor: '#374151' }}
       >
-        {/* Grayscale map tiles from Stamen Toner Lite */}
+        {/* CartoDB Positron - Light gray lands on darker background */}
         <TileLayer
-          attribution='Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'
-          url="https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          className="map-inverted"
         />
         {locations.map((location, idx) => (
           <CircleMarker
@@ -155,8 +156,19 @@ export function ClickMap({ clicks }: ClickMapProps) {
         ))}
       </MapContainer>
 
-      {/* CSS for subtle animated dots */}
+      {/* CSS for inverted map and subtle animated dots */}
       <style jsx global>{`
+        /* Invert map tiles - light lands, dark oceans */
+        .map-inverted {
+          filter: invert(1) hue-rotate(180deg) brightness(1.2) contrast(0.9);
+        }
+
+        /* Keep controls normal */
+        .leaflet-control-zoom,
+        .leaflet-control-attribution {
+          filter: invert(1) hue-rotate(180deg);
+        }
+
         .leaflet-interactive.subtle-pulse-dot {
           animation: subtle-pulse 3s ease-in-out infinite;
         }
