@@ -61,12 +61,18 @@ export function ClickMap({ clicks }: ClickMapProps) {
     }
   }, []);
 
+  // Debug: Log the clicks data
+  console.log('[ClickMap] Total clicks received:', clicks.length);
+  console.log('[ClickMap] Clicks data:', clicks);
+
   // Group clicks by location
   const locations: ClickLocation[] = (() => {
     const locationMap = new Map<string, ClickLocation>();
 
     clicks.forEach(click => {
+      console.log('[ClickMap] Processing click:', click);
       if (click.latitude && click.longitude) {
+        console.log('[ClickMap] Click has location:', click.latitude, click.longitude);
         const key = `${click.latitude.toFixed(2)},${click.longitude.toFixed(2)}`;
         const existing = locationMap.get(key);
 

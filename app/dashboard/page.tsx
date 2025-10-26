@@ -25,6 +25,11 @@ export default function Dashboard() {
     clickAnalytics: {},
   });
 
+  // Debug: Log the queried data
+  console.log('[Dashboard] Query data:', data);
+  console.log('[Dashboard] URLs:', data?.urls);
+  console.log('[Dashboard] ClickAnalytics:', (data as any)?.clickAnalytics);
+
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null);
@@ -86,7 +91,11 @@ export default function Dashboard() {
 
   const getAnalyticsForUrl = (urlId: string) => {
     const allAnalytics = (data as any)?.clickAnalytics || [];
-    return allAnalytics.filter((analytics: any) => analytics.urlId === urlId);
+    console.log('[Dashboard] All analytics:', allAnalytics);
+    console.log('[Dashboard] Filtering for urlId:', urlId);
+    const filtered = allAnalytics.filter((analytics: any) => analytics.urlId === urlId);
+    console.log('[Dashboard] Filtered analytics:', filtered);
+    return filtered;
   };
 
   if (isLoading || urlsLoading) {
