@@ -19,16 +19,14 @@ export default function Dashboard() {
   const router = useRouter();
   const { profile } = useUserProfile(user?.id);
 
-  // Query URLs and analytics - we'll filter by user after fetching
+  // Query URLs - analytics are stored within each URL
   const { data, isLoading: urlsLoading } = db.useQuery({
     urls: {},
-    clickAnalytics: {},
   });
 
   // Debug: Log the queried data
   console.log('[Dashboard] Query data:', data);
   console.log('[Dashboard] URLs:', data?.urls);
-  console.log('[Dashboard] ClickAnalytics:', (data as any)?.clickAnalytics);
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -89,13 +87,22 @@ export default function Dashboard() {
     setExpandedLinkId(expandedLinkId === id ? null : id);
   };
 
-  const getAnalyticsForUrl = (urlId: string) => {
-    const allAnalytics = (data as any)?.clickAnalytics || [];
-    console.log('[Dashboard] All analytics:', allAnalytics);
-    console.log('[Dashboard] Filtering for urlId:', urlId);
-    const filtered = allAnalytics.filter((analytics: any) => analytics.urlId === urlId);
-    console.log('[Dashboard] Filtered analytics:', filtered);
-    return filtered;
+  const getAnalyticsForUrl = (url: any) => {
+    console.log('[Dashboard] Getting analytics for URL:', url.id);
+    console.log('[Dashboard] Raw analyticsData:', url.analyticsData);
+
+    try {
+      if (url.analyticsData) {
+        const parsed = JSON.parse(url.analyticsData);
+        console.log('[Dashboard] Parsed analytics:', parsed);
+        return parsed;
+      }
+    } catch (e) {
+      console.error('[Dashboard] Error parsing analytics:', e);
+    }
+
+    console.log('[Dashboard] No analytics data found');
+    return [];
   };
 
   if (isLoading || urlsLoading) {
@@ -277,7 +284,7 @@ export default function Dashboard() {
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {urls.map((url) => {
-                        const urlAnalytics = getAnalyticsForUrl(url.id);
+                        const urlAnalytics = getAnalyticsForUrl(url);
                         const isExpanded = expandedLinkId === url.id;
 
                         return (

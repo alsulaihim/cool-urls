@@ -109,11 +109,8 @@ export async function GET(
 
     // Increment click count and save analytics
     try {
-      const analyticsId = uuidv4();
-
-      const analyticsData = {
-        urlId: url.id,
-        shortCode: shortCode,
+      const newClickData = {
+        id: uuidv4(),
         timestamp: Date.now(),
         // Geolocation
         country: geoData?.country,
@@ -133,15 +130,31 @@ export async function GET(
         ipHash: hashIP(ip),
       };
 
-      console.log('[Analytics] Saving analytics:', analyticsData);
+      console.log('[Analytics] Saving analytics:', newClickData);
+
+      // Parse existing analytics data
+      let analyticsArray = [];
+      try {
+        if (url.analyticsData) {
+          analyticsArray = JSON.parse(url.analyticsData);
+        }
+      } catch (e) {
+        console.error('[Analytics] Error parsing existing analytics:', e);
+      }
+
+      // Add new click data
+      analyticsArray.push(newClickData);
+
+      // Keep only last 1000 clicks to prevent data bloat
+      if (analyticsArray.length > 1000) {
+        analyticsArray = analyticsArray.slice(-1000);
+      }
 
       await db.transact([
-        // Update click count
         db.tx.urls[url.id].update({
           clicks: (url.clicks || 0) + 1,
+          analyticsData: JSON.stringify(analyticsArray),
         }),
-        // Save detailed analytics
-        db.tx.clickAnalytics[analyticsId].update(analyticsData),
       ]);
       console.log('[Analytics] Click analytics saved successfully for:', shortCode);
     } catch (updateError) {

@@ -14,7 +14,9 @@
       "Bash(git push:*)",
       "Bash(railway whoami:*)",
       "Bash(railway init:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run dev)"
     ],
     "deny": [],
     "ask": []

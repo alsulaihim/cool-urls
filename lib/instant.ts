@@ -10,32 +10,13 @@ const schema = i.schema({
       createdAt: i.number(),
       clicks: i.number(),
       userId: i.string(),
+      // Store analytics as JSON string array
+      analyticsData: i.string().optional(),
     }),
     userProfiles: i.entity({
       userId: i.string().unique().indexed(),
       name: i.string(),
       createdAt: i.number(),
-    }),
-    clickAnalytics: i.entity({
-      urlId: i.string().indexed(),
-      shortCode: i.string().indexed(),
-      timestamp: i.number(),
-      // Geolocation data
-      country: i.string().optional(),
-      city: i.string().optional(),
-      region: i.string().optional(),
-      latitude: i.number().optional(),
-      longitude: i.number().optional(),
-      // Device & Browser info
-      deviceType: i.string().optional(), // mobile, tablet, desktop
-      os: i.string().optional(),
-      osVersion: i.string().optional(),
-      browser: i.string().optional(),
-      browserVersion: i.string().optional(),
-      // Additional metadata
-      referrer: i.string().optional(),
-      userAgent: i.string().optional(),
-      ipHash: i.string().optional(), // Hashed IP for privacy
     }),
   },
 });
