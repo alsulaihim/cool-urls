@@ -12,14 +12,33 @@ const db = init({
 // Helper function to get geolocation data from IP
 async function getGeolocation(ip: string) {
   try {
+    // For localhost/private IPs, return mock data for testing
+    if (ip === '127.0.0.1' || ip === 'localhost' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+      console.log('[Geolocation] Using mock data for local IP:', ip);
+      return {
+        country: 'United States',
+        city: 'San Francisco',
+        region: 'California',
+        latitude: 37.7749,
+        longitude: -122.4194,
+      };
+    }
+
+    console.log('[Geolocation] Fetching location for IP:', ip);
+
     // Using ip-api.com for free geolocation (rate limited to 45 requests per minute)
     const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,regionName,lat,lon`, {
       next: { revalidate: 3600 } // Cache for 1 hour
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.error('[Geolocation] API response not OK:', response.status);
+      return null;
+    }
 
     const data = await response.json();
+    console.log('[Geolocation] API response:', data);
+
     if (data.status === 'success') {
       return {
         country: data.country,
@@ -28,9 +47,11 @@ async function getGeolocation(ip: string) {
         latitude: data.lat,
         longitude: data.lon,
       };
+    } else {
+      console.error('[Geolocation] API returned failure status:', data);
     }
   } catch (error) {
-    console.error('Geolocation error:', error);
+    console.error('[Geolocation] Error:', error);
   }
   return null;
 }
@@ -84,10 +105,35 @@ export async function GET(
 
     // Get geolocation data
     const geoData = await getGeolocation(ip);
+    console.log('[Analytics] Geolocation data:', geoData);
 
     // Increment click count and save analytics
     try {
       const analyticsId = uuidv4();
+
+      const analyticsData = {
+        urlId: url.id,
+        shortCode: shortCode,
+        timestamp: Date.now(),
+        // Geolocation
+        country: geoData?.country,
+        city: geoData?.city,
+        region: geoData?.region,
+        latitude: geoData?.latitude,
+        longitude: geoData?.longitude,
+        // Device & Browser
+        deviceType: uaResult.device.type || 'desktop',
+        os: uaResult.os.name,
+        osVersion: uaResult.os.version,
+        browser: uaResult.browser.name,
+        browserVersion: uaResult.browser.version,
+        // Metadata
+        referrer: referrer || undefined,
+        userAgent: userAgent,
+        ipHash: hashIP(ip),
+      };
+
+      console.log('[Analytics] Saving analytics:', analyticsData);
 
       await db.transact([
         // Update click count
@@ -95,29 +141,9 @@ export async function GET(
           clicks: (url.clicks || 0) + 1,
         }),
         // Save detailed analytics
-        db.tx.clickAnalytics[analyticsId].update({
-          urlId: url.id,
-          shortCode: shortCode,
-          timestamp: Date.now(),
-          // Geolocation
-          country: geoData?.country,
-          city: geoData?.city,
-          region: geoData?.region,
-          latitude: geoData?.latitude,
-          longitude: geoData?.longitude,
-          // Device & Browser
-          deviceType: uaResult.device.type || 'desktop',
-          os: uaResult.os.name,
-          osVersion: uaResult.os.version,
-          browser: uaResult.browser.name,
-          browserVersion: uaResult.browser.version,
-          // Metadata
-          referrer: referrer || undefined,
-          userAgent: userAgent,
-          ipHash: hashIP(ip),
-        }),
+        db.tx.clickAnalytics[analyticsId].update(analyticsData),
       ]);
-      console.log('Click analytics saved for:', shortCode);
+      console.log('[Analytics] Click analytics saved successfully for:', shortCode);
     } catch (updateError) {
       console.error('Error saving analytics:', updateError);
       // Continue anyway, redirect is more important
