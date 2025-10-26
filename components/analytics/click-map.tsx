@@ -123,38 +123,59 @@ export function ClickMap({ clicks }: ClickMapProps) {
   }
 
   return (
-    <div className="w-full h-[400px] rounded-lg overflow-hidden border border-gray-200">
+    <div className="w-full h-[600px] rounded-lg overflow-hidden border border-gray-200 relative">
       <MapContainer
         center={center}
         zoom={zoom}
-        scrollWheelZoom={false}
+        scrollWheelZoom={true}
+        zoomControl={true}
         style={{ height: '100%', width: '100%' }}
       >
+        {/* Grayscale map tiles from Stamen Toner Lite */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.'
+          url="https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png"
         />
         {locations.map((location, idx) => (
           <CircleMarker
             key={idx}
             center={[location.latitude, location.longitude]}
-            radius={Math.min(8 + location.count * 2, 20)}
-            fillColor="#3b82f6"
-            color="#1d4ed8"
-            weight={2}
-            opacity={0.8}
-            fillOpacity={0.6}
+            radius={12}
+            fillColor="#10b981"
+            color="#059669"
+            weight={3}
+            opacity={1}
+            fillOpacity={0.8}
+            className="animate-pulse-dot"
           >
             <Popup>
               <div className="text-sm">
-                <p className="font-semibold">{location.count} click{location.count > 1 ? 's' : ''}</p>
-                {location.city && <p>{location.city}</p>}
-                {location.country && <p>{location.country}</p>}
+                <p className="font-semibold text-gray-900">{location.count} click{location.count > 1 ? 's' : ''}</p>
+                {location.city && <p className="text-gray-700">{location.city}</p>}
+                {location.country && <p className="text-gray-600">{location.country}</p>}
               </div>
             </Popup>
           </CircleMarker>
         ))}
       </MapContainer>
+
+      {/* CSS for animated dots */}
+      <style jsx>{`
+        :global(.animate-pulse-dot) {
+          animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+          0%, 100% {
+            opacity: 0.8;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.1);
+          }
+        }
+      `}</style>
     </div>
   );
 }

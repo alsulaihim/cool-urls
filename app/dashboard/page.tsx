@@ -420,9 +420,9 @@ export default function Dashboard() {
                                           <ClickSparkline data={urlAnalytics} timeRange={timeRange} />
                                         </div>
 
-                                        {/* Map */}
-                                        <div className="bg-white rounded-lg border border-gray-200 p-4">
-                                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Geographic Distribution</h4>
+                                        {/* Map - Full Width */}
+                                        <div className="bg-white rounded-lg border border-gray-200 p-6">
+                                          <h4 className="text-lg font-semibold text-gray-900 mb-4">Geographic Distribution</h4>
                                           <ClickMap clicks={urlAnalytics} />
                                         </div>
 
