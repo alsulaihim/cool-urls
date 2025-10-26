@@ -173,3 +173,4 @@ If you have questions or run into issues:
 ---
 
 Made with ❤️ using Next.js and InstantDB
+
