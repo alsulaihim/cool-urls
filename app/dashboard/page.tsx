@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { db } from '@/lib/instant';
 import { AuthHeader } from '@/components/auth/auth-header';
 import { Card } from '@/components/ui/card';
@@ -272,8 +272,8 @@ export default function Dashboard() {
                         const isExpanded = expandedLinkId === url.id;
 
                         return (
-                          <>
-                            <tr key={url.id} className="hover:bg-gray-50 transition-colors">
+                          <React.Fragment key={url.id}>
+                            <tr className="hover:bg-gray-50 transition-colors">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center gap-2">
                                   <code className="text-sm font-mono text-black">
@@ -420,7 +420,7 @@ export default function Dashboard() {
                                 </tr>
                               )}
                             </AnimatePresence>
-                          </>
+                          </React.Fragment>
                         );
                       })}
                     </tbody>
