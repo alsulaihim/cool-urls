@@ -156,4 +156,4 @@ For Cool URLs support:
 
 ---
 
-**Note:** Remember to update the domain URL and copyright year before deploying to production!
+**Note:** Remember to update the domain URL before deploying to production! The copyright notice intentionally doesn't include a year to avoid needing annual updates.
