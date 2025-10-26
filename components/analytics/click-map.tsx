@@ -93,15 +93,9 @@ export function ClickMap({ clicks }: ClickMapProps) {
     return Array.from(locationMap.values());
   })();
 
-  // Calculate center and zoom based on locations
-  const center: [number, number] = locations.length > 0
-    ? [
-        locations.reduce((sum, loc) => sum + loc.latitude, 0) / locations.length,
-        locations.reduce((sum, loc) => sum + loc.longitude, 0) / locations.length,
-      ]
-    : [20, 0]; // Default to world view
-
-  const zoom = locations.length === 1 ? 10 : locations.length > 0 ? 2 : 2;
+  // Always show full world map view
+  const center: [number, number] = [20, 0]; // Center of world map
+  const zoom = 2; // World view zoom level
 
   if (!isMounted) {
     return (
@@ -140,13 +134,15 @@ export function ClickMap({ clicks }: ClickMapProps) {
           <CircleMarker
             key={idx}
             center={[location.latitude, location.longitude]}
-            radius={12}
+            radius={8}
             fillColor="#10b981"
             color="#059669"
-            weight={3}
-            opacity={1}
-            fillOpacity={0.8}
-            className="animate-pulse-dot"
+            weight={2}
+            opacity={0.9}
+            fillOpacity={0.7}
+            pathOptions={{
+              className: 'subtle-pulse-dot'
+            }}
           >
             <Popup>
               <div className="text-sm">
@@ -159,20 +155,18 @@ export function ClickMap({ clicks }: ClickMapProps) {
         ))}
       </MapContainer>
 
-      {/* CSS for animated dots */}
-      <style jsx>{`
-        :global(.animate-pulse-dot) {
-          animation: pulse-dot 2s ease-in-out infinite;
+      {/* CSS for subtle animated dots */}
+      <style jsx global>{`
+        .leaflet-interactive.subtle-pulse-dot {
+          animation: subtle-pulse 3s ease-in-out infinite;
         }
 
-        @keyframes pulse-dot {
+        @keyframes subtle-pulse {
           0%, 100% {
-            opacity: 0.8;
-            transform: scale(1);
+            opacity: 0.7;
           }
           50% {
-            opacity: 1;
-            transform: scale(1.1);
+            opacity: 0.95;
           }
         }
       `}</style>
