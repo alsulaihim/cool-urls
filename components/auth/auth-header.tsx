@@ -20,7 +20,7 @@ export function AuthHeader() {
 
   if (isLoading) {
     return (
-      <header className="border-b border-gray-200 bg-white">
+      <header className="border-b border-gray-200 bg-white relative z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="text-xl font-bold text-black">
             Cool URLs
@@ -33,7 +33,7 @@ export function AuthHeader() {
 
   return (
     <>
-      <header className="border-b border-gray-200 bg-white">
+      <header className="border-b border-gray-200 bg-white relative z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="text-xl font-bold text-black hover:text-gray-700 transition-colors">
             Cool URLs

@@ -1,58 +1,68 @@
-'use client';
+import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import RedirectClient from './redirect-client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+type Props = {
+  params: { shortCode: string };
+};
 
-export default function RedirectPage() {
-  const params = useParams();
-  const router = useRouter();
-  const [error, setError] = useState(false);
-  const shortCode = params.shortCode as string;
+async function getUrlData(shortCode: string) {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/redirect/${shortCode}`, {
+      cache: 'no-store',
+    });
 
-  useEffect(() => {
-    const fetchAndRedirect = async () => {
-      try {
-        const response = await fetch(`/api/redirect/${shortCode}`);
-        const data = await response.json();
+    if (!response.ok) {
+      return null;
+    }
 
-        if (!response.ok) {
-          setError(true);
-          return;
-        }
+    return await response.json();
+  } catch (error) {
+    return null;
+  }
+}
 
-        // Redirect to the original URL
-        window.location.href = data.originalUrl;
-      } catch (err) {
-        setError(true);
-      }
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const data = await getUrlData(params.shortCode);
+
+  if (!data) {
+    return {
+      title: '404 - Cool URLs',
+      description: 'This short URL does not exist',
     };
-
-    fetchAndRedirect();
-  }, [shortCode]);
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-black mb-4">404</h1>
-          <p className="text-gray-600 mb-8">This short URL doesn't exist</p>
-          <a
-            href="/"
-            className="px-6 py-3 bg-black text-white rounded-md hover:bg-gray-800 transition-colors"
-          >
-            Go Home
-          </a>
-        </div>
-      </div>
-    );
   }
 
-  return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-16 h-16 border-4 border-gray-200 border-t-black rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-gray-600">Redirecting...</p>
-      </div>
-    </div>
-  );
+  const title = `${params.shortCode} - Cool URLs`;
+  const description = `This short link redirects to ${data.originalUrl}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `/${params.shortCode}`,
+      siteName: 'Cool URLs',
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: 'Cool URLs - URL Shortener',
+        },
+      ],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/og-image.png'],
+    },
+  };
+}
+
+export default function RedirectPage({ params }: Props) {
+  return <RedirectClient shortCode={params.shortCode} />;
 }

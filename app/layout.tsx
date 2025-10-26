@@ -15,6 +15,33 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Cool URLs - URL Shortener",
   description: "Create beautiful short links with custom prefixes",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  openGraph: {
+    title: "Cool URLs - URL Shortener",
+    description: "Create beautiful short links with custom prefixes",
+    url: '/',
+    siteName: 'Cool URLs',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Cool URLs - URL Shortener',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Cool URLs - URL Shortener",
+    description: "Create beautiful short links with custom prefixes",
+    images: ['/og-image.png'],
+  },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 export default function RootLayout({
