@@ -1,10 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { init } from '@instantdb/admin';
+import { v4 as uuidv4 } from 'uuid';
+import { UAParser } from 'ua-parser-js';
+import { createHash } from 'crypto';
 
 const db = init({
   appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID!,
   adminToken: process.env.INSTANT_ADMIN_TOKEN!,
 });
+
+// Helper function to get geolocation data from IP
+async function getGeolocation(ip: string) {
+  try {
+    // Using ip-api.com for free geolocation (rate limited to 45 requests per minute)
+    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,regionName,lat,lon`, {
+      next: { revalidate: 3600 } // Cache for 1 hour
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (data.status === 'success') {
+      return {
+        country: data.country,
+        city: data.city,
+        region: data.regionName,
+        latitude: data.lat,
+        longitude: data.lon,
+      };
+    }
+  } catch (error) {
+    console.error('Geolocation error:', error);
+  }
+  return null;
+}
+
+// Helper to hash IP for privacy
+function hashIP(ip: string): string {
+  return createHash('sha256').update(ip).digest('hex').substring(0, 16);
+}
 
 export async function GET(
   request: NextRequest,
@@ -35,16 +69,57 @@ export async function GET(
       );
     }
 
-    // Increment click count
+    // Parse user agent
+    const userAgent = request.headers.get('user-agent') || '';
+    const parser = new UAParser(userAgent);
+    const uaResult = parser.getResult();
+
+    // Get IP address
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
+                request.headers.get('x-real-ip') ||
+                '127.0.0.1';
+
+    // Get referrer
+    const referrer = request.headers.get('referer') || request.headers.get('referrer');
+
+    // Get geolocation data
+    const geoData = await getGeolocation(ip);
+
+    // Increment click count and save analytics
     try {
+      const analyticsId = uuidv4();
+
       await db.transact([
+        // Update click count
         db.tx.urls[url.id].update({
           clicks: (url.clicks || 0) + 1,
         }),
+        // Save detailed analytics
+        db.tx.clickAnalytics[analyticsId].update({
+          urlId: url.id,
+          shortCode: shortCode,
+          timestamp: Date.now(),
+          // Geolocation
+          country: geoData?.country,
+          city: geoData?.city,
+          region: geoData?.region,
+          latitude: geoData?.latitude,
+          longitude: geoData?.longitude,
+          // Device & Browser
+          deviceType: uaResult.device.type || 'desktop',
+          os: uaResult.os.name,
+          osVersion: uaResult.os.version,
+          browser: uaResult.browser.name,
+          browserVersion: uaResult.browser.version,
+          // Metadata
+          referrer: referrer || undefined,
+          userAgent: userAgent,
+          ipHash: hashIP(ip),
+        }),
       ]);
-      console.log('Click count incremented for:', shortCode);
+      console.log('Click analytics saved for:', shortCode);
     } catch (updateError) {
-      console.error('Error updating click count:', updateError);
+      console.error('Error saving analytics:', updateError);
       // Continue anyway, redirect is more important
     }
 

@@ -5,24 +5,30 @@ import { db } from '@/lib/instant';
 import { AuthHeader } from '@/components/auth/auth-header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
-import { Link2, MousePointerClick, Calendar, Copy, CheckCircle2, Trash2, ExternalLink, Plus, LogOut } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Link2, MousePointerClick, Calendar, Copy, CheckCircle2, Trash2, ExternalLink, Plus, LogOut, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUserProfile } from '@/lib/useUserProfile';
+import { ClickSparkline } from '@/components/analytics/click-sparkline';
+import { ClickMap } from '@/components/analytics/click-map';
+import { DeviceStats } from '@/components/analytics/device-stats';
 
 export default function Dashboard() {
   const { user, isLoading } = db.useAuth();
   const router = useRouter();
   const { profile } = useUserProfile(user?.id);
 
-  // Query URLs - we'll filter by user after fetching
+  // Query URLs and analytics - we'll filter by user after fetching
   const { data, isLoading: urlsLoading } = db.useQuery({
     urls: {},
+    clickAnalytics: {},
   });
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null);
+  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d');
 
   // Filter URLs for the current user client-side
   const allUrls = data?.urls || [];
@@ -72,6 +78,15 @@ export default function Dashboard() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const toggleExpanded = (id: string) => {
+    setExpandedLinkId(expandedLinkId === id ? null : id);
+  };
+
+  const getAnalyticsForUrl = (urlId: string) => {
+    const allAnalytics = (data as any)?.clickAnalytics || [];
+    return allAnalytics.filter((analytics: any) => analytics.urlId === urlId);
   };
 
   if (isLoading || urlsLoading) {
@@ -252,73 +267,162 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {urls.map((url) => (
-                        <tr key={url.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <code className="text-sm font-mono text-black">
-                                {url.shortCode}
-                              </code>
-                              <a
-                                href={`/${url.shortCode}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-gray-400 hover:text-black transition-colors"
-                              >
-                                <ExternalLink className="w-4 h-4" />
-                              </a>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="max-w-xs truncate text-sm text-gray-600">
-                              {url.originalUrl}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm font-semibold text-black">
-                              {url.clicks || 0}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(url.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button
-                                onClick={() => copyToClipboard(url.shortCode, url.id)}
-                                variant="ghost"
-                                size="sm"
-                                className="text-gray-600 hover:text-black hover:bg-gray-100"
-                              >
-                                {copiedId === url.id ? (
-                                  <>
-                                    <CheckCircle2 className="w-4 h-4 mr-1" />
-                                    Copied
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy className="w-4 h-4 mr-1" />
-                                    Copy
-                                  </>
-                                )}
-                              </Button>
-                              <Button
-                                onClick={() => handleDelete(url.id)}
-                                variant="ghost"
-                                size="sm"
-                                disabled={deletingId === url.id}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                {deletingId === url.id ? (
-                                  <div className="w-4 h-4 border-2 border-red-600/30 border-t-red-600 rounded-full animate-spin" />
-                                ) : (
-                                  <Trash2 className="w-4 h-4" />
-                                )}
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {urls.map((url) => {
+                        const urlAnalytics = getAnalyticsForUrl(url.id);
+                        const isExpanded = expandedLinkId === url.id;
+
+                        return (
+                          <>
+                            <tr key={url.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center gap-2">
+                                  <code className="text-sm font-mono text-black">
+                                    {url.shortCode}
+                                  </code>
+                                  <a
+                                    href={`/${url.shortCode}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-gray-400 hover:text-black transition-colors"
+                                  >
+                                    <ExternalLink className="w-4 h-4" />
+                                  </a>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="max-w-xs truncate text-sm text-gray-600">
+                                  {url.originalUrl}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-semibold text-black">
+                                    {url.clicks || 0}
+                                  </span>
+                                  {url.clicks > 0 && (
+                                    <Button
+                                      onClick={() => toggleExpanded(url.id)}
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 w-6 p-0 text-gray-400 hover:text-black"
+                                    >
+                                      <BarChart3 className="w-4 h-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {new Date(url.createdAt).toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button
+                                    onClick={() => copyToClipboard(url.shortCode, url.id)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-gray-600 hover:text-black hover:bg-gray-100"
+                                  >
+                                    {copiedId === url.id ? (
+                                      <>
+                                        <CheckCircle2 className="w-4 h-4 mr-1" />
+                                        Copied
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Copy className="w-4 h-4 mr-1" />
+                                        Copy
+                                      </>
+                                    )}
+                                  </Button>
+                                  <Button
+                                    onClick={() => handleDelete(url.id)}
+                                    variant="ghost"
+                                    size="sm"
+                                    disabled={deletingId === url.id}
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    {deletingId === url.id ? (
+                                      <div className="w-4 h-4 border-2 border-red-600/30 border-t-red-600 rounded-full animate-spin" />
+                                    ) : (
+                                      <Trash2 className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                  {url.clicks > 0 && (
+                                    <Button
+                                      onClick={() => toggleExpanded(url.id)}
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-gray-600 hover:text-black hover:bg-gray-100"
+                                    >
+                                      {isExpanded ? (
+                                        <ChevronUp className="w-4 h-4" />
+                                      ) : (
+                                        <ChevronDown className="w-4 h-4" />
+                                      )}
+                                    </Button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <tr key={`${url.id}-analytics`}>
+                                  <td colSpan={5} className="px-0 py-0 bg-gray-50">
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: 'auto' }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      transition={{ duration: 0.3 }}
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="p-6 space-y-6">
+                                        {/* Header with time range selector */}
+                                        <div className="flex items-center justify-between">
+                                          <h3 className="text-lg font-semibold text-black flex items-center gap-2">
+                                            <BarChart3 className="w-5 h-5" />
+                                            Analytics for {url.shortCode}
+                                          </h3>
+                                          <div className="flex gap-2">
+                                            {(['24h', '7d', '30d'] as const).map((range) => (
+                                              <Button
+                                                key={range}
+                                                onClick={() => setTimeRange(range)}
+                                                variant={timeRange === range ? 'default' : 'outline'}
+                                                size="sm"
+                                                className={timeRange === range ? 'bg-black text-white' : ''}
+                                              >
+                                                {range === '24h' ? '24 Hours' : range === '7d' ? '7 Days' : '30 Days'}
+                                              </Button>
+                                            ))}
+                                          </div>
+                                        </div>
+
+                                        {/* Sparkline */}
+                                        <div className="bg-white rounded-lg border border-gray-200 p-4">
+                                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Click Trends</h4>
+                                          <ClickSparkline data={urlAnalytics} timeRange={timeRange} />
+                                        </div>
+
+                                        {/* Map */}
+                                        <div className="bg-white rounded-lg border border-gray-200 p-4">
+                                          <h4 className="text-sm font-semibold text-gray-700 mb-3">Geographic Distribution</h4>
+                                          <ClickMap clicks={urlAnalytics} />
+                                        </div>
+
+                                        {/* Device & Browser Stats */}
+                                        <div>
+                                          <DeviceStats clicks={urlAnalytics} />
+                                        </div>
+                                      </div>
+                                    </motion.div>
+                                  </td>
+                                </tr>
+                              )}
+                            </AnimatePresence>
+                          </>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
