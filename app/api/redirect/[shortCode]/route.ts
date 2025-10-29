@@ -70,25 +70,30 @@ export async function GET(
 ) {
   try {
     const { shortCode } = await params;
-    console.log('Looking for shortCode:', shortCode);
+    console.log('[Redirect] Looking for shortCode:', shortCode);
 
     // Query all URLs from InstantDB
     const result = await db.query({
       urls: {},
     });
 
-    console.log('Query result:', result);
-    console.log('Total URLs found:', result.urls?.length || 0);
+    console.log('[Redirect] Query result:', JSON.stringify(result, null, 2));
+    console.log('[Redirect] Total URLs found:', result.urls?.length || 0);
+
+    if (result.urls && result.urls.length > 0) {
+      console.log('[Redirect] All shortCodes in database:', result.urls.map((u: any) => u.shortCode));
+    }
 
     // Find the URL with matching shortCode
     const url = result.urls?.find((u: any) => u.shortCode === shortCode);
 
-    console.log('Found URL:', url);
+    console.log('[Redirect] Found URL:', url ? JSON.stringify(url, null, 2) : 'null');
 
     if (!url) {
-      console.log('URL not found for shortCode:', shortCode);
+      console.log('[Redirect] URL not found for shortCode:', shortCode);
+      console.log('[Redirect] Available shortCodes:', result.urls?.map((u: any) => u.shortCode).join(', ') || 'none');
       return NextResponse.json(
-        { error: 'Short URL not found' },
+        { error: 'Short URL not found', shortCode, availableCount: result.urls?.length || 0 },
         { status: 404 }
       );
     }
