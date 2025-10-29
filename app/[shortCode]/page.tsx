@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import RedirectClient from './redirect-client';
 
 type Props = {
-  params: { shortCode: string };
+  params: Promise<{ shortCode: string }>;
 };
 
 async function getUrlData(shortCode: string) {
@@ -24,7 +24,8 @@ async function getUrlData(shortCode: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const data = await getUrlData(params.shortCode);
+  const { shortCode } = await params;
+  const data = await getUrlData(shortCode);
 
   if (!data) {
     return {
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const title = `${params.shortCode} - Cool URLs`;
+  const title = `${shortCode} - Cool URLs`;
   const description = `This short link redirects to ${data.originalUrl}`;
 
   return {
@@ -42,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      url: `/${params.shortCode}`,
+      url: `/${shortCode}`,
       siteName: 'Cool URLs',
       images: [
         {
@@ -64,6 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function RedirectPage({ params }: Props) {
-  return <RedirectClient shortCode={params.shortCode} />;
+export default async function RedirectPage({ params }: Props) {
+  const { shortCode } = await params;
+  return <RedirectClient shortCode={shortCode} />;
 }
