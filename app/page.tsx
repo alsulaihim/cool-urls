@@ -87,11 +87,11 @@ export default function Home() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-6 sm:mb-10 md:mb-16"
         >
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold mb-2 sm:mb-4 tracking-tight font-[family-name:var(--font-orbitron)] lowercase text-pink-500">
-            cool urls
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-4 tracking-tight text-black">
+            Get Short Links with Style
           </h1>
           <p className="text-gray-500 text-sm sm:text-base md:text-lg px-2">
-            Create beautiful short links with custom prefixes
+            Create beautiful short URLs with custom prefixes
           </p>
         </motion.div>
 
