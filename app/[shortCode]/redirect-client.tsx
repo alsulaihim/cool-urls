@@ -1,13 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function RedirectClient({ shortCode }: { shortCode: string }) {
   const router = useRouter();
   const [error, setError] = useState(false);
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
+    // Prevent double execution in development (React Strict Mode)
+    if (hasRedirected.current) {
+      return;
+    }
+    hasRedirected.current = true;
+
     const fetchAndRedirect = async () => {
       try {
         const response = await fetch(`/api/redirect/${shortCode}`);
