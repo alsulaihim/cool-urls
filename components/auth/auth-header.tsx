@@ -22,8 +22,8 @@ export function AuthHeader() {
     return (
       <header className="border-b border-gray-200 bg-white relative z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold text-black">
-            Cool URLs
+          <Link href="/" className="text-xl font-bold font-[family-name:var(--font-orbitron)] lowercase" style={{ color: '#8B0000' }}>
+            cool urls
           </Link>
           <div className="w-20 h-10 bg-gray-100 rounded animate-pulse" />
         </div>
@@ -35,8 +35,8 @@ export function AuthHeader() {
     <>
       <header className="border-b border-gray-200 bg-white relative z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold text-black hover:text-gray-700 transition-colors">
-            Cool URLs
+          <Link href="/" className="text-xl font-bold font-[family-name:var(--font-orbitron)] lowercase transition-opacity hover:opacity-80" style={{ color: '#8B0000' }}>
+            cool urls
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-4">
