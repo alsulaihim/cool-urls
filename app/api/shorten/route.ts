@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate short code
-    const randomCode = nanoid(6);
+    // Generate short code with 2-character suffix for cleaner look
+    const randomCode = nanoid(2);
     const shortCode = prefix ? `${prefix}-${randomCode}` : randomCode;
 
     // Check if short code already exists (rare but possible)
