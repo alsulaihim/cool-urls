@@ -76,6 +76,7 @@ const Map = React.forwardRef<HTMLDivElement, MapProps>(
           zoom={zoom}
           scrollWheelZoom={scrollWheelZoom}
           zoomControl={zoomControl}
+          attributionControl={false}
           style={{ height: '100%', width: '100%' }}
           className="z-0"
         >
@@ -98,10 +99,7 @@ const MapTileLayer = React.forwardRef<
   return (
     <TileLayerComponent
       ref={ref}
-      attribution={
-        attribution ||
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-      }
+      attribution={attribution || ''}
       url={url || 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'}
     />
   );
