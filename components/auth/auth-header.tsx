@@ -21,11 +21,11 @@ export function AuthHeader() {
   if (isLoading) {
     return (
       <header className="border-b border-gray-200 bg-white relative z-50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="container mx-auto px-4 py-4 flex justify-center sm:justify-between items-center">
           <Link href="/" className="text-2xl font-semibold font-[family-name:var(--font-orbitron)] lowercase text-pink-500">
             cool urls
           </Link>
-          <div className="w-20 h-10 bg-gray-100 rounded animate-pulse" />
+          <div className="w-20 h-10 bg-gray-100 rounded animate-pulse hidden sm:block" />
         </div>
       </header>
     );
@@ -34,12 +34,12 @@ export function AuthHeader() {
   return (
     <>
       <header className="border-b border-gray-200 bg-white relative z-50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="container mx-auto px-4 py-4 flex justify-center sm:justify-between items-center relative">
           <Link href="/" className="text-2xl font-semibold font-[family-name:var(--font-orbitron)] lowercase transition-opacity hover:opacity-80 text-pink-500">
             cool urls
           </Link>
 
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 absolute sm:relative right-4 sm:right-0">
             {user ? (
               <>
                 <Link href="/dashboard" className="hidden sm:block">
