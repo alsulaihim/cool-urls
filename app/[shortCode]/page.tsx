@@ -9,7 +9,8 @@ type Props = {
 async function getUrlData(shortCode: string) {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/redirect/${shortCode}`, {
+    // Use url-data endpoint which doesn't track clicks (for metadata only)
+    const response = await fetch(`${baseUrl}/api/url-data/${shortCode}`, {
       cache: 'no-store',
     });
 
