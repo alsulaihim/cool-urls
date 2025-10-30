@@ -139,7 +139,7 @@ export default function Home() {
                   />
                 </div>
                 <p className="mt-2 text-xs text-gray-500 break-all">
-                  Your short URL will look like: <span className="font-mono text-xs">{getDisplayDomain()}/{prefix || 'abc123'}-xyz789</span>
+                  Your short URL will look like: <span className="font-mono text-xs">{getDisplayDomain()}/{prefix || 'mybrand'}<span className="text-pink-500 font-semibold">-go</span></span>
                 </p>
               </div>
 
