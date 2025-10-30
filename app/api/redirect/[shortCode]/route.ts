@@ -12,21 +12,6 @@ const db = init({
 // Helper function to get geolocation data from IP
 async function getGeolocation(ip: string) {
   try {
-    // For localhost/private IPs, return mock data for testing
-    // Check for both IPv4 and IPv6 localhost, plus private IP ranges
-    if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' ||
-        ip.startsWith('192.168.') || ip.startsWith('10.') ||
-        ip.startsWith('172.') || ip.startsWith('::ffff:127.')) {
-      console.log('[Geolocation] Using mock data for local IP:', ip);
-      return {
-        country: 'United States',
-        city: 'San Francisco',
-        region: 'California',
-        latitude: 37.7749,
-        longitude: -122.4194,
-      };
-    }
-
     console.log('[Geolocation] Fetching location for IP:', ip);
 
     // Using ip-api.com for free geolocation (rate limited to 45 requests per minute)
