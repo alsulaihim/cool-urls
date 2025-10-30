@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link2, Copy, CheckCircle2, Link as LinkIcon, BarChart3, LogIn } from 'lucide-react';
 import Link from 'next/link';
@@ -22,6 +22,11 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+  const [displayDomain, setDisplayDomain] = useState('');
+
+  useEffect(() => {
+    setDisplayDomain(getDisplayDomain());
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,7 +144,7 @@ export default function Home() {
                   />
                 </div>
                 <p className="mt-2 text-xs text-gray-500 break-all">
-                  Your short URL will look like: <span className="font-mono text-xs">{getDisplayDomain()}/{prefix || 'mybrand'}<span className="text-pink-500 font-semibold">-go</span></span>
+                  Your short URL will look like: <span className="font-mono text-xs">{displayDomain || 'loading...'}/<wbr/>{prefix || 'mybrand'}<span className="text-pink-500 font-semibold">-go</span></span>
                 </p>
               </div>
 
