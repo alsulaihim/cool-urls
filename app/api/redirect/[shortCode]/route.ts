@@ -12,6 +12,24 @@ const db = init({
 // Helper function to get geolocation data from IP
 async function getGeolocation(ip: string) {
   try {
+    // If localhost IP, try to get the real public IP first
+    if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' ||
+        ip.startsWith('192.168.') || ip.startsWith('10.') ||
+        ip.startsWith('172.') || ip.startsWith('::ffff:127.')) {
+      console.log('[Geolocation] Localhost IP detected, fetching public IP...');
+      try {
+        // Get the actual public IP when testing locally
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        if (ipResponse.ok) {
+          const ipData = await ipResponse.json();
+          ip = ipData.ip;
+          console.log('[Geolocation] Using public IP:', ip);
+        }
+      } catch (e) {
+        console.log('[Geolocation] Could not fetch public IP, using original:', ip);
+      }
+    }
+
     console.log('[Geolocation] Fetching location for IP:', ip);
 
     // Using ip-api.com for free geolocation (rate limited to 45 requests per minute)
