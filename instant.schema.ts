@@ -16,6 +16,8 @@ const graph = i.graph(
       clicks: i.number(),
       userId: i.string(),
       analyticsData: i.string().optional(),
+      expiresAt: i.number().optional(), // Expiration timestamp for temporary URLs
+      isAnonymous: i.boolean().optional(), // Whether created by anonymous user
     }),
     userProfiles: i.entity({
       userId: i.string().unique().indexed(),

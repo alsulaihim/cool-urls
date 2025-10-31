@@ -12,6 +12,8 @@ const schema = i.schema({
       userId: i.string(),
       // Store analytics as JSON string array
       analyticsData: i.string().optional(),
+      expiresAt: i.number().optional(), // Expiration timestamp for temporary URLs
+      isAnonymous: i.boolean().optional(), // Whether created by anonymous user
     }),
     userProfiles: i.entity({
       userId: i.string().unique().indexed(),

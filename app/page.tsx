@@ -90,32 +90,64 @@ export default function Home() {
         return;
       }
 
-      // Generate short code with "-go" suffix (no random code needed)
-      const shortCode = prefix ? `${prefix}-go` : `${nanoid(6)}-go`;
+      const isRegistered = !!user;
+      let shortCode: string;
+      let expiresAt: number | undefined;
+      let isAnonymous = false;
+
+      if (isRegistered) {
+        // Registered users: Can use prefix with "-go" suffix
+        if (!prefix) {
+          setError('Please enter a prefix for your branded link');
+          setLoading(false);
+          return;
+        }
+        shortCode = `${prefix}-go`;
+      } else {
+        // Anonymous users: Random short code, expires in 24 hours
+        shortCode = nanoid(6);
+        expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours from now
+        isAnonymous = true;
+      }
 
       // Check if short code already exists
       if (shortCodeExists(shortCode)) {
-        // Generate suggestions with alternative prefixes
-        const suggestionsList = generateSuggestions(prefix);
-        const availableSuggestions = suggestionsList.filter(s => !shortCodeExists(s));
+        if (isRegistered) {
+          // Generate suggestions with alternative prefixes
+          const suggestionsList = generateSuggestions(prefix);
+          const availableSuggestions = suggestionsList.filter(s => !shortCodeExists(s));
 
-        setSuggestions(availableSuggestions.slice(0, 5));
-        setShowSuggestions(true);
-        setError('This short link already exists. Try one of these alternative prefixes:');
+          setSuggestions(availableSuggestions.slice(0, 5));
+          setShowSuggestions(true);
+          setError('This short link already exists. Try one of these alternative prefixes:');
+        } else {
+          // For anonymous, just retry with new random code
+          shortCode = nanoid(6);
+        }
         setLoading(false);
         return;
       }
 
       // Save to InstantDB - use UUID for entity ID
+      const urlData: any = {
+        originalUrl: url,
+        shortCode,
+        createdAt: Date.now(),
+        clicks: 0,
+        userId: user?.id || 'anonymous',
+        isAnonymous,
+      };
+
+      if (prefix && isRegistered) {
+        urlData.prefix = prefix;
+      }
+
+      if (expiresAt) {
+        urlData.expiresAt = expiresAt;
+      }
+
       await db.transact(
-        db.tx.urls[uuidv4()].update({
-          originalUrl: url,
-          shortCode,
-          prefix,
-          createdAt: Date.now(),
-          clicks: 0,
-          userId: user?.id || 'anonymous',
-        })
+        db.tx.urls[uuidv4()].update(urlData)
       );
 
       const baseUrl = getShortUrlBase();
@@ -185,7 +217,9 @@ export default function Home() {
             Get Short Links with Style
           </h1>
           <p className="text-gray-500 text-sm sm:text-base md:text-lg px-2">
-            Create beautiful short URLs with custom prefixes
+            {user
+              ? 'Create beautiful branded short URLs with custom prefixes'
+              : 'Create short URLs instantly - Sign in for branded links'}
           </p>
         </motion.div>
 
@@ -216,26 +250,45 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Prefix Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Custom Prefix <span className="text-gray-400">(optional)</span>
-                </label>
-                <div className="relative">
-                  <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    type="text"
-                    value={prefix}
-                    onChange={(e) => setPrefix(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
-                    placeholder="my-brand"
-                    maxLength={20}
-                    className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
-                  />
+              {/* Prefix Input - Only for registered users */}
+              {user ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Custom Prefix <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      value={prefix}
+                      onChange={(e) => setPrefix(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+                      placeholder="mybrand"
+                      maxLength={20}
+                      required
+                      className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500 break-all">
+                    Your branded URL: <span className="font-mono text-xs">{displayDomain || 'loading...'}/<wbr/>{prefix || 'mybrand'}<span className="text-pink-500 font-semibold">-go</span></span>
+                  </p>
+                  <p className="mt-1 text-xs text-green-600 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Permanent link - never expires
+                  </p>
                 </div>
-                <p className="mt-2 text-xs text-gray-500 break-all">
-                  Your short URL will look like: <span className="font-mono text-xs">{displayDomain || 'loading...'}/<wbr/>{prefix || 'mybrand'}<span className="text-pink-500 font-semibold">-go</span></span>
-                </p>
-              </div>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-900 font-medium mb-2">Anonymous Link</p>
+                  <p className="text-xs text-blue-700 mb-3">
+                    Your link will be a random short code and will expire in 24 hours.
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    Want permanent branded links like <span className="font-mono">yourname-go</span>?{' '}
+                    <Link href="/#" className="underline font-semibold hover:text-blue-800">
+                      Sign in now
+                    </Link>
+                  </p>
+                </div>
+              )}
 
               {/* Error Message */}
               <AnimatePresence>
@@ -354,6 +407,11 @@ export default function Home() {
                       )}
                     </Button>
                   </div>
+                  {!user && (
+                    <p className="mt-3 text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded p-2">
+                      ⏰ This link will expire in 24 hours. Sign in to create permanent branded links!
+                    </p>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
