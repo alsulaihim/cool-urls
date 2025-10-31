@@ -51,7 +51,9 @@ export default function AdminLayout({
   });
 
   // Calculate admin status directly from data (no state delays!)
-  const isAdmin = user && adminData?.adminUsers ?
+  // CRITICAL: Only grant admin access if we have both user AND adminData loaded
+  // If adminData hasn't loaded yet, isAdmin must be false
+  const isAdmin = user && adminData?.adminUsers && !adminLoading ?
     adminData.adminUsers.some(admin => admin.userId === user.id) : false;
 
   const checkingAdmin = authLoading || adminLoading;
@@ -99,8 +101,9 @@ export default function AdminLayout({
     return <>{children}</>;
   }
 
-  // Loading state
-  if (authLoading || checkingAdmin) {
+  // CRITICAL: Block rendering until we've verified admin status
+  // Loading state - show spinner while checking authentication
+  if (authLoading || checkingAdmin || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -111,8 +114,11 @@ export default function AdminLayout({
     );
   }
 
-  // Not authenticated or not admin
+  // CRITICAL: Block access if not authenticated or not admin
+  // This prevents any content from rendering for non-admin users
   if (!user || !isAdmin) {
+    // Return null to prevent any rendering
+    // The useEffect above will handle the redirect
     return null;
   }
 
