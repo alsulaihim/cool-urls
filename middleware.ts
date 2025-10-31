@@ -24,12 +24,14 @@ export function middleware(request: NextRequest) {
   // Check if running on Railway or other platform without custom domain
   const isRailwayDomain = hostname.includes('.railway.app') || hostname.includes('.up.railway.app');
   const isVercelDomain = hostname.includes('.vercel.app');
-  const isPlatformDomain = isRailwayDomain || isVercelDomain;
+  const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
+  const isPlatformDomain = isRailwayDomain || isVercelDomain || isLocalhost;
 
   // Production: Enforce admin subdomain requirement (only for custom domains)
   // Exception: Allow /admin/login to be accessible from any domain
+  // Exception: Allow platform domains (Railway, Vercel, localhost) to access /admin directly
   if (isProduction && isAdminPath && !isAdminLoginPath && !isAdminDomain && !isPlatformDomain) {
-    // Redirect to admin subdomain
+    // Only redirect for custom domains (e.g., hoturl.me)
     const adminUrl = new URL(request.url);
     adminUrl.hostname = `admin.${adminUrl.hostname.replace(/^(www\.)?/, '')}`;
     adminUrl.port = '8088';
