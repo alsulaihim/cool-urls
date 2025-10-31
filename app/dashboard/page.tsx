@@ -302,6 +302,8 @@ export default function Dashboard() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-gray-400 hover:text-black transition-colors"
+                                    aria-label={`Open short URL ${url.shortCode} in new tab`}
+                                    title={`Open short URL ${url.shortCode} in new tab`}
                                   >
                                     <ExternalLink className="w-4 h-4" />
                                   </a>
@@ -465,6 +467,8 @@ export default function Dashboard() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-gray-400 hover:text-black transition-colors shrink-0"
+                                aria-label={`Open short URL ${url.shortCode} in new tab`}
+                                title={`Open short URL ${url.shortCode} in new tab`}
                               >
                                 <ExternalLink className="w-4 h-4" />
                               </a>

@@ -16,6 +16,59 @@ interface DeviceStatsProps {
   clicks: ClickAnalytics[];
 }
 
+// Corporate color palette: Black, Gray, and Pink
+const COLORS = [
+  '#000000', // Pure Black - professional and strong
+  '#EC4899', // Pink - corporate accent color
+  '#6B7280', // Medium Gray - neutral
+  '#9CA3AF', // Light Gray - subtle
+  '#1F2937', // Dark Gray - depth
+];
+
+/**
+ * StatCard component - displays statistics with a title and data list
+ */
+const StatCard = ({ title, data, icon }: { title: string; data: Array<{ name: string; value: number }>; icon?: React.ReactNode }) => (
+  <Card className="p-5 border">
+    <div className="flex items-center gap-3 mb-4">
+      {icon}
+      <h4 className="font-semibold text-foreground text-base">{title}</h4>
+    </div>
+    {data.length === 0 ? (
+      <p className="text-muted-foreground text-sm">No data</p>
+    ) : (
+      <div className="space-y-3">
+        {data.map((item, idx) => (
+          <div key={idx} className="flex items-center justify-between group">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              {/* Dynamic color indicator - inline styles required for data-driven visualization */}
+              <div
+                className="w-3 h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: COLORS[idx % COLORS.length], opacity: 0.6 }}
+              />
+              <span className="text-sm font-medium text-foreground truncate">{item.name}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-1 bg-muted rounded-full overflow-hidden w-16 hidden sm:block">
+                {/* Dynamic progress bar - width calculated from analytics data */}
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${(item.value / Math.max(...data.map(d => d.value))) * 100}%`,
+                    backgroundColor: COLORS[idx % COLORS.length],
+                    opacity: 0.6
+                  }}
+                />
+              </div>
+              <span className="text-sm font-semibold text-foreground ml-2 min-w-[2rem] text-right">{item.value}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </Card>
+);
+
 export function DeviceStats({ clicks }: DeviceStatsProps) {
   // Aggregate device types
   const deviceData = (() => {
@@ -81,15 +134,6 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
       .slice(0, 5);
   })();
 
-  // Corporate color palette: Black, Gray, and Pink
-  const COLORS = [
-    '#000000', // Pure Black - professional and strong
-    '#EC4899', // Pink - corporate accent color
-    '#6B7280', // Medium Gray - neutral
-    '#9CA3AF', // Light Gray - subtle
-    '#1F2937', // Dark Gray - depth
-  ];
-
   // Specific device colors using corporate palette
   const DEVICE_COLORS: Record<string, string> = {
     'mobile': '#EC4899', // Pink - stands out, most common device
@@ -127,45 +171,6 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
     }
   };
 
-  const StatCard = ({ title, data, icon }: { title: string; data: Array<{ name: string; value: number }>; icon?: React.ReactNode }) => (
-    <Card className="p-5 border">
-      <div className="flex items-center gap-3 mb-4">
-        {icon}
-        <h4 className="font-semibold text-foreground text-base">{title}</h4>
-      </div>
-      {data.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No data</p>
-      ) : (
-        <div className="space-y-3">
-          {data.map((item, idx) => (
-            <div key={idx} className="flex items-center justify-between group">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div
-                  className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: COLORS[idx % COLORS.length], opacity: 0.6 }}
-                />
-                <span className="text-sm font-medium text-foreground truncate">{item.name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-1 bg-muted rounded-full overflow-hidden w-16 hidden sm:block">
-                  <div
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${(item.value / Math.max(...data.map(d => d.value))) * 100}%`,
-                      backgroundColor: COLORS[idx % COLORS.length],
-                      opacity: 0.6
-                    }}
-                  />
-                </div>
-                <span className="text-sm font-semibold text-foreground ml-2 min-w-[2rem] text-right">{item.value}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </Card>
-  );
-
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Device Type Distribution Chart */}
@@ -186,7 +191,10 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={(entry) => {
+                      const { name, percent } = entry as unknown as { name: string; percent: number };
+                      return `${name} ${(percent * 100).toFixed(0)}%`;
+                    }}
                     outerRadius={85}
                     innerRadius={45}
                     fill="hsl(var(--primary))"
@@ -245,11 +253,13 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1.5">
+                        {/* Device-specific color indicator */}
                         <div
                           className="w-2 h-2 rounded-full"
                           style={{ backgroundColor: color, opacity: 0.6 }}
                         />
                         <div className="h-1 w-16 rounded-full overflow-hidden bg-muted">
+                          {/* Analytics visualization - dynamic width */}
                           <div
                             className="h-full rounded-full transition-all duration-500"
                             style={{

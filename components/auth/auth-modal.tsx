@@ -30,8 +30,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     try {
       await db.auth.sendMagicCode({ email });
       setSentEmail(true);
-    } catch (err: any) {
-      setError(err.message || 'Failed to send magic code');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to send magic code';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -70,8 +71,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setName('');
       setCode('');
       setSentEmail(false);
-    } catch (err: any) {
-      setError(err.message || 'Invalid verification code');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Invalid verification code';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -104,6 +106,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <button
                   onClick={onClose}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="Close dialog"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -167,7 +170,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   </Button>
 
                   <p className="text-xs text-gray-500 text-center mt-4">
-                    We'll send you a magic link to sign in without a password
+                    We&apos;ll send you a magic link to sign in without a password
                   </p>
                 </form>
               ) : (

@@ -1,23 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install:*)",
-      "Bash(cat:*)",
-      "Bash(test:*)",
-      "Bash(npm run build:*)",
+      "Bash(npm run dev)",
+      "Bash(kill:*)",
+      "Bash(rm:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git branch:*)",
-      "Bash(git checkout:*)",
-      "Bash(gh auth:*)",
-      "Bash(gh repo create:*)",
       "Bash(git push:*)",
-      "Bash(railway whoami:*)",
-      "Bash(railway init:*)",
-      "Bash(chmod:*)",
-      "Bash(pkill:*)",
-      "Bash(npm run dev)",
-      "Bash(npm run generate-sample:*)"
+      "Bash(cat:*)",
+      "Bash(awk:*)",
+      "Bash(curl:*)",
+      "Bash(npm run setup-admin:*)",
+      "Bash(npx tsx:*)"
     ],
     "deny": [],
     "ask": []

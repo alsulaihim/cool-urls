@@ -18,6 +18,36 @@ const schema = i.schema({
       name: i.string(),
       createdAt: i.number(),
     }),
+    // Admin Panel Entities
+    adminUsers: i.entity({
+      userId: i.string().unique().indexed(),
+      role: i.string(),
+      permissions: i.string(),
+      mfaEnabled: i.boolean(),
+      mfaSecret: i.string().optional(),
+      createdAt: i.number(),
+      createdBy: i.string(),
+      lastActiveAt: i.number().optional(),
+    }),
+    auditLogs: i.entity({
+      adminId: i.string().indexed(),
+      adminEmail: i.string(),
+      action: i.string(),
+      targetType: i.string(),
+      targetId: i.string(),
+      metadata: i.string(),
+      ipAddress: i.string(),
+      userAgent: i.string(),
+      timestamp: i.number(),
+    }),
+    userStatus: i.entity({
+      userId: i.string().unique().indexed(),
+      status: i.string(),
+      reason: i.string().optional(),
+      notes: i.string().optional(),
+      modifiedBy: i.string(),
+      modifiedAt: i.number(),
+    }),
   },
 });
 

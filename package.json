@@ -4,10 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:admin": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
+    "start:admin": "next start -p 8088",
     "lint": "eslint",
-    "generate-sample": "tsx scripts/generate-sample-data.ts"
+    "generate-sample": "tsx scripts/generate-sample-data.ts",
+    "create-first-admin": "tsx scripts/create-first-admin.ts",
+    "setup-admin": "tsx scripts/setup-admin-user.ts",
+    "push-schema": "npx instant-cli push-schema"
   },
   "dependencies": {
     "@instantdb/admin": "^0.22.34",
