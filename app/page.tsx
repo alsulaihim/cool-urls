@@ -23,16 +23,62 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
   const [displayDomain, setDisplayDomain] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Query all URLs to check for collisions
+  const { data: urlsData } = db.useQuery({
+    urls: {},
+  });
 
   useEffect(() => {
     setDisplayDomain(getDisplayDomain());
   }, []);
+
+  // Helper function to generate alternative prefix suggestions
+  const generateSuggestions = (originalPrefix: string, randomCode: string): string[] => {
+    const suggestions = [];
+
+    // If there was a prefix, suggest variations of the prefix
+    if (originalPrefix) {
+      // Add numbered variations of the prefix
+      for (let i = 1; i <= 3; i++) {
+        suggestions.push(`${originalPrefix}${i}-${randomCode}-go`);
+      }
+
+      // Add suffix variations to the prefix
+      const suffixes = ['new', 'app', 'link', 'url', 'go'];
+      for (const suffix of suffixes) {
+        suggestions.push(`${originalPrefix}-${suffix}-${randomCode}-go`);
+      }
+
+      // Shortened prefix variations
+      if (originalPrefix.length > 3) {
+        suggestions.push(`${originalPrefix.slice(0, 3)}-${randomCode}-go`);
+      }
+    } else {
+      // If no prefix, suggest common prefix options
+      const commonPrefixes = ['my', 'app', 'link', 'url', 'go', 'hot', 'cool', 'new'];
+      for (const prefix of commonPrefixes) {
+        suggestions.push(`${prefix}-${randomCode}-go`);
+      }
+    }
+
+    return suggestions;
+  };
+
+  // Helper function to check if short code exists
+  const shortCodeExists = (code: string): boolean => {
+    return urlsData?.urls?.some((url: any) => url.shortCode === code) || false;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setShortUrl('');
+    setSuggestions([]);
+    setShowSuggestions(false);
 
     try {
       // Validate URL
@@ -44,9 +90,23 @@ export default function Home() {
         return;
       }
 
-      // Generate short code
+      // Generate short code with "-go" suffix
       const randomCode = nanoid(6);
-      const shortCode = prefix ? `${prefix}-${randomCode}` : randomCode;
+      const baseCode = prefix ? `${prefix}-${randomCode}` : randomCode;
+      const shortCode = `${baseCode}-go`;
+
+      // Check if short code already exists
+      if (shortCodeExists(shortCode)) {
+        // Generate suggestions with alternative prefixes
+        const suggestionsList = generateSuggestions(prefix, randomCode);
+        const availableSuggestions = suggestionsList.filter(s => !shortCodeExists(s));
+
+        setSuggestions(availableSuggestions.slice(0, 5));
+        setShowSuggestions(true);
+        setError('This short link already exists. Try one of these alternative prefixes:');
+        setLoading(false);
+        return;
+      }
 
       // Save to InstantDB - use UUID for entity ID
       await db.transact(
@@ -64,6 +124,37 @@ export default function Home() {
       setShortUrl(`${baseUrl}/${shortCode}`);
       setUrl('');
       setPrefix('');
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle using a suggested short code
+  const useSuggestion = async (suggestedCode: string) => {
+    setLoading(true);
+    setError('');
+    setShowSuggestions(false);
+
+    try {
+      // Save to InstantDB with suggested code
+      await db.transact(
+        db.tx.urls[uuidv4()].update({
+          originalUrl: url,
+          shortCode: suggestedCode,
+          prefix,
+          createdAt: Date.now(),
+          clicks: 0,
+          userId: user?.id || 'anonymous',
+        })
+      );
+
+      const baseUrl = getShortUrlBase();
+      setShortUrl(`${baseUrl}/${suggestedCode}`);
+      setUrl('');
+      setPrefix('');
+      setSuggestions([]);
     } catch (err: any) {
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {
@@ -158,6 +249,54 @@ export default function Home() {
                     className="bg-red-50 text-red-600 px-4 py-3 rounded-md text-sm border border-red-200"
                   >
                     {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Suggestions */}
+              <AnimatePresence>
+                {showSuggestions && suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-3"
+                  >
+                    <p className="text-sm font-medium text-gray-700">
+                      Available alternatives:
+                    </p>
+                    <div className="space-y-2">
+                      {suggestions.map((suggestion, index) => (
+                        <motion.button
+                          key={suggestion}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          type="button"
+                          onClick={() => useSuggestion(suggestion)}
+                          className="w-full flex items-center justify-between px-4 py-3 bg-white border-2 border-gray-200 rounded-lg hover:border-black hover:bg-gray-50 transition-all group"
+                        >
+                          <span className="font-mono text-sm text-gray-700 group-hover:text-black">
+                            {displayDomain}/{suggestion}
+                          </span>
+                          <span className="text-xs text-gray-500 group-hover:text-black">
+                            Use this →
+                          </span>
+                        </motion.button>
+                      ))}
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setShowSuggestions(false);
+                        setSuggestions([]);
+                        setError('');
+                      }}
+                      variant="ghost"
+                      className="w-full text-sm text-gray-600 hover:text-black"
+                    >
+                      Try again with different prefix
+                    </Button>
                   </motion.div>
                 )}
               </AnimatePresence>
