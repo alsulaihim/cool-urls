@@ -74,7 +74,7 @@ async function main() {
 
   try {
     // Query user by email (assuming they've already signed up)
-    const { data } = await db.query({
+    const result = await db.query({
       users: {
         $: {
           where: {
@@ -84,14 +84,14 @@ async function main() {
       },
     });
 
-    if (!data?.users || data.users.length === 0) {
+    if (!result?.users || result.users.length === 0) {
       console.error('\n❌ No user found with that email address');
       console.error('   The user must sign up first before being made an admin.');
       rl.close();
       process.exit(1);
     }
 
-    const user = data.users[0];
+    const user = result.users[0];
     console.log(`\n✅ Found user: ${user.email}`);
     console.log(`   User ID: ${user.id}`);
 
