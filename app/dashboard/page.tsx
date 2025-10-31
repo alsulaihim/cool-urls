@@ -194,40 +194,40 @@ export default function Dashboard() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-10 md:mb-12"
+            className="grid grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-10 md:mb-12"
           >
-            <Card className="p-4 sm:p-6 border border-gray-200 rounded-lg bg-white">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="p-2 sm:p-3 bg-black/5 rounded-lg shrink-0">
-                  <Link2 className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+            <Card className="p-3 sm:p-6 border border-gray-200 rounded-lg bg-white">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4">
+                <div className="p-2 bg-black/5 rounded-lg shrink-0">
+                  <Link2 className="w-4 h-4 sm:w-6 sm:h-6 text-black" />
                 </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-500">Total Links</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-black">{totalLinks}</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-4 sm:p-6 border border-gray-200 rounded-lg bg-white">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="p-2 sm:p-3 bg-black/5 rounded-lg shrink-0">
-                  <MousePointerClick className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-500">Total Clicks</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-black">{totalClicks}</p>
+                <div className="text-center sm:text-left">
+                  <p className="text-[10px] sm:text-sm text-gray-500">Total Links</p>
+                  <p className="text-lg sm:text-3xl font-bold text-black">{totalLinks}</p>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-4 sm:p-6 border border-gray-200 rounded-lg bg-white sm:col-span-2 lg:col-span-1">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="p-2 sm:p-3 bg-black/5 rounded-lg shrink-0">
-                  <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+            <Card className="p-3 sm:p-6 border border-gray-200 rounded-lg bg-white">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4">
+                <div className="p-2 bg-black/5 rounded-lg shrink-0">
+                  <MousePointerClick className="w-4 h-4 sm:w-6 sm:h-6 text-black" />
                 </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-500">Member Since</p>
-                  <p className="text-base sm:text-lg font-bold text-black">
+                <div className="text-center sm:text-left">
+                  <p className="text-[10px] sm:text-sm text-gray-500">Total Clicks</p>
+                  <p className="text-lg sm:text-3xl font-bold text-black">{totalClicks}</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-3 sm:p-6 border border-gray-200 rounded-lg bg-white">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4">
+                <div className="p-2 bg-black/5 rounded-lg shrink-0">
+                  <Calendar className="w-4 h-4 sm:w-6 sm:h-6 text-black" />
+                </div>
+                <div className="text-center sm:text-left">
+                  <p className="text-[10px] sm:text-sm text-gray-500">Member Since</p>
+                  <p className="text-sm sm:text-lg font-bold text-black">
                     {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                   </p>
                 </div>
