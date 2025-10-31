@@ -105,7 +105,7 @@ async function main() {
     }
 
     // Check if already admin
-    const { data: adminCheck } = await db.query({
+    const adminCheck = await db.query({
       adminUsers: {
         $: {
           where: {
