@@ -36,31 +36,31 @@ export default function Home() {
   }, []);
 
   // Helper function to generate alternative prefix suggestions
-  const generateSuggestions = (originalPrefix: string, randomCode: string): string[] => {
+  const generateSuggestions = (originalPrefix: string): string[] => {
     const suggestions = [];
 
     // If there was a prefix, suggest variations of the prefix
     if (originalPrefix) {
       // Add numbered variations of the prefix
       for (let i = 1; i <= 3; i++) {
-        suggestions.push(`${originalPrefix}${i}-${randomCode}-go`);
+        suggestions.push(`${originalPrefix}${i}-go`);
       }
 
       // Add suffix variations to the prefix
-      const suffixes = ['new', 'app', 'link', 'url', 'go'];
+      const suffixes = ['new', 'app', 'link', 'url', 'hot', 'cool', 'my'];
       for (const suffix of suffixes) {
-        suggestions.push(`${originalPrefix}-${suffix}-${randomCode}-go`);
+        suggestions.push(`${originalPrefix}-${suffix}-go`);
       }
 
       // Shortened prefix variations
       if (originalPrefix.length > 3) {
-        suggestions.push(`${originalPrefix.slice(0, 3)}-${randomCode}-go`);
+        suggestions.push(`${originalPrefix.slice(0, 3)}-go`);
       }
     } else {
       // If no prefix, suggest common prefix options
-      const commonPrefixes = ['my', 'app', 'link', 'url', 'go', 'hot', 'cool', 'new'];
+      const commonPrefixes = ['my', 'app', 'link', 'url', 'go', 'hot', 'cool', 'new', 'click', 'visit'];
       for (const prefix of commonPrefixes) {
-        suggestions.push(`${prefix}-${randomCode}-go`);
+        suggestions.push(`${prefix}-go`);
       }
     }
 
@@ -90,15 +90,13 @@ export default function Home() {
         return;
       }
 
-      // Generate short code with "-go" suffix
-      const randomCode = nanoid(6);
-      const baseCode = prefix ? `${prefix}-${randomCode}` : randomCode;
-      const shortCode = `${baseCode}-go`;
+      // Generate short code with "-go" suffix (no random code needed)
+      const shortCode = prefix ? `${prefix}-go` : `${nanoid(6)}-go`;
 
       // Check if short code already exists
       if (shortCodeExists(shortCode)) {
         // Generate suggestions with alternative prefixes
-        const suggestionsList = generateSuggestions(prefix, randomCode);
+        const suggestionsList = generateSuggestions(prefix);
         const availableSuggestions = suggestionsList.filter(s => !shortCodeExists(s));
 
         setSuggestions(availableSuggestions.slice(0, 5));
