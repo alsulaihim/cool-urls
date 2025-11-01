@@ -210,6 +210,9 @@ export async function GET(
   try {
     const { shortCode } = await params;
     console.log('[Redirect] Looking for shortCode:', shortCode);
+    console.log('🔍 [REQUEST URL] Full request URL:', request.url);
+    console.log('🔍 [REQUEST URL] nextUrl:', request.nextUrl.toString());
+    console.log('🔍 [REQUEST URL] Search params:', request.nextUrl.searchParams.toString());
 
     // Query all URLs from InstantDB
     const db = await getDb();

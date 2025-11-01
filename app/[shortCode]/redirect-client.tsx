@@ -17,7 +17,11 @@ export default function RedirectClient({ shortCode }: { shortCode: string }) {
 
     const fetchAndRedirect = async () => {
       try {
-        const response = await fetch(`/api/redirect/${shortCode}`);
+        // Capture URL parameters from the current page URL and forward them to the API
+        const urlParams = new URLSearchParams(window.location.search);
+        const apiUrl = `/api/redirect/${shortCode}${urlParams.toString() ? `?${urlParams.toString()}` : ''}`;
+
+        const response = await fetch(apiUrl);
         const data = await response.json();
 
         if (!response.ok) {
