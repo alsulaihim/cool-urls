@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { getStripe, createStripeCustomer, createStripeSubscription } from '@/lib/stripe';
+import { getStripe, createStripeCustomer } from '@/lib/stripe';
 import type { PlanId } from '@/lib/pricing';
 import { getPlanById } from '@/lib/pricing';
 
@@ -55,10 +55,11 @@ export async function POST(request: NextRequest) {
           userId,
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating/finding customer:', error);
+      const message = error instanceof Error ? error.message : 'Failed to create customer';
       return NextResponse.json(
-        { error: 'Failed to create customer' },
+        { error: message },
         { status: 500 }
       );
     }
@@ -75,36 +76,59 @@ export async function POST(request: NextRequest) {
           default_payment_method: paymentMethodId,
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error attaching payment method:', error);
+      const message = error instanceof Error ? error.message : 'Failed to attach payment method';
       return NextResponse.json(
-        { error: 'Failed to attach payment method' },
+        { error: message },
         { status: 500 }
       );
     }
 
-    // Create subscription
+    // Create subscription with immediate payment
     let subscription: Stripe.Subscription;
     try {
-      subscription = await createStripeSubscription({
-        customerId: customer.id,
-        priceId: plan.stripePriceId,
+      subscription = await stripe.subscriptions.create({
+        customer: customer.id,
+        items: [{ price: plan.stripePriceId }],
+        default_payment_method: paymentMethodId,
         metadata: {
           userId,
           planId,
         },
+        expand: ['latest_invoice.payment_intent'],
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating subscription:', error);
+      const message = error instanceof Error ? error.message : 'Failed to create subscription';
       return NextResponse.json(
-        { error: 'Failed to create subscription' },
+        { error: message },
         { status: 500 }
       );
     }
 
     // Get the latest invoice and payment intent
     const latestInvoice = subscription.latest_invoice;
+
+    // Handle case where subscription is active/trialing without payment required
     if (!latestInvoice || typeof latestInvoice === 'string') {
+      // If subscription is active or trialing, save it even without an invoice
+      if (subscription.status === 'active' || subscription.status === 'trialing') {
+        await createSubscription({
+          userId,
+          planId,
+          provider: 'stripe',
+          providerSubscriptionId: subscription.id,
+          providerCustomerId: customer.id,
+        });
+
+        return NextResponse.json({
+          success: true,
+          subscriptionId: subscription.id,
+          customerId: customer.id,
+        });
+      }
+
       return NextResponse.json(
         { error: 'Invalid invoice data' },
         { status: 500 }
@@ -118,7 +142,25 @@ export async function POST(request: NextRequest) {
 
     const paymentIntentRaw = invoice.payment_intent;
 
+    // Handle case where there's no payment intent (e.g., $0 invoice)
     if (!paymentIntentRaw || typeof paymentIntentRaw === 'string') {
+      // Check if subscription is already active
+      if (subscription.status === 'active' || subscription.status === 'trialing') {
+        await createSubscription({
+          userId,
+          planId,
+          provider: 'stripe',
+          providerSubscriptionId: subscription.id,
+          providerCustomerId: customer.id,
+        });
+
+        return NextResponse.json({
+          success: true,
+          subscriptionId: subscription.id,
+          customerId: customer.id,
+        });
+      }
+
       return NextResponse.json(
         { error: 'Invalid payment intent data' },
         { status: 500 }
@@ -194,10 +236,11 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Subscription creation error:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: message },
       { status: 500 }
     );
   }
