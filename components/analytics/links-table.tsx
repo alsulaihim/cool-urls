@@ -130,35 +130,35 @@ export function LinksTable({ urls, onCopy, copiedId }: LinksTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="font-semibold w-[120px] sm:w-[180px] text-xs sm:text-sm">Short Link</TableHead>
-              <TableHead className="font-semibold min-w-[150px] sm:min-w-[200px] text-xs sm:text-sm hidden sm:table-cell">Destination</TableHead>
-              <TableHead className="font-semibold text-center w-[60px] sm:w-[80px] text-xs sm:text-sm">
+              <TableHead className="font-semibold w-[140px] text-xs sm:text-sm">Short Link</TableHead>
+              <TableHead className="font-semibold w-[200px] lg:w-[250px] text-xs sm:text-sm hidden sm:table-cell">Destination</TableHead>
+              <TableHead className="font-semibold text-center w-[70px] text-xs sm:text-sm">
                 <div className="flex items-center justify-center gap-1">
                   <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden md:inline">Clicks</span>
                 </div>
               </TableHead>
-              <TableHead className="font-semibold text-center w-[60px] sm:w-[80px] text-xs sm:text-sm hidden md:table-cell">
+              <TableHead className="font-semibold text-center w-[70px] text-xs sm:text-sm hidden md:table-cell">
                 <div className="flex items-center justify-center gap-1">
                   <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden lg:inline">Unique</span>
                 </div>
               </TableHead>
-              <TableHead className="font-semibold text-center w-[70px] sm:w-[90px] text-xs sm:text-sm hidden lg:table-cell">
+              <TableHead className="font-semibold text-center w-[80px] text-xs sm:text-sm hidden lg:table-cell">
                 <div className="flex items-center justify-center gap-1">
                   <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden xl:inline">Countries</span>
                 </div>
               </TableHead>
-              <TableHead className="font-semibold text-center w-[60px] sm:w-[80px] text-xs sm:text-sm hidden lg:table-cell">
+              <TableHead className="font-semibold text-center w-[70px] text-xs sm:text-sm hidden lg:table-cell">
                 <div className="flex items-center justify-center gap-1">
                   <Smartphone className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden xl:inline">Mobile</span>
                 </div>
               </TableHead>
-              <TableHead className="font-semibold w-[120px] hidden lg:table-cell text-xs sm:text-sm">Top Source</TableHead>
-              <TableHead className="font-semibold w-[140px] hidden xl:table-cell text-xs sm:text-sm">Created</TableHead>
-              <TableHead className="font-semibold text-center w-[90px] sm:w-[120px] text-xs sm:text-sm">Actions</TableHead>
+              <TableHead className="font-semibold w-[100px] hidden lg:table-cell text-xs sm:text-sm">Top Source</TableHead>
+              <TableHead className="font-semibold w-[120px] hidden xl:table-cell text-xs sm:text-sm">Created</TableHead>
+              <TableHead className="font-semibold text-center w-[100px] text-xs sm:text-sm">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -192,7 +192,7 @@ export function LinksTable({ urls, onCopy, copiedId }: LinksTableProps) {
                         </div>
                       </TableCell>
                       <TableCell className="py-2 sm:py-3 px-2 sm:px-4 hidden sm:table-cell">
-                        <div className="flex items-center gap-2 max-w-[200px] sm:max-w-[300px]">
+                        <div className="flex items-center gap-2">
                           <span className="text-xs sm:text-sm text-muted-foreground truncate">
                             {url.originalUrl}
                           </span>
