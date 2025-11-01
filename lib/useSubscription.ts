@@ -20,12 +20,18 @@ export interface Subscription {
 }
 
 export function useSubscription(userId: string | undefined) {
-  // Don't query if no userId
+  // Temporarily disable subscription queries until schema is synced
+  // TODO: Re-enable when subscriptions entity is available in InstantDB backend
+
+  // Return null subscription for now - users default to free plan
+  return { subscription: null, isLoading: false };
+
+  // Original implementation (commented out until schema is synced):
+  /*
   const { data, isLoading, error } = db.useQuery(
     userId ? { subscriptions: { $: { where: { userId } } } } : null as any
   );
 
-  // If there's an error (entity doesn't exist), return null subscription
   if (error) {
     console.warn('Subscriptions entity not found in schema. User will default to free plan.');
     return { subscription: null, isLoading: false };
@@ -36,4 +42,5 @@ export function useSubscription(userId: string | undefined) {
     : null;
 
   return { subscription, isLoading };
+  */
 }
