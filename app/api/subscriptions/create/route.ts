@@ -111,14 +111,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Type the expanded invoice properly
-    type ExpandedInvoice = Stripe.Invoice & {
-      payment_intent?: Stripe.PaymentIntent | string | null;
-      amount_paid: number;
-      currency: string;
+    // Type the expanded invoice properly - payment_intent is expanded from the subscription query
+    const invoice = latestInvoice as Stripe.Invoice & {
+      payment_intent: Stripe.PaymentIntent | string | null;
     };
 
-    const invoice = latestInvoice as ExpandedInvoice;
     const paymentIntentRaw = invoice.payment_intent;
 
     if (!paymentIntentRaw || typeof paymentIntentRaw === 'string') {
