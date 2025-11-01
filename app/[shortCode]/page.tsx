@@ -35,6 +35,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  // Get the base URL for absolute URLs in Open Graph tags
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const ogImageUrl = `${baseUrl}/og-image.jpg`;
+
   const title = `${shortCode} - Cool URLs`;
   const description = `This short link redirects to ${data.originalUrl}`;
 
@@ -44,11 +48,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      url: `/${shortCode}`,
+      url: `${baseUrl}/${shortCode}`,
       siteName: 'Cool URLs',
       images: [
         {
-          url: '/og-image.jpg',
+          url: ogImageUrl,
           width: 1200,
           height: 630,
           alt: 'Cool URLs - URL Shortener',
@@ -61,7 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title,
       description,
-      images: ['/og-image.jpg'],
+      images: [ogImageUrl],
     },
   };
 }
