@@ -1,11 +1,9 @@
-import { init, type InstantGraph } from "@instantdb/admin";
+import { init } from "@instantdb/admin";
 import 'dotenv/config';
 
 const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID!;
 
-const schema = {} as InstantGraph<any, any>;
-
-const db = init({ appId: APP_ID, adminToken: process.env.INSTANT_ADMIN_TOKEN! }, schema);
+const db = init({ appId: APP_ID, adminToken: process.env.INSTANT_ADMIN_TOKEN! });
 
 async function listNonAdminUsers() {
   console.log('\n📋 Listing all NON-ADMIN users...\n');
