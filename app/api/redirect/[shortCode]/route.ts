@@ -257,11 +257,11 @@ export async function GET(
 
     // Capture URL parameters
     const urlParams = request.nextUrl.searchParams;
-    const params: Record<string, string> = {};
+    const queryParams: Record<string, string> = {};
     urlParams.forEach((value, key) => {
-      params[key] = value;
+      queryParams[key] = value;
     });
-    const hasParams = Object.keys(params).length > 0;
+    const hasParams = Object.keys(queryParams).length > 0;
 
     // Get geolocation data
     const geoData = await getGeolocation(ip);
@@ -313,7 +313,7 @@ export async function GET(
         language: language,
         isBot: botDetected,
         // URL Parameters
-        urlParams: hasParams ? params : undefined,
+        urlParams: hasParams ? queryParams : undefined,
       };
 
       console.log('[Analytics] Saving analytics:', newClickData);
