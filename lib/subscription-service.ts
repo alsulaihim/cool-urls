@@ -134,7 +134,7 @@ export async function getSubscription(userId: string): Promise<Subscription | nu
   });
 
   if (result.subscriptions && result.subscriptions.length > 0) {
-    return result.subscriptions[0] as Subscription;
+    return result.subscriptions[0] as unknown as Subscription;
   }
 
   return null;
