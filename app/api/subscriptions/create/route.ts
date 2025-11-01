@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { stripe, createStripeCustomer, createStripeSubscription } from '@/lib/stripe';
-import { createSubscription, recordPayment } from '@/lib/subscription-service';
 import type { PlanId } from '@/lib/pricing';
 import { getPlanById } from '@/lib/pricing';
 
@@ -10,6 +9,8 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
+  // Dynamic import to avoid build-time evaluation
+  const { createSubscription, recordPayment } = await import('@/lib/subscription-service');
   try {
     const body = await request.json();
     const { userId, email, planId, paymentMethodId } = body as {
