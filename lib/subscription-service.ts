@@ -103,6 +103,8 @@ export async function createSubscription(params: {
  */
 export async function updateSubscription(params: {
   userId: string;
+  subscriptionId?: string;
+  newPlanId?: PlanId;
   planId?: PlanId;
   status?: 'active' | 'cancelled' | 'past_due' | 'expired';
   cancelAtPeriodEnd?: boolean;
@@ -112,10 +114,15 @@ export async function updateSubscription(params: {
     updatedAt: Date.now(),
   };
 
-  if (params.planId) {
-    const plan = getPlanById(params.planId);
-    updates.planId = params.planId;
+  // Handle new plan ID (for plan changes)
+  const planToUse = params.newPlanId || params.planId;
+
+  if (planToUse) {
+    const plan = getPlanById(planToUse);
+    updates.planId = planToUse;
     updates.clicksLimit = plan.clicksLimit;
+
+    console.log(`[Subscription] Updating plan to ${planToUse} for user ${params.userId}`);
   }
 
   if (params.status) {
@@ -137,6 +144,8 @@ export async function updateSubscription(params: {
   await db.transact([
     db.tx.subscriptions[params.userId].update(updates),
   ]);
+
+  console.log(`[Subscription] Updated subscription for user ${params.userId}`, updates);
 }
 
 /**

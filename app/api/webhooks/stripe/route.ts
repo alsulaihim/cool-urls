@@ -100,10 +100,13 @@ export async function POST(request: NextRequest) {
 
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
-        const userId = (subscription as any).metadata.userId;
+        const userId = subscription.metadata?.userId;
+        const planId = subscription.metadata?.planId as PlanId | undefined;
 
         if (userId) {
-          const updates: any = {};
+          const updates: any = {
+            userId,
+          };
 
           // Map Stripe status to our status
           if (subscription.status === 'active') {
@@ -114,18 +117,28 @@ export async function POST(request: NextRequest) {
             updates.status = 'cancelled';
           }
 
-          updates.cancelAtPeriodEnd = (subscription as any).cancel_at_period_end;
-          updates.currentPeriodEnd = (subscription as any).current_period_end * 1000; // Convert to ms
+          updates.cancelAtPeriodEnd = subscription.cancel_at_period_end;
+          updates.currentPeriodEnd = subscription.current_period_end * 1000; // Convert to ms
 
-          // Check if plan changed
-          if ((subscription as any).items.data[0]?.price.metadata.planId) {
-            updates.planId = (subscription as any).items.data[0].price.metadata.planId as PlanId;
+          // Detect plan change by checking the price ID
+          const currentPriceId = subscription.items.data[0]?.price.id;
+          if (currentPriceId) {
+            // Dynamically import to avoid build-time issues
+            const { getPlanByStripePriceId } = await import('@/lib/pricing');
+            const newPlan = getPlanByStripePriceId(currentPriceId);
+
+            if (newPlan) {
+              updates.planId = newPlan.id;
+              console.log(`[Webhook] Plan changed to ${newPlan.id} for user ${userId}`);
+            }
           }
 
-          await updateSubscription({
-            userId,
-            ...updates,
-          });
+          // Fallback to metadata planId if price mapping fails
+          if (!updates.planId && planId) {
+            updates.planId = planId;
+          }
+
+          await updateSubscription(updates);
 
           console.log(`[Webhook] Subscription updated for user ${userId}`);
         }

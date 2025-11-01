@@ -186,6 +186,15 @@ export function getPlanById(planId: PlanId): PricingPlan {
   return PRICING_PLANS[planId];
 }
 
+// Helper function to get plan by Stripe price ID
+export function getPlanByStripePriceId(stripePriceId: string): PricingPlan | null {
+  const plans = getAllPlans();
+  return plans.find(plan =>
+    plan.stripePriceId === stripePriceId ||
+    plan.stripeYearlyPriceId === stripePriceId
+  ) || null;
+}
+
 // Helper function to get all plans as array
 export function getAllPlans(): PricingPlan[] {
   return Object.values(PRICING_PLANS);
