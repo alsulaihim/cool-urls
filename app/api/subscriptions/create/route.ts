@@ -94,16 +94,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the latest invoice and payment intent
-    const latestInvoice = subscription.latest_invoice;
-    if (typeof latestInvoice === 'string') {
+    const latestInvoice = subscription.latest_invoice as Stripe.Invoice | null;
+    if (!latestInvoice || typeof latestInvoice === 'string') {
       return NextResponse.json(
         { error: 'Invalid invoice data' },
         { status: 500 }
       );
     }
 
-    const paymentIntent = latestInvoice?.payment_intent;
-    if (typeof paymentIntent === 'string') {
+    const paymentIntent = latestInvoice.payment_intent as Stripe.PaymentIntent | null;
+    if (!paymentIntent || typeof paymentIntent === 'string') {
       return NextResponse.json(
         { error: 'Invalid payment intent data' },
         { status: 500 }
