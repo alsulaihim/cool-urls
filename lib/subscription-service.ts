@@ -2,10 +2,18 @@ import { init } from '@instantdb/admin';
 import type { PlanId } from './pricing';
 import { getPlanById } from './pricing';
 
-const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID!;
-const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN!;
+const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID || '';
+const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN || '';
 
-const db = init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
+// Lazy initialization for build-time compatibility
+let dbInstance: ReturnType<typeof init> | null = null;
+
+function getDb() {
+  if (!dbInstance) {
+    dbInstance = init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
+  }
+  return dbInstance;
+}
 
 export interface Subscription {
   id: string;
@@ -66,8 +74,8 @@ export async function createSubscription(params: {
     subscriptionData.createdAt = now;
   }
 
-  await db.transact([
-    db.tx.subscriptions[params.userId].update(subscriptionData),
+  await getDb().transact([
+    getDb().tx.subscriptions[params.userId].update(subscriptionData),
   ]);
 
   console.log(`[Subscription] ${existing ? 'Updated' : 'Created'} subscription for user ${params.userId}: ${params.planId}`);
@@ -108,8 +116,8 @@ export async function updateSubscription(params: {
     updates.currentPeriodEnd = params.currentPeriodEnd;
   }
 
-  await db.transact([
-    db.tx.subscriptions[params.userId].update(updates),
+  await getDb().transact([
+    getDb().tx.subscriptions[params.userId].update(updates),
   ]);
 }
 
@@ -117,7 +125,7 @@ export async function updateSubscription(params: {
  * Get a user's subscription
  */
 export async function getSubscription(userId: string): Promise<Subscription | null> {
-  const result = await db.query({
+  const result = await getDb().query({
     subscriptions: {
       $: {
         where: { userId },
@@ -139,8 +147,8 @@ export async function createFreeSubscription(userId: string): Promise<void> {
   const now = Date.now();
   const oneMonthFromNow = now + 30 * 24 * 60 * 60 * 1000;
 
-  await db.transact([
-    db.tx.subscriptions[userId].update({
+  await getDb().transact([
+    getDb().tx.subscriptions[userId].update({
       userId,
       planId: 'free',
       status: 'active',
@@ -163,8 +171,8 @@ export async function incrementClickUsage(userId: string, clicks: number = 1): P
   const subscription = await getSubscription(userId);
 
   if (subscription) {
-    await db.transact([
-      db.tx.subscriptions[userId].update({
+    await getDb().transact([
+      getDb().tx.subscriptions[userId].update({
         clicksUsed: subscription.clicksUsed + clicks,
         updatedAt: Date.now(),
       }),
@@ -176,8 +184,8 @@ export async function incrementClickUsage(userId: string, clicks: number = 1): P
  * Reset monthly click usage (called by cron job at start of billing period)
  */
 export async function resetClickUsage(userId: string): Promise<void> {
-  await db.transact([
-    db.tx.subscriptions[userId].update({
+  await getDb().transact([
+    getDb().tx.subscriptions[userId].update({
       clicksUsed: 0,
       updatedAt: Date.now(),
     }),
@@ -213,8 +221,8 @@ export async function recordPayment(params: {
 }): Promise<void> {
   const paymentId = `payment_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-  await db.transact([
-    db.tx.payments[paymentId].update({
+  await getDb().transact([
+    getDb().tx.payments[paymentId].update({
       userId: params.userId,
       subscriptionId: params.subscriptionId,
       provider: params.provider,
@@ -233,7 +241,7 @@ export async function recordPayment(params: {
  * Get user's payment history
  */
 export async function getPaymentHistory(userId: string, limit: number = 10) {
-  const result = await db.query({
+  const result = await getDb().query({
     payments: {
       $: {
         where: { userId },
