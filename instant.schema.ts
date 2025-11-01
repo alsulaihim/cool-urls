@@ -1,121 +1,141 @@
-// instant.schema.ts
-// This file defines the schema for InstantDB
-// Run `npx instant-cli push-schema` to push this to your InstantDB app
+// Docs: https://www.instantdb.com/docs/modeling-data
 
-import { i } from '@instantdb/core';
+import { i } from "@instantdb/react";
 
-// Schema version with full type definitions
-const graph = i.graph(
-  {
-    // Existing entities
-    urls: i.entity({
-      originalUrl: i.string(),
-      shortCode: i.string().unique().indexed(),
-      prefix: i.string().optional(),
+const _schema = i.schema({
+  // We inferred 1 attribute!
+  // Take a look at this schema, and if everything looks good,
+  // run `push schema` again to enforce the types.
+  entities: {
+    $files: i.entity({
+      path: i.string().unique().indexed(),
+      url: i.string(),
+    }),
+    $users: i.entity({
+      email: i.string().unique().indexed().optional(),
+      imageURL: i.string().optional(),
+      type: i.string().optional(),
+    }),
+    adminUsers: i.entity({
       createdAt: i.number(),
-      clicks: i.number(),
-      userId: i.string(),
+      createdBy: i.string(),
+      lastActiveAt: i.number().optional(),
+      mfaEnabled: i.boolean(),
+      mfaSecret: i.string().optional(),
+      permissions: i.string(),
+      role: i.string(),
+      userId: i.string().unique().indexed(),
+    }),
+    auditLogs: i.entity({
+      action: i.string(),
+      adminEmail: i.string(),
+      adminId: i.string().indexed(),
+      ipAddress: i.string(),
+      metadata: i.string(),
+      targetId: i.string(),
+      targetType: i.string(),
+      timestamp: i.number(),
+      userAgent: i.string(),
+    }),
+    invoices: i.entity({
+      amount: i.number(),
+      createdAt: i.number(),
+      currency: i.string(),
+      hostedInvoiceUrl: i.string().optional(),
+      invoiceNumber: i.string().optional(),
+      paidAt: i.number().optional(),
+      pdfUrl: i.string().optional(),
+      periodEnd: i.number(),
+      periodStart: i.number(),
+      provider: i.string(),
+      providerInvoiceId: i.string().optional(),
+      status: i.string(),
+      subscriptionId: i.string().optional(),
+      userId: i.string().indexed(),
+    }),
+    payments: i.entity({
+      amount: i.number(),
+      createdAt: i.number(),
+      currency: i.string(),
+      metadata: i.string().optional(),
+      planId: i.string(),
+      provider: i.string(),
+      providerPaymentId: i.string().indexed(),
+      status: i.string(),
+      subscriptionId: i.string().optional(),
+      userId: i.string().indexed(),
+    }),
+    subscriptions: i.entity({
+      cancelAtPeriodEnd: i.boolean(),
+      cancelledAt: i.number().optional(),
+      clicksLimit: i.number(),
+      clicksUsed: i.number(),
+      createdAt: i.number(),
+      currentPeriodEnd: i.number(),
+      currentPeriodStart: i.number(),
+      planId: i.string(),
+      provider: i.string(),
+      providerCustomerId: i.string().optional(),
+      providerSubscriptionId: i.string().optional(),
+      status: i.string(),
+      updatedAt: i.number(),
+      userId: i.string().unique().indexed(),
+    }),
+    urls: i.entity({
       analyticsData: i.string().optional(),
-      expiresAt: i.number().optional(), // Expiration timestamp for temporary URLs
-      isAnonymous: i.boolean().optional(), // Whether created by anonymous user
+      clicks: i.number(),
+      createdAt: i.number(),
+      expiresAt: i.number().optional(),
+      isAnonymous: i.boolean().optional(),
+      originalUrl: i.string(),
+      prefix: i.string().optional(),
+      shortCode: i.string().unique().indexed(),
+      userId: i.string(),
+    }),
+    usageTracking: i.entity({
+      clicks: i.number(),
+      createdAt: i.number(),
+      date: i.string().indexed(),
+      updatedAt: i.number(),
+      urlId: i.string().indexed(),
+      userId: i.string().indexed(),
     }),
     userProfiles: i.entity({
-      userId: i.string().unique().indexed(),
+      createdAt: i.number(),
       name: i.string(),
-      createdAt: i.number(),
-    }),
-    
-    // Admin Panel Entities
-    adminUsers: i.entity({
       userId: i.string().unique().indexed(),
-      role: i.string(), // 'super_admin' | 'admin' | 'moderator'
-      permissions: i.string(), // JSON array of permissions
-      mfaEnabled: i.boolean(),
-      mfaSecret: i.string().optional(), // TOTP secret for 2FA
-      createdAt: i.number(),
-      createdBy: i.string(), // Admin who granted access
-      lastActiveAt: i.number().optional(),
     }),
-    
-    auditLogs: i.entity({
-      adminId: i.string().indexed(),
-      adminEmail: i.string(), // Denormalized for quick display
-      action: i.string(), // e.g., 'user.suspend', 'url.delete'
-      targetType: i.string(), // 'user' | 'url' | 'system' | 'admin'
-      targetId: i.string(),
-      metadata: i.string(), // JSON object with action details
-      ipAddress: i.string(),
-      userAgent: i.string(),
-      timestamp: i.number(),
-    }),
-    
     userStatus: i.entity({
-      userId: i.string().unique().indexed(),
-      status: i.string(), // 'active' | 'suspended' | 'banned'
-      reason: i.string().optional(),
-      notes: i.string().optional(),
-      modifiedBy: i.string(), // Admin ID
       modifiedAt: i.number(),
-    }),
-
-    // Subscription and Billing Entities
-    subscriptions: i.entity({
+      modifiedBy: i.string(),
+      notes: i.string().optional(),
+      reason: i.string().optional(),
+      status: i.string(),
       userId: i.string().unique().indexed(),
-      planId: i.string(), // 'free' | 'starter' | 'growth' | 'business' | 'enterprise' | 'scale' | 'premium'
-      status: i.string(), // 'active' | 'cancelled' | 'past_due' | 'expired' | 'trialing'
-      provider: i.string(), // 'stripe' | 'paypal' | 'none'
-      providerSubscriptionId: i.string().optional(), // Stripe/PayPal subscription ID
-      providerCustomerId: i.string().optional(), // Stripe customer ID or PayPal payer ID
-      currentPeriodStart: i.number(),
-      currentPeriodEnd: i.number(),
-      cancelAtPeriodEnd: i.boolean(),
-      clicksUsed: i.number(), // Clicks used in current billing period
-      clicksLimit: i.number(), // Monthly click limit based on plan
-      createdAt: i.number(),
-      updatedAt: i.number(),
-      cancelledAt: i.number().optional(),
-    }),
-
-    payments: i.entity({
-      userId: i.string().indexed(),
-      subscriptionId: i.string().optional(), // Link to subscription entity ID
-      provider: i.string(), // 'stripe' | 'paypal'
-      providerPaymentId: i.string().indexed(), // Stripe payment intent ID or PayPal order ID
-      amount: i.number(), // Amount in cents
-      currency: i.string(), // 'usd', 'eur', etc.
-      status: i.string(), // 'succeeded' | 'failed' | 'pending' | 'refunded'
-      planId: i.string(), // Plan at time of payment
-      metadata: i.string().optional(), // JSON with additional payment details
-      createdAt: i.number(),
-    }),
-
-    invoices: i.entity({
-      userId: i.string().indexed(),
-      subscriptionId: i.string().optional(),
-      provider: i.string(), // 'stripe' | 'paypal'
-      providerInvoiceId: i.string().optional(),
-      invoiceNumber: i.string().optional(),
-      amount: i.number(), // Amount in cents
-      currency: i.string(),
-      status: i.string(), // 'paid' | 'open' | 'void' | 'uncollectible'
-      pdfUrl: i.string().optional(), // Link to invoice PDF
-      hostedInvoiceUrl: i.string().optional(), // Stripe hosted invoice page
-      periodStart: i.number(),
-      periodEnd: i.number(),
-      createdAt: i.number(),
-      paidAt: i.number().optional(),
-    }),
-
-    usageTracking: i.entity({
-      userId: i.string().indexed(),
-      urlId: i.string().indexed(), // Link to urls entity
-      date: i.string().indexed(), // YYYY-MM-DD format for daily tracking
-      clicks: i.number(), // Number of clicks on this day
-      createdAt: i.number(),
-      updatedAt: i.number(),
     }),
   },
-  {}
-);
+  links: {
+    $usersLinkedPrimaryUser: {
+      forward: {
+        on: "$users",
+        has: "one",
+        label: "linkedPrimaryUser",
+        onDelete: "cascade",
+      },
+      reverse: {
+        on: "$users",
+        has: "many",
+        label: "linkedGuestUsers",
+      },
+    },
+  },
+  rooms: {},
+});
 
-export default graph;
+// This helps Typescript display nicer intellisense
+type _AppSchema = typeof _schema;
+interface AppSchema extends _AppSchema {}
+const schema: AppSchema = _schema;
+
+export type { AppSchema };
+export default schema;
