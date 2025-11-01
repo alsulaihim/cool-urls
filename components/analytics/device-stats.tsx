@@ -22,6 +22,7 @@ interface ClickAnalytics {
   isProxy?: boolean;
   isMobileConnection?: boolean;
   isHosting?: boolean;
+  urlParams?: Record<string, string>;
 }
 
 interface DeviceStatsProps {
@@ -295,6 +296,32 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
     return Object.entries(counts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
+  })();
+
+  // Aggregate URL parameters
+  const urlParamsData = (() => {
+    const paramCounts: Record<string, Record<string, number>> = {};
+    clicks.forEach(click => {
+      if (click.urlParams) {
+        Object.entries(click.urlParams).forEach(([key, value]) => {
+          if (!paramCounts[key]) {
+            paramCounts[key] = {};
+          }
+          paramCounts[key][value] = (paramCounts[key][value] || 0) + 1;
+        });
+      }
+    });
+
+    // Convert to array format for display
+    const result: Array<{ paramName: string; values: Array<{ name: string; value: number }> }> = [];
+    Object.entries(paramCounts).forEach(([paramName, valueCounts]) => {
+      const values = Object.entries(valueCounts)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10); // Show top 10 values per parameter
+      result.push({ paramName, values });
+    });
+    return result;
   })();
 
   // Specific device colors using corporate palette
@@ -572,6 +599,65 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
           }
         />
       </div>
+
+      {/* URL Parameters Section */}
+      {urlParamsData.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 mt-6">
+            <div className="w-8 h-8 border border-black/20 rounded-lg flex items-center justify-center bg-gray-50">
+              <Share2 className="w-4 h-4 text-black" strokeWidth={1.5} />
+            </div>
+            URL Parameters Tracking
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {urlParamsData.map((param, idx) => (
+              <Card key={idx} className="p-5 border">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-8 border border-pink-500/20 rounded-lg flex items-center justify-center bg-pink-50">
+                    <Share2 className="w-4 h-4 text-pink-500" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-foreground text-base">
+                      Parameter: <code className="text-pink-600 bg-pink-50 px-2 py-0.5 rounded text-sm">{param.paramName}</code>
+                    </h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {param.values.reduce((sum, v) => sum + v.value, 0)} total clicks with this parameter
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {param.values.map((item, vidx) => (
+                    <div key={vidx} className="flex items-center justify-between group">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div
+                          className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: COLORS[vidx % COLORS.length], opacity: 0.6 }}
+                        />
+                        <code className="text-sm font-mono text-foreground truncate bg-gray-50 px-2 py-0.5 rounded">
+                          {item.name}
+                        </code>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-1 bg-muted rounded-full overflow-hidden w-16 hidden sm:block">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${(item.value / Math.max(...param.values.map(d => d.value))) * 100}%`,
+                              backgroundColor: COLORS[vidx % COLORS.length],
+                              opacity: 0.6
+                            }}
+                          />
+                        </div>
+                        <span className="text-sm font-semibold text-foreground ml-2 min-w-[2rem] text-right">{item.value}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

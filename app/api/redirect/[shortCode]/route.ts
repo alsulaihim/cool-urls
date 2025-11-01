@@ -255,6 +255,14 @@ export async function GET(
     const acceptLanguage = request.headers.get('accept-language');
     const language = extractLanguage(acceptLanguage);
 
+    // Capture URL parameters
+    const urlParams = request.nextUrl.searchParams;
+    const params: Record<string, string> = {};
+    urlParams.forEach((value, key) => {
+      params[key] = value;
+    });
+    const hasParams = Object.keys(params).length > 0;
+
     // Get geolocation data
     const geoData = await getGeolocation(ip);
     console.log('[Analytics] Geolocation data:', geoData);
@@ -304,6 +312,8 @@ export async function GET(
         // New analytics
         language: language,
         isBot: botDetected,
+        // URL Parameters
+        urlParams: hasParams ? params : undefined,
       };
 
       console.log('[Analytics] Saving analytics:', newClickData);
