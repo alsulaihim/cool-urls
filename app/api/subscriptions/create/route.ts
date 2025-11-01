@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
 import { stripe, createStripeCustomer, createStripeSubscription } from '@/lib/stripe';
 import { createSubscription, recordPayment } from '@/lib/subscription-service';
 import type { PlanId } from '@/lib/pricing';
