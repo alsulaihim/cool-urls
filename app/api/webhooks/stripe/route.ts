@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 import type { PlanId } from '@/lib/pricing';
 import Stripe from 'stripe';
 
@@ -12,6 +12,10 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 export async function POST(request: NextRequest) {
   // Dynamic import to avoid build-time evaluation
   const { createSubscription, updateSubscription, recordPayment } = await import('@/lib/subscription-service');
+
+  // Get Stripe instance
+  const stripe = getStripe();
+
   try {
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');

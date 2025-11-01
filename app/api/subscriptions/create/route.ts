@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { stripe, createStripeCustomer, createStripeSubscription } from '@/lib/stripe';
+import { getStripe, createStripeCustomer, createStripeSubscription } from '@/lib/stripe';
 import type { PlanId } from '@/lib/pricing';
 import { getPlanById } from '@/lib/pricing';
 
@@ -12,6 +12,9 @@ export async function POST(request: NextRequest) {
   // Dynamic import to avoid build-time evaluation
   const { createSubscription, recordPayment } = await import('@/lib/subscription-service');
   try {
+    // Get Stripe instance
+    const stripe = getStripe();
+
     const body = await request.json();
     const { userId, email, planId, paymentMethodId } = body as {
       userId: string;
