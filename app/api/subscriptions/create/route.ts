@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create or retrieve Stripe customer
-    let customer;
+    let customer: Stripe.Customer;
     try {
       // Try to find existing customer by email
       const customers = await stripe.customers.list({ email, limit: 1 });
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create subscription
-    let subscription;
+    let subscription: Stripe.Subscription;
     try {
       subscription = await createStripeSubscription({
         customerId: customer.id,
@@ -114,6 +114,8 @@ export async function POST(request: NextRequest) {
     // Type the expanded invoice properly
     type ExpandedInvoice = Stripe.Invoice & {
       payment_intent?: Stripe.PaymentIntent | string | null;
+      amount_paid: number;
+      currency: string;
     };
 
     const invoice = latestInvoice as ExpandedInvoice;
