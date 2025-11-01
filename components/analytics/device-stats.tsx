@@ -620,7 +620,7 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
             </div>
             URL Parameters Tracking
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className={`grid gap-4 ${urlParamsData.length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
             {urlParamsData.map((param, idx) => (
               <Card key={idx} className="p-5 border">
                 <div className="flex items-center gap-3 mb-4">
