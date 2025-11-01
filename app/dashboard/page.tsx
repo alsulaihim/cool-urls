@@ -17,11 +17,14 @@ import { ClickMap } from '@/components/analytics/click-map';
 import { DeviceStats } from '@/components/analytics/device-stats';
 import { LinksTable } from '@/components/analytics/links-table';
 import { OverviewSparklines } from '@/components/analytics/overview-sparklines';
+import { useSubscription } from '@/lib/useSubscription';
+import { ClicksUsageWidget } from '@/components/dashboard/clicks-usage-widget';
 
 export default function Dashboard() {
   const { user, isLoading } = db.useAuth();
   const router = useRouter();
   const { profile } = useUserProfile(user?.id);
+  const { subscription } = useSubscription(user?.id);
 
   // Query URLs - analytics are stored within each URL
   const { data, isLoading: urlsLoading } = db.useQuery({
@@ -165,7 +168,7 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-6 sm:mb-10 md:mb-12"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div>
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-black mb-2">
                   Welcome back, {getDisplayName()}! 👋
@@ -191,6 +194,15 @@ export default function Dashboard() {
                 </Button>
               </div>
             </div>
+
+            {/* Clicks Usage Widget */}
+            {subscription && (
+              <ClicksUsageWidget
+                clicksUsed={subscription.clicksUsed}
+                planId={subscription.planId}
+                compact={true}
+              />
+            )}
           </motion.div>
 
           {/* Enhanced Stats with Tabs */}
