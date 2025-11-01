@@ -20,27 +20,24 @@ export interface Subscription {
 }
 
 export function useSubscription(userId: string | undefined) {
-  // Temporarily disable subscription queries until schema is synced
-  // TODO: Re-enable when subscriptions entity is available in InstantDB backend
+  // Query subscriptions - wrapped in try/catch for safety
+  try {
+    const { data, isLoading, error } = db.useQuery(
+      userId ? { subscriptions: { $: { where: { userId } } } } : null as any
+    );
 
-  // Return null subscription for now - users default to free plan
-  return { subscription: null, isLoading: false };
+    if (error) {
+      console.warn('Subscriptions query error:', error);
+      return { subscription: null, isLoading: false };
+    }
 
-  // Original implementation (commented out until schema is synced):
-  /*
-  const { data, isLoading, error } = db.useQuery(
-    userId ? { subscriptions: { $: { where: { userId } } } } : null as any
-  );
+    const subscription = userId && data
+      ? (data as any)?.subscriptions?.[0] as Subscription | undefined
+      : null;
 
-  if (error) {
-    console.warn('Subscriptions entity not found in schema. User will default to free plan.');
+    return { subscription: subscription || null, isLoading };
+  } catch (error) {
+    console.warn('Error querying subscriptions:', error);
     return { subscription: null, isLoading: false };
   }
-
-  const subscription = userId && data
-    ? (data as any)?.subscriptions?.[0] as Subscription | undefined
-    : null;
-
-  return { subscription, isLoading };
-  */
 }
