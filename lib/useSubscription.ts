@@ -20,9 +20,16 @@ export interface Subscription {
 }
 
 export function useSubscription(userId: string | undefined) {
-  const { data, isLoading } = db.useQuery(
+  // Don't query if no userId
+  const { data, isLoading, error } = db.useQuery(
     userId ? { subscriptions: { $: { where: { userId } } } } : null as any
   );
+
+  // If there's an error (entity doesn't exist), return null subscription
+  if (error) {
+    console.warn('Subscriptions entity not found in schema. User will default to free plan.');
+    return { subscription: null, isLoading: false };
+  }
 
   const subscription = userId && data
     ? (data as any)?.subscriptions?.[0] as Subscription | undefined
