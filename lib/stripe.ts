@@ -1,17 +1,32 @@
 import Stripe from 'stripe';
 
-// Initialize Stripe with latest API version (lazy initialization for build-time compatibility)
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-10-29.clover',
-  typescript: true,
-});
+// Lazy singleton instance
+let stripeInstance: Stripe | null = null;
 
-// Runtime validation helper
-export function validateStripeKey() {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
+// Get Stripe instance with lazy initialization
+export function getStripe(): Stripe {
+  if (!stripeInstance) {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+
+    if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
+    }
+
+    stripeInstance = new Stripe(secretKey, {
+      apiVersion: '2025-10-29.clover',
+      typescript: true,
+    });
   }
+
+  return stripeInstance;
 }
+
+// Backward compatibility: export stripe getter
+export const stripe = new Proxy({} as Stripe, {
+  get: (target, prop) => {
+    return getStripe()[prop as keyof Stripe];
+  }
+});
 
 // Helper to create a Stripe customer
 export async function createStripeCustomer(params: {

@@ -4,6 +4,10 @@ import { stripe, createStripeCustomer, createStripeSubscription } from '@/lib/st
 import type { PlanId } from '@/lib/pricing';
 import { getPlanById } from '@/lib/pricing';
 
+// Force Node.js runtime and dynamic rendering
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   // Dynamic import to avoid build-time evaluation
   const { createSubscription, recordPayment } = await import('@/lib/subscription-service');
