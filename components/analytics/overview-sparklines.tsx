@@ -115,7 +115,6 @@ export function OverviewSparklines({ urls }: OverviewSparklinesProps) {
   );
 
   // Calculate recent growth (last 7 days vs previous 7 days)
-  const now = Date.now();
   const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
   const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
 
