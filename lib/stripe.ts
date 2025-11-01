@@ -1,14 +1,17 @@
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
-}
-
-// Initialize Stripe with latest API version
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+// Initialize Stripe with latest API version (lazy initialization for build-time compatibility)
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-10-29.clover',
   typescript: true,
 });
+
+// Runtime validation helper
+export function validateStripeKey() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
+  }
+}
 
 // Helper to create a Stripe customer
 export async function createStripeCustomer(params: {
