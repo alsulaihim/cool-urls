@@ -25,7 +25,8 @@
       "Bash(npx instant-cli:*)",
       "Bash(brew install:*)",
       "Bash(stripe login:*)",
-      "Bash(stripe listen:*)"
+      "Bash(stripe listen:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

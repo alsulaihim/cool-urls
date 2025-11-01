@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { init } from '@instantdb/admin';
 import { v4 as uuidv4 } from 'uuid';
 import { UAParser } from 'ua-parser-js';
 import { createHash } from 'crypto';
@@ -19,10 +18,13 @@ interface URLData {
   createdAt: number;
 }
 
-// Lazy initialization for build-time compatibility
-let dbInstance: ReturnType<typeof init> | null = null;
+// Type for InstantDB instance
+type InstantDBInstance = any;
 
-function getDb() {
+// Lazy initialization for build-time compatibility
+let dbInstance: InstantDBInstance | null = null;
+
+async function getDb() {
   if (!dbInstance) {
     const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID;
     const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN;
@@ -31,6 +33,8 @@ function getDb() {
       throw new Error('InstantDB credentials not configured');
     }
 
+    // Dynamic import to prevent module evaluation during build
+    const { init } = await import('@instantdb/admin');
     dbInstance = init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
   }
   return dbInstance;
@@ -202,7 +206,8 @@ export async function GET(
     console.log('[Redirect] Looking for shortCode:', shortCode);
 
     // Query all URLs from InstantDB
-    const result = await getDb().query({
+    const db = await getDb();
+    const result = await db.query({
       urls: {},
     });
 
@@ -315,7 +320,7 @@ export async function GET(
         analyticsArray = analyticsArray.slice(-1000);
       }
 
-      const db = getDb();
+      const db = await getDb();
       await db.transact([
         db.tx.urls[url.id].update({
           clicks: (url.clicks || 0) + 1,
