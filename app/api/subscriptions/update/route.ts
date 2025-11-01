@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         id: updatedSubscription.id,
         planId: newPlanId,
         status: updatedSubscription.status,
-        currentPeriodEnd: updatedSubscription.current_period_end,
+        currentPeriodEnd: (updatedSubscription as any).current_period_end,
       },
     });
 
