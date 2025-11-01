@@ -247,7 +247,7 @@ export default function PricingPage() {
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3, delay: 0.2 }}
                   onClick={handleSubscribe}
-                  disabled={user && userCurrentPlan && selectedPlan === userCurrentPlan.id}
+                  disabled={!!(user && userCurrentPlan && selectedPlan === userCurrentPlan.id)}
                   className={`w-full mt-6 py-3 px-6 rounded-md font-medium text-sm transition-colors ${
                     user && userCurrentPlan && selectedPlan === userCurrentPlan.id
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
