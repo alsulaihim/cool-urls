@@ -6,6 +6,7 @@ import Stripe from 'stripe';
 
 // Force dynamic rendering (don't pre-render during build)
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
