@@ -263,6 +263,12 @@ export async function GET(
     });
     const hasParams = Object.keys(queryParams).length > 0;
 
+    // Debug logging for URL parameters
+    if (hasParams) {
+      console.log('🔍 [URL PARAMS] Captured parameters:', queryParams);
+      console.log('🔍 [URL PARAMS] Full URL:', request.nextUrl.toString());
+    }
+
     // Get geolocation data
     const geoData = await getGeolocation(ip);
     console.log('[Analytics] Geolocation data:', geoData);
@@ -317,6 +323,9 @@ export async function GET(
       };
 
       console.log('[Analytics] Saving analytics:', newClickData);
+      if (newClickData.urlParams) {
+        console.log('🔍 [URL PARAMS] Including URL params in analytics:', newClickData.urlParams);
+      }
 
       // Parse existing analytics data
       let analyticsArray = [];
