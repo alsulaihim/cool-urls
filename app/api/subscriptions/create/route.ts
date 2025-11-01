@@ -4,10 +4,6 @@ import { stripe, createStripeCustomer, createStripeSubscription } from '@/lib/st
 import type { PlanId } from '@/lib/pricing';
 import { getPlanById } from '@/lib/pricing';
 
-// Force dynamic rendering (don't pre-render during build)
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-
 export async function POST(request: NextRequest) {
   // Dynamic import to avoid build-time evaluation
   const { createSubscription, recordPayment } = await import('@/lib/subscription-service');
