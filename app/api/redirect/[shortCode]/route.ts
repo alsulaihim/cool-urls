@@ -8,6 +8,17 @@ import { createHash } from 'crypto';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+// Type for URL object from InstantDB
+interface URLData {
+  id: string;
+  shortCode: string;
+  originalUrl: string;
+  clicks: number;
+  userId: string;
+  analyticsData?: string;
+  createdAt: number;
+}
+
 // Lazy initialization for build-time compatibility
 let dbInstance: ReturnType<typeof init> | null = null;
 
@@ -203,7 +214,7 @@ export async function GET(
     }
 
     // Find the URL with matching shortCode
-    const url = result.urls?.find((u: any) => u.shortCode === shortCode);
+    const url = result.urls?.find((u: any) => u.shortCode === shortCode) as URLData | undefined;
 
     console.log('[Redirect] Found URL:', url ? JSON.stringify(url, null, 2) : 'null');
 
