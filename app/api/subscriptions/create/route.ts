@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the latest invoice and payment intent
-    const latestInvoice = subscription.latest_invoice as Stripe.Invoice | null;
+    const latestInvoice = subscription.latest_invoice;
     if (!latestInvoice || typeof latestInvoice === 'string') {
       return NextResponse.json(
         { error: 'Invalid invoice data' },
@@ -103,7 +103,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const paymentIntent = latestInvoice.payment_intent as Stripe.PaymentIntent | null;
+    // Cast to any to access payment_intent property
+    const paymentIntent = (latestInvoice as any).payment_intent as Stripe.PaymentIntent | string | null;
     if (!paymentIntent || typeof paymentIntent === 'string') {
       return NextResponse.json(
         { error: 'Invalid payment intent data' },
