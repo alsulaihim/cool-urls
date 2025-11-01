@@ -21,6 +21,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [sentEmail, setSentEmail] = useState(false);
   const [error, setError] = useState('');
   const [code, setCode] = useState('');
+  const [isExistingUser, setIsExistingUser] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +29,14 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     setIsLoading(true);
 
     try {
+      // Check if user already exists before sending magic code
+      const { data } = await db.queryOnce({ userProfiles: {} });
+      const profiles = (data as any)?.userProfiles || [];
+
+      // Find if any profile with this email exists (we'll match on email after auth)
+      // For now, we'll check after they sign in
+      setIsExistingUser(false); // Will be checked after sign-in
+
       await db.auth.sendMagicCode({ email });
       setSentEmail(true);
     } catch (err: unknown) {
@@ -46,19 +55,27 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     try {
       // Sign in with magic code
       const result = await db.auth.signInWithMagicCode({ email, code });
-      
-      // Save the user's name to their profile if provided
-      if (result && name.trim()) {
+
+      if (result) {
         // Wait a bit for auth to complete
         setTimeout(async () => {
           try {
-            await db.transact(
-              db.tx.userProfiles[uuidv4()].update({
-                userId: result.user.id,
-                name: name.trim(),
-                createdAt: Date.now(),
-              })
+            // Check if profile already exists
+            const { data } = await db.queryOnce({ userProfiles: {} });
+            const existingProfile = (data as any)?.userProfiles?.find(
+              (p: any) => p.userId === result.user.id
             );
+
+            // Only create profile if it doesn't exist AND name was provided
+            if (!existingProfile && name.trim()) {
+              await db.transact(
+                db.tx.userProfiles[uuidv4()].update({
+                  userId: result.user.id,
+                  name: name.trim(),
+                  createdAt: Date.now(),
+                })
+              );
+            }
           } catch (profileError) {
             console.error('Error saving profile:', profileError);
           }
@@ -71,6 +88,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setName('');
       setCode('');
       setSentEmail(false);
+      setIsExistingUser(false);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Invalid verification code';
       setError(message);
@@ -116,7 +134,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      What shall we call you?
+                      What shall we call you? <span className="text-gray-400 font-normal">(optional)</span>
                     </label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -125,10 +143,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Your first name"
-                        required
                         className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
                       />
                     </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Only needed if this is your first time signing in
+                    </p>
                   </div>
 
                   <div>
