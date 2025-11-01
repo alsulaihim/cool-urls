@@ -34,6 +34,7 @@ export async function createStripeCustomer(params: {
   name?: string;
   userId: string;
 }) {
+  const stripe = getStripe();
   return await stripe.customers.create({
     email: params.email,
     name: params.name,
@@ -49,6 +50,7 @@ export async function createStripeSubscription(params: {
   priceId: string;
   metadata?: Record<string, string>;
 }) {
+  const stripe = getStripe();
   return await stripe.subscriptions.create({
     customer: params.customerId,
     items: [{ price: params.priceId }],
@@ -64,6 +66,7 @@ export async function updateStripeSubscription(params: {
   subscriptionId: string;
   priceId: string;
 }) {
+  const stripe = getStripe();
   const subscription = await stripe.subscriptions.retrieve(params.subscriptionId);
 
   return await stripe.subscriptions.update(params.subscriptionId, {
@@ -77,6 +80,7 @@ export async function updateStripeSubscription(params: {
 
 // Helper to cancel a subscription
 export async function cancelStripeSubscription(subscriptionId: string, cancelAtPeriodEnd: boolean = true) {
+  const stripe = getStripe();
   if (cancelAtPeriodEnd) {
     return await stripe.subscriptions.update(subscriptionId, {
       cancel_at_period_end: true,
@@ -88,6 +92,7 @@ export async function cancelStripeSubscription(subscriptionId: string, cancelAtP
 
 // Helper to create a setup intent for saving payment method
 export async function createSetupIntent(customerId: string) {
+  const stripe = getStripe();
   return await stripe.setupIntents.create({
     customer: customerId,
     payment_method_types: ['card'],
@@ -99,6 +104,7 @@ export async function createCustomerPortalSession(params: {
   customerId: string;
   returnUrl: string;
 }) {
+  const stripe = getStripe();
   return await stripe.billingPortal.sessions.create({
     customer: params.customerId,
     return_url: params.returnUrl,
@@ -107,6 +113,7 @@ export async function createCustomerPortalSession(params: {
 
 // Helper to retrieve subscription details
 export async function getStripeSubscription(subscriptionId: string) {
+  const stripe = getStripe();
   return await stripe.subscriptions.retrieve(subscriptionId, {
     expand: ['default_payment_method', 'customer'],
   });
@@ -114,11 +121,13 @@ export async function getStripeSubscription(subscriptionId: string) {
 
 // Helper to retrieve customer
 export async function getStripeCustomer(customerId: string) {
+  const stripe = getStripe();
   return await stripe.customers.retrieve(customerId);
 }
 
 // Helper to list customer invoices
 export async function listCustomerInvoices(customerId: string, limit: number = 10) {
+  const stripe = getStripe();
   return await stripe.invoices.list({
     customer: customerId,
     limit,
