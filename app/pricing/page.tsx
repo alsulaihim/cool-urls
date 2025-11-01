@@ -13,6 +13,7 @@ import { Elements } from '@stripe/react-stripe-js';
 import { AuthHeader } from '@/components/auth/auth-header';
 import { useSubscription } from '@/lib/useSubscription';
 import { getPlanById } from '@/lib/pricing';
+import PlanChangeModal from '@/components/subscription/plan-change-modal';
 
 // Initialize Stripe with publishable key
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
@@ -28,6 +29,7 @@ export default function PricingPage() {
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('growth');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [showPlanChangeModal, setShowPlanChangeModal] = useState(false);
 
   const plans = getAllPlans();
   const userCurrentPlan = subscription ? getPlanById(subscription.planId) : getPlanById('free');
@@ -60,7 +62,13 @@ export default function PricingPage() {
       return;
     }
 
-    // Show checkout form inline
+    // If user has an active subscription, show plan change modal instead of checkout
+    if (subscription && subscription.providerSubscriptionId && userCurrentPlan && userCurrentPlan.id !== 'free') {
+      setShowPlanChangeModal(true);
+      return;
+    }
+
+    // Show checkout form inline for new subscriptions
     setShowCheckout(true);
 
     // Smooth scroll to checkout form
@@ -70,6 +78,12 @@ export default function PricingPage() {
         block: 'center',
       });
     }, 100);
+  };
+
+  const handlePlanChangeSuccess = () => {
+    // InstantDB will automatically refetch subscription data
+    // Redirect to dashboard with success message
+    router.push('/dashboard?plan-changed=true');
   };
 
   const handleCheckoutSuccess = () => {
@@ -263,6 +277,8 @@ export default function PricingPage() {
                     ? 'Current Plan'
                     : currentPlan.price === 0
                     ? 'Get Started'
+                    : user && subscription && subscription.providerSubscriptionId && userCurrentPlan && userCurrentPlan.id !== 'free'
+                    ? (currentPlan.price > userCurrentPlan.price ? 'Upgrade Plan' : 'Downgrade Plan')
                     : 'Continue'}
                 </motion.button>
               )}
@@ -336,6 +352,19 @@ export default function PricingPage() {
             </div>
           </div>
         </motion.div>
+
+        {/* Plan Change Modal */}
+        {user && subscription && showPlanChangeModal && (
+          <PlanChangeModal
+            isOpen={showPlanChangeModal}
+            onClose={() => setShowPlanChangeModal(false)}
+            currentPlan={userCurrentPlan}
+            newPlan={currentPlan}
+            userId={user.id}
+            subscriptionId={subscription.providerSubscriptionId || ''}
+            onSuccess={handlePlanChangeSuccess}
+          />
+        )}
       </div>
     </div>
   );
