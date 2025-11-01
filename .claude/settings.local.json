@@ -13,7 +13,19 @@
       "Bash(awk:*)",
       "Bash(curl:*)",
       "Bash(npm run setup-admin:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(npx instant-cli push-schema:*)",
+      "Bash(npx instant-cli push:*)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(git log:*)",
+      "Bash(pkill:*)",
+      "Bash(npx instant-cli pull:*)",
+      "Bash(npx instant-cli:*)",
+      "Bash(brew install:*)",
+      "Bash(stripe login:*)",
+      "Bash(stripe listen:*)"
     ],
     "deny": [],
     "ask": []

@@ -4,6 +4,9 @@ import { createSubscription, updateSubscription, recordPayment } from '@/lib/sub
 import type { PlanId } from '@/lib/pricing';
 import Stripe from 'stripe';
 
+// Force dynamic rendering (don't pre-render during build)
+export const dynamic = 'force-dynamic';
+
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(request: NextRequest) {

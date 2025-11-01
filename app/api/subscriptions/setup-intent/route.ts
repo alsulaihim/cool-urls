@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe, createStripeCustomer } from '@/lib/stripe';
 
+// Force dynamic rendering (don't pre-render during build)
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

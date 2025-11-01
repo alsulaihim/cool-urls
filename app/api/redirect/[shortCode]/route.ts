@@ -9,7 +9,21 @@ const db = init({
   adminToken: process.env.INSTANT_ADMIN_TOKEN!,
 });
 
-// Helper function to get geolocation data from IP
+// Helper function to clean up ISP names
+function cleanISPName(isp: string): string {
+  if (!isp) return isp;
+
+  // Simply remove parenthetical information and extra whitespace
+  // Keep the ISP name as-is from the API
+  let cleaned = isp
+    .replace(/\s*\(.*?\)\s*/g, '') // Remove anything in parentheses
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
+
+  return cleaned;
+}
+
+// Helper function to get geolocation and ISP data from IP
 async function getGeolocation(ip: string) {
   try {
     // If localhost IP, try to get the real public IP first
@@ -32,8 +46,9 @@ async function getGeolocation(ip: string) {
 
     console.log('[Geolocation] Fetching location for IP:', ip);
 
-    // Using ip-api.com for free geolocation (rate limited to 45 requests per minute)
-    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,regionName,lat,lon`, {
+    // Using ip-api.com for free geolocation with ISP data (rate limited to 45 requests per minute)
+    // Include proxy, mobile, hosting, and timezone fields
+    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,regionName,lat,lon,isp,org,proxy,mobile,hosting,timezone`, {
       next: { revalidate: 3600 } // Cache for 1 hour
     });
 
@@ -52,6 +67,12 @@ async function getGeolocation(ip: string) {
         region: data.regionName,
         latitude: data.lat,
         longitude: data.lon,
+        isp: data.isp,
+        org: data.org,
+        isProxy: data.proxy,
+        isMobile: data.mobile,
+        isHosting: data.hosting,
+        timezone: data.timezone,
       };
     } else {
       console.error('[Geolocation] API returned failure status:', data);
@@ -62,9 +83,87 @@ async function getGeolocation(ip: string) {
   return null;
 }
 
+// Helper function to detect referrer application from user agent and referrer
+function detectReferrerApp(userAgent: string, referrer?: string | null): string | undefined {
+  const ua = userAgent.toLowerCase();
+  const ref = referrer?.toLowerCase() || '';
+
+  // Check referrer URL first (most reliable)
+  if (ref.includes('instagram.com') || ref.includes('ig.me')) return 'Instagram';
+  if (ref.includes('facebook.com') || ref.includes('fb.com') || ref.includes('fb.me')) return 'Facebook';
+  if (ref.includes('twitter.com') || ref.includes('t.co')) return 'Twitter';
+  if (ref.includes('linkedin.com') || ref.includes('lnkd.in')) return 'LinkedIn';
+  if (ref.includes('reddit.com')) return 'Reddit';
+  if (ref.includes('tiktok.com')) return 'TikTok';
+  if (ref.includes('pinterest.com') || ref.includes('pin.it')) return 'Pinterest';
+  if (ref.includes('youtube.com') || ref.includes('youtu.be')) return 'YouTube';
+  if (ref.includes('snapchat.com')) return 'Snapchat';
+  if (ref.includes('telegram.org') || ref.includes('t.me')) return 'Telegram';
+  if (ref.includes('discord.com') || ref.includes('discord.gg')) return 'Discord';
+  if (ref.includes('whatsapp.com')) return 'WhatsApp';
+  if (ref.includes('slack.com')) return 'Slack';
+  if (ref.includes('messenger.com')) return 'Messenger';
+
+  // Check user agent for in-app browsers
+  if (ua.includes('instagram')) return 'Instagram';
+  if (ua.includes('fban') || ua.includes('fbav') || ua.includes('fb_iab')) return 'Facebook';
+  if (ua.includes('twitter')) return 'Twitter';
+  if (ua.includes('linkedin')) return 'LinkedIn';
+  if (ua.includes('pinterest')) return 'Pinterest';
+  if (ua.includes('whatsapp')) return 'WhatsApp';
+  if (ua.includes('snapchat')) return 'Snapchat';
+  if (ua.includes('telegram')) return 'Telegram';
+  if (ua.includes('tiktok')) return 'TikTok';
+  if (ua.includes('discord')) return 'Discord';
+  if (ua.includes('line/')) return 'LINE';
+  if (ua.includes('kakaotalk')) return 'KakaoTalk';
+  if (ua.includes('wechat') || ua.includes('micromessenger')) return 'WeChat';
+
+  // If no specific app detected, return undefined
+  return undefined;
+}
+
 // Helper to hash IP for privacy
 function hashIP(ip: string): string {
   return createHash('sha256').update(ip).digest('hex').substring(0, 16);
+}
+
+// Helper function to detect if a user agent is a bot
+function isBot(userAgent: string): boolean {
+  if (!userAgent) return false;
+
+  const ua = userAgent.toLowerCase();
+  const botPatterns = [
+    'bot', 'crawler', 'spider', 'scraper', 'curl', 'wget', 'python',
+    'java', 'apache', 'http', 'monitor', 'check', 'scan', 'test',
+    'facebook', 'twitter', 'linkedin', 'pinterest', 'slack',
+    'whatsapp', 'telegram', 'discord', 'headless', 'phantom',
+    'selenium', 'puppeteer', 'playwright'
+  ];
+
+  return botPatterns.some(pattern => ua.includes(pattern));
+}
+
+// Helper function to extract primary language from Accept-Language header
+function extractLanguage(acceptLanguage: string | null): string | undefined {
+  if (!acceptLanguage) return undefined;
+
+  // Accept-Language format: "en-US,en;q=0.9,ar;q=0.8"
+  // Extract the first language code
+  const primaryLang = acceptLanguage.split(',')[0].split(';')[0].trim();
+  return primaryLang || undefined;
+}
+
+// Helper function to extract domain from referrer URL
+function extractDomain(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function GET(
@@ -114,9 +213,24 @@ export async function GET(
     // Get referrer
     const referrer = request.headers.get('referer') || request.headers.get('referrer');
 
+    // Get language
+    const acceptLanguage = request.headers.get('accept-language');
+    const language = extractLanguage(acceptLanguage);
+
     // Get geolocation data
     const geoData = await getGeolocation(ip);
     console.log('[Analytics] Geolocation data:', geoData);
+
+    // Detect referrer application
+    const referrerApp = detectReferrerApp(userAgent, referrer);
+    console.log('[Analytics] Referrer app detected:', referrerApp);
+
+    // Detect if bot
+    const botDetected = isBot(userAgent);
+    console.log('[Analytics] Bot detected:', botDetected);
+
+    // Extract referrer domain
+    const referrerDomain = extractDomain(referrer);
 
     // Increment click count and save analytics
     try {
@@ -129,6 +243,14 @@ export async function GET(
         region: geoData?.region,
         latitude: geoData?.latitude,
         longitude: geoData?.longitude,
+        timezone: geoData?.timezone,
+        // ISP - cleaned up for better display
+        isp: geoData?.isp ? cleanISPName(geoData.isp) : undefined,
+        org: geoData?.org,
+        // Network type detection
+        isProxy: geoData?.isProxy,
+        isMobileConnection: geoData?.isMobile,
+        isHosting: geoData?.isHosting,
         // Device & Browser
         deviceType: uaResult.device.type || 'desktop',
         os: uaResult.os.name,
@@ -137,8 +259,13 @@ export async function GET(
         browserVersion: uaResult.browser.version,
         // Metadata
         referrer: referrer || undefined,
+        referrerApp: referrerApp,
+        referrerDomain: referrerDomain,
         userAgent: userAgent,
         ipHash: hashIP(ip),
+        // New analytics
+        language: language,
+        isBot: botDetected,
       };
 
       console.log('[Analytics] Saving analytics:', newClickData);

@@ -2,14 +2,19 @@ import { init } from '@instantdb/admin';
 import type { PlanId } from './pricing';
 import { getPlanById } from './pricing';
 
-const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID || '';
-const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN || '';
-
 // Lazy initialization for build-time compatibility
 let dbInstance: ReturnType<typeof init> | null = null;
 
 function getDb() {
   if (!dbInstance) {
+    const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID || '';
+    const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN || '';
+
+    // Only initialize if we have valid credentials (runtime check)
+    if (!APP_ID || !ADMIN_TOKEN) {
+      throw new Error('InstantDB credentials not configured');
+    }
+
     dbInstance = init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
   }
   return dbInstance;

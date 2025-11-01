@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link2, Copy, CheckCircle2, Link as LinkIcon, BarChart3, LogIn } from 'lucide-react';
+import { Link2, Copy, CheckCircle2, Link as LinkIcon, BarChart3, LogIn, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -417,14 +417,15 @@ export default function Home() {
             </AnimatePresence>
           </Card>
 
-          {/* Dashboard CTA - Show for signed-in users */}
+          {/* Dashboard & Upgrade CTA - Show for signed-in users */}
           {user && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="mt-6 sm:mt-8"
+              className="mt-6 sm:mt-8 space-y-4"
             >
+              {/* Dashboard Link */}
               <Link href="/dashboard">
                 <Card className="border border-gray-200 p-4 sm:p-6 rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -445,17 +446,40 @@ export default function Home() {
                   </div>
                 </Card>
               </Link>
+
+              {/* Upgrade Link */}
+              <Link href="/pricing">
+                <Card className="border-2 border-black p-4 sm:p-6 rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="p-2 sm:p-3 bg-black rounded-lg shrink-0">
+                        <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-black text-sm sm:text-base">Upgrade Your Plan</h3>
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          Get more clicks and unlock premium features
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" className="text-black text-sm sm:text-base self-stretch sm:self-auto">
+                      View Plans →
+                    </Button>
+                  </div>
+                </Card>
+              </Link>
             </motion.div>
           )}
 
-          {/* Login CTA - Show for signed-out users */}
+          {/* Login CTA & Pricing - Show for signed-out users */}
           {!user && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="mt-6 sm:mt-8"
+              className="mt-6 sm:mt-8 space-y-4"
             >
+              {/* Login CTA */}
               <Card className="border border-gray-200 p-6 sm:p-8 rounded-lg bg-gradient-to-br from-gray-50 to-white text-center">
                 <div className="max-w-md mx-auto">
                   <div className="inline-flex p-3 sm:p-4 bg-black/5 rounded-full mb-3 sm:mb-4">
@@ -490,6 +514,28 @@ export default function Home() {
                   </p>
                 </div>
               </Card>
+
+              {/* Pricing Link */}
+              <Link href="/pricing">
+                <Card className="border border-gray-200 p-4 sm:p-6 rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="p-2 sm:p-3 bg-black/5 rounded-lg shrink-0">
+                        <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-black text-sm sm:text-base">View Pricing Plans</h3>
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          See all available plans and features
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" className="text-black text-sm sm:text-base self-stretch sm:self-auto">
+                      View Plans →
+                    </Button>
+                  </div>
+                </Card>
+              </Link>
             </motion.div>
           )}
         </motion.div>
