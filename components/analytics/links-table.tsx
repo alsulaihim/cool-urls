@@ -191,9 +191,9 @@ export function LinksTable({ urls, onCopy, copiedId }: LinksTableProps) {
                           <span className="text-foreground text-xs sm:text-sm">/{url.shortCode}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="py-2 sm:py-3 px-2 sm:px-4 hidden sm:table-cell">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs sm:text-sm text-muted-foreground truncate">
+                      <TableCell className="py-2 sm:py-3 px-2 sm:px-4 hidden sm:table-cell max-w-[200px] lg:max-w-[250px]">
+                        <div className="flex items-center gap-2 w-full">
+                          <span className="text-xs sm:text-sm text-muted-foreground truncate block min-w-0">
                             {url.originalUrl}
                           </span>
                           <a
