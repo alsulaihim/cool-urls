@@ -1,10 +1,26 @@
 import { NextResponse } from 'next/server';
 import { init } from '@instantdb/admin';
 
-const db = init({
-  appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID!,
-  adminToken: process.env.INSTANT_ADMIN_TOKEN!,
-});
+// Force dynamic rendering (don't pre-render during build)
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+// Lazy initialization for build-time compatibility
+let dbInstance: ReturnType<typeof init> | null = null;
+
+function getDb() {
+  if (!dbInstance) {
+    const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID;
+    const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN;
+
+    if (!APP_ID || !ADMIN_TOKEN) {
+      throw new Error('InstantDB credentials not configured');
+    }
+
+    dbInstance = init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
+  }
+  return dbInstance;
+}
 
 export async function GET() {
   try {
@@ -13,7 +29,7 @@ export async function GET() {
     console.log('[Test DB] Admin Token exists:', !!process.env.INSTANT_ADMIN_TOKEN);
 
     // Query all URLs from InstantDB
-    const result = await db.query({
+    const result = await getDb().query({
       urls: {},
     });
 

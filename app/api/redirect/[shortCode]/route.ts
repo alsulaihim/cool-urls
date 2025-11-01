@@ -4,10 +4,26 @@ import { v4 as uuidv4 } from 'uuid';
 import { UAParser } from 'ua-parser-js';
 import { createHash } from 'crypto';
 
-const db = init({
-  appId: process.env.NEXT_PUBLIC_INSTANT_APP_ID!,
-  adminToken: process.env.INSTANT_ADMIN_TOKEN!,
-});
+// Force dynamic rendering (don't pre-render during build)
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+// Lazy initialization for build-time compatibility
+let dbInstance: ReturnType<typeof init> | null = null;
+
+function getDb() {
+  if (!dbInstance) {
+    const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID;
+    const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN;
+
+    if (!APP_ID || !ADMIN_TOKEN) {
+      throw new Error('InstantDB credentials not configured');
+    }
+
+    dbInstance = init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
+  }
+  return dbInstance;
+}
 
 // Helper function to clean up ISP names
 function cleanISPName(isp: string): string {
@@ -175,7 +191,7 @@ export async function GET(
     console.log('[Redirect] Looking for shortCode:', shortCode);
 
     // Query all URLs from InstantDB
-    const result = await db.query({
+    const result = await getDb().query({
       urls: {},
     });
 
@@ -288,6 +304,7 @@ export async function GET(
         analyticsArray = analyticsArray.slice(-1000);
       }
 
+      const db = getDb();
       await db.transact([
         db.tx.urls[url.id].update({
           clicks: (url.clicks || 0) + 1,

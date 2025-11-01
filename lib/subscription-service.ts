@@ -7,12 +7,14 @@ let dbInstance: ReturnType<typeof init> | null = null;
 
 function getDb() {
   if (!dbInstance) {
-    const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID || '';
-    const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN || '';
+    const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID;
+    const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN;
 
     // Only initialize if we have valid credentials (runtime check)
     if (!APP_ID || !ADMIN_TOKEN) {
-      throw new Error('InstantDB credentials not configured');
+      // During build time, credentials might not be available
+      // Return a mock that will throw at runtime if actually used
+      throw new Error('InstantDB credentials not configured. This should only be called at runtime, not during build.');
     }
 
     dbInstance = init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
