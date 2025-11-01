@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
             : session.subscription.id;
 
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-          const userId = subscription.metadata.userId;
-          const planId = subscription.metadata.planId as PlanId;
+          const userId = (subscription as any).metadata.userId;
+          const planId = (subscription as any).metadata.planId as PlanId;
 
           if (userId && planId) {
             await createSubscription({
@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
 
       case 'customer.subscription.created': {
         const subscription = event.data.object as Stripe.Subscription;
-        const userId = subscription.metadata.userId;
-        const planId = subscription.metadata.planId as PlanId;
+        const userId = (subscription as any).metadata.userId;
+        const planId = (subscription as any).metadata.planId as PlanId;
 
         if (userId && planId) {
           await createSubscription({
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
-        const userId = subscription.metadata.userId;
+        const userId = (subscription as any).metadata.userId;
 
         if (userId) {
           const updates: any = {};
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
-        const userId = subscription.metadata.userId;
+        const userId = (subscription as any).metadata.userId;
 
         if (userId) {
           await updateSubscription({
@@ -139,13 +139,13 @@ export async function POST(request: NextRequest) {
       }
 
       case 'invoice.payment_succeeded': {
-        const invoice = event.data.object as Stripe.Invoice;
+        const invoice = event.data.object as any;
         const subscription = invoice.subscription;
 
         if (subscription && invoice.customer_email) {
           const subscriptionObj = await stripe.subscriptions.retrieve(subscription as string);
-          const userId = subscriptionObj.metadata.userId;
-          const planId = subscriptionObj.metadata.planId as PlanId;
+          const userId = (subscriptionObj as any).metadata.userId;
+          const planId = (subscriptionObj as any).metadata.planId as PlanId;
 
           if (userId && planId) {
             await recordPayment({
@@ -170,13 +170,13 @@ export async function POST(request: NextRequest) {
       }
 
       case 'invoice.payment_failed': {
-        const invoice = event.data.object as Stripe.Invoice;
+        const invoice = event.data.object as any;
         const subscription = invoice.subscription;
 
         if (subscription) {
           const subscriptionObj = await stripe.subscriptions.retrieve(subscription as string);
-          const userId = subscriptionObj.metadata.userId;
-          const planId = subscriptionObj.metadata.planId as PlanId;
+          const userId = (subscriptionObj as any).metadata.userId;
+          const planId = (subscriptionObj as any).metadata.planId as PlanId;
 
           if (userId && planId) {
             // Update subscription status to past_due
