@@ -69,14 +69,14 @@ export default function PricingPage() {
 
   const handleCheckoutSuccess = () => {
     setShowCheckout(false);
-    setSelectedPlan(null);
+    setSelectedPlan('free');
     // Show success message and redirect to dashboard
     router.push('/dashboard?upgraded=true');
   };
 
   const handleCheckoutCancel = () => {
     setShowCheckout(false);
-    setSelectedPlan(null);
+    setSelectedPlan('free');
   };
 
   return (
