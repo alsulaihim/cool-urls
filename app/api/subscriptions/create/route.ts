@@ -111,17 +111,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Cast to any to access payment_intent property
-    const paymentIntent = (latestInvoice as any).payment_intent as Stripe.PaymentIntent | string | null;
-    if (!paymentIntent || typeof paymentIntent === 'string') {
+    // Type the expanded invoice properly
+    type ExpandedInvoice = Stripe.Invoice & {
+      payment_intent?: Stripe.PaymentIntent | string | null;
+    };
+
+    const invoice = latestInvoice as ExpandedInvoice;
+    const paymentIntentRaw = invoice.payment_intent;
+
+    if (!paymentIntentRaw || typeof paymentIntentRaw === 'string') {
       return NextResponse.json(
         { error: 'Invalid payment intent data' },
         { status: 500 }
       );
     }
 
+    const paymentIntent = paymentIntentRaw as Stripe.PaymentIntent;
+
     // Check if payment requires confirmation (3D Secure)
-    if (paymentIntent?.status === 'requires_action' || paymentIntent?.status === 'requires_confirmation') {
+    if (paymentIntent.status === 'requires_action' || paymentIntent.status === 'requires_confirmation') {
       return NextResponse.json({
         requiresAction: true,
         clientSecret: paymentIntent.client_secret,
@@ -130,7 +138,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Payment is processing or requires payment method
-    if (paymentIntent?.status === 'requires_payment_method' || paymentIntent?.status === 'processing') {
+    if (paymentIntent.status === 'requires_payment_method' || paymentIntent.status === 'processing') {
       return NextResponse.json({
         requiresAction: true,
         clientSecret: paymentIntent.client_secret,
@@ -140,7 +148,7 @@ export async function POST(request: NextRequest) {
 
     // Payment succeeded or subscription is active/trialing
     if (
-      paymentIntent?.status === 'succeeded' ||
+      paymentIntent.status === 'succeeded' ||
       subscription.status === 'active' ||
       subscription.status === 'trialing'
     ) {
@@ -154,14 +162,14 @@ export async function POST(request: NextRequest) {
       });
 
       // Record the payment if there is one
-      if (paymentIntent && latestInvoice && paymentIntent.status === 'succeeded') {
+      if (paymentIntent.status === 'succeeded') {
         await recordPayment({
           userId,
           subscriptionId: subscription.id,
           provider: 'stripe',
           providerPaymentId: paymentIntent.id,
-          amount: latestInvoice.amount_paid,
-          currency: latestInvoice.currency,
+          amount: invoice.amount_paid,
+          currency: invoice.currency,
           status: 'succeeded',
           planId,
         });
@@ -176,14 +184,14 @@ export async function POST(request: NextRequest) {
 
     // Log detailed error information for debugging
     console.error('Unexpected payment/subscription state:', {
-      paymentIntentStatus: paymentIntent?.status,
+      paymentIntentStatus: paymentIntent.status,
       subscriptionStatus: subscription.status,
       subscriptionId: subscription.id,
     });
 
     // Payment failed or unexpected state
     return NextResponse.json(
-      { error: `Payment failed with status: ${paymentIntent?.status || 'unknown'}` },
+      { error: `Payment failed with status: ${paymentIntent.status}` },
       { status: 400 }
     );
 
