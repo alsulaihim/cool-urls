@@ -14,7 +14,12 @@ import { AuthHeader } from '@/components/auth/auth-header';
 import { useSubscription } from '@/lib/useSubscription';
 import { getPlanById } from '@/lib/pricing';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+// Initialize Stripe with publishable key
+const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+if (!publishableKey) {
+  console.error('❌ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not set in environment variables');
+}
+const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
 
 export default function PricingPage() {
   const { user } = db.useAuth();
@@ -286,15 +291,24 @@ export default function PricingPage() {
                   </p>
                 </div>
 
-                <Elements stripe={stripePromise}>
-                  <CheckoutForm
-                    planId={selectedPlan}
-                    userId={user.id}
-                    email={user.email || ''}
-                    onSuccess={handleCheckoutSuccess}
-                    onCancel={handleCheckoutCancel}
-                  />
-                </Elements>
+                {!stripePromise ? (
+                  <div className="p-8 text-center">
+                    <p className="text-red-600 font-medium mb-2">Stripe is not configured</p>
+                    <p className="text-sm text-gray-600">
+                      Please contact support. Error: Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+                    </p>
+                  </div>
+                ) : (
+                  <Elements stripe={stripePromise}>
+                    <CheckoutForm
+                      planId={selectedPlan}
+                      userId={user.id}
+                      email={user.email || ''}
+                      onSuccess={handleCheckoutSuccess}
+                      onCancel={handleCheckoutCancel}
+                    />
+                  </Elements>
+                )}
               </div>
             </motion.div>
           )}
