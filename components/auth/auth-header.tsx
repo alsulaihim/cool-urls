@@ -4,14 +4,19 @@ import { useState } from 'react';
 import { db } from '@/lib/instant';
 import { Button } from '@/components/ui/button';
 import { AuthModal } from './auth-modal';
-import { LogOut, User, BarChart3 } from 'lucide-react';
+import { LogOut, User, BarChart3, Zap, Crown, Rocket, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSubscription } from '@/lib/useSubscription';
+import { getPlanById } from '@/lib/pricing';
 
 export function AuthHeader() {
   const { isLoading, user, error } = db.useAuth();
+  const { subscription, isLoading: subLoading } = useSubscription(user?.id);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const router = useRouter();
+
+  const currentPlan = subscription ? getPlanById(subscription.planId) : getPlanById('free');
 
   const handleSignOut = () => {
     db.auth.signOut();
@@ -48,7 +53,30 @@ export function AuthHeader() {
                     Dashboard
                   </Button>
                 </Link>
+                <Link href="/pricing" className="hidden sm:block">
+                  <Button variant="ghost" className="text-gray-600 hover:text-black hover:bg-gray-50">
+                    <Zap className="w-4 h-4 mr-2" />
+                    Pricing
+                  </Button>
+                </Link>
                 <div className="flex items-center gap-2 sm:gap-3">
+                  {/* Plan Badge */}
+                  {!subLoading && currentPlan && (
+                    <Link href="/pricing">
+                      <div className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:opacity-80 ${
+                        currentPlan.id === 'enterprise'
+                          ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                          : currentPlan.id === 'growth'
+                          ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                          : 'bg-gray-100 text-gray-700 border border-gray-200'
+                      }`}>
+                        {currentPlan.id === 'enterprise' && <Crown className="w-3 h-3" />}
+                        {currentPlan.id === 'growth' && <Rocket className="w-3 h-3" />}
+                        {currentPlan.id === 'free' && <Star className="w-3 h-3" />}
+                        <span>{currentPlan.name}</span>
+                      </div>
+                    </Link>
+                  )}
                   <div className="hidden md:flex items-center gap-2 text-sm text-gray-600">
                     <User className="w-4 h-4" />
                     <span className="max-w-[150px] truncate">{user.email}</span>
@@ -65,13 +93,21 @@ export function AuthHeader() {
                 </div>
               </>
             ) : (
-              <Button
-                onClick={() => setShowAuthModal(true)}
-                data-auth-trigger
-                className="bg-black text-white hover:bg-gray-800"
-              >
-                Sign In
-              </Button>
+              <>
+                <Link href="/pricing" className="hidden sm:block">
+                  <Button variant="ghost" className="text-gray-600 hover:text-black hover:bg-gray-50">
+                    <Zap className="w-4 h-4 mr-2" />
+                    Pricing
+                  </Button>
+                </Link>
+                <Button
+                  onClick={() => setShowAuthModal(true)}
+                  data-auth-trigger
+                  className="bg-black text-white hover:bg-gray-800"
+                >
+                  Sign In
+                </Button>
+              </>
             )}
           </div>
         </div>
