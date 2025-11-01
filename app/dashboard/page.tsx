@@ -15,7 +15,6 @@ import { useUserProfile } from '@/lib/useUserProfile';
 import { ClickSparkline } from '@/components/analytics/click-sparkline';
 import { ClickMap } from '@/components/analytics/click-map';
 import { DeviceStats } from '@/components/analytics/device-stats';
-import { OverviewStats } from '@/components/analytics/overview-stats';
 import { LinksTable } from '@/components/analytics/links-table';
 import { OverviewSparklines } from '@/components/analytics/overview-sparklines';
 
@@ -208,20 +207,11 @@ export default function Dashboard() {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
-              {/* Overview Stats */}
+              {/* Activity Trends with All Stats */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <OverviewStats urls={urls} />
-              </motion.div>
-
-              {/* Activity Trends Sparklines */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
               >
                 <OverviewSparklines urls={urls} />
               </motion.div>

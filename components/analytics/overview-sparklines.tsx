@@ -3,7 +3,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { LineChart, Line, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
-import { TrendingUp, Users, Globe } from 'lucide-react';
+import { TrendingUp, Users, Globe, Link2, MousePointerClick, Zap } from 'lucide-react';
 
 interface OverviewSparklinesProps {
   urls: any[];
@@ -94,10 +94,42 @@ export function OverviewSparklines({ urls }: OverviewSparklinesProps) {
 
   const chartData = Array.from(dailyMap.values());
 
-  // Calculate totals
-  const totalClicks = chartData.reduce((sum, d) => sum + d.clicks, 0);
+  // Calculate totals and stats
+  const totalLinks = urls.length;
+  const totalClicks = urls.reduce((sum, url) => sum + (url.clicks || 0), 0);
   const totalVisitors = new Set(allAnalytics.map(c => c.ipHash).filter(Boolean)).size;
   const totalCountries = new Set(allAnalytics.map(c => c.country).filter(Boolean)).size;
+
+  // Calculate average clicks per link
+  const avgClicksPerLink = totalLinks > 0 ? Math.round(totalClicks / totalLinks) : 0;
+
+  // Calculate click-through rate (unique vs total)
+  const clickThroughRate = totalClicks > 0
+    ? Math.round((totalVisitors / totalClicks) * 100)
+    : 0;
+
+  // Calculate top performing link
+  const topLink = urls.reduce((max, url) =>
+    (url.clicks || 0) > (max.clicks || 0) ? url : max,
+    urls[0] || { clicks: 0 }
+  );
+
+  // Calculate recent growth (last 7 days vs previous 7 days)
+  const now = Date.now();
+  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
+
+  const recentClicks = allAnalytics.filter(
+    click => click.timestamp && click.timestamp > sevenDaysAgo
+  ).length;
+
+  const previousClicks = allAnalytics.filter(
+    click => click.timestamp && click.timestamp > fourteenDaysAgo && click.timestamp <= sevenDaysAgo
+  ).length;
+
+  const growthRate = previousClicks > 0
+    ? Math.round(((recentClicks - previousClicks) / previousClicks) * 100)
+    : recentClicks > 0 ? 100 : 0;
 
   // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {
@@ -142,39 +174,81 @@ export function OverviewSparklines({ urls }: OverviewSparklinesProps) {
         <p className="text-xs sm:text-sm text-muted-foreground">Last 30 days performance overview</p>
       </div>
 
-      {/* Metric Cards on Top */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
-        {/* Total Clicks */}
-        <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-gray-50 border border-gray-200">
-          <div className="p-1.5 sm:p-2 rounded-md bg-gray-100">
-            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+      {/* All Stats Cards - 6 cards in responsive grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        {/* Total Links */}
+        <div className="flex flex-col gap-2 p-3 sm:p-4 rounded-lg bg-gray-50 border border-gray-200">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-gray-100">
+              <Link2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+            </div>
+            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">Total Links</p>
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">Total Clicks</p>
-            <p className="text-xl sm:text-2xl font-bold text-foreground">{totalClicks.toLocaleString()}</p>
+          <p className="text-lg sm:text-xl font-bold text-foreground">{totalLinks}</p>
+        </div>
+
+        {/* Total Clicks */}
+        <div className="flex flex-col gap-2 p-3 sm:p-4 rounded-lg bg-gray-50 border border-gray-200">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-gray-100">
+              <MousePointerClick className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+            </div>
+            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">Total Clicks</p>
+          </div>
+          <div className="flex items-baseline gap-1.5">
+            <p className="text-lg sm:text-xl font-bold text-foreground">{totalClicks.toLocaleString()}</p>
+            {growthRate !== 0 && (
+              <span className={`text-[10px] font-medium ${growthRate > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {growthRate > 0 ? '+' : ''}{growthRate}%
+              </span>
+            )}
           </div>
         </div>
 
         {/* Unique Visitors */}
-        <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-gray-50 border border-gray-200">
-          <div className="p-1.5 sm:p-2 rounded-md bg-gray-100">
-            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+        <div className="flex flex-col gap-2 p-3 sm:p-4 rounded-lg bg-gray-50 border border-gray-200">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-gray-100">
+              <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+            </div>
+            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">Unique Visitors</p>
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">Unique Visitors</p>
-            <p className="text-xl sm:text-2xl font-bold text-foreground">{totalVisitors.toLocaleString()}</p>
-          </div>
+          <p className="text-lg sm:text-xl font-bold text-foreground">{totalVisitors.toLocaleString()}</p>
+          <p className="text-[10px] text-muted-foreground">{clickThroughRate}% unique</p>
         </div>
 
         {/* Global Reach */}
-        <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-gray-50 border border-gray-200">
-          <div className="p-1.5 sm:p-2 rounded-md bg-gray-100">
-            <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+        <div className="flex flex-col gap-2 p-3 sm:p-4 rounded-lg bg-gray-50 border border-gray-200">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-gray-100">
+              <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+            </div>
+            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">Countries</p>
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-muted-foreground">Global Reach</p>
-            <p className="text-xl sm:text-2xl font-bold text-foreground">{totalCountries}</p>
+          <p className="text-lg sm:text-xl font-bold text-foreground">{totalCountries}</p>
+        </div>
+
+        {/* Avg Clicks/Link */}
+        <div className="flex flex-col gap-2 p-3 sm:p-4 rounded-lg bg-gray-50 border border-gray-200">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-gray-100">
+              <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+            </div>
+            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">Avg/Link</p>
           </div>
+          <p className="text-lg sm:text-xl font-bold text-foreground">{avgClicksPerLink}</p>
+        </div>
+
+        {/* Top Performer */}
+        <div className="flex flex-col gap-2 p-3 sm:p-4 rounded-lg bg-gray-50 border border-gray-200">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-md bg-gray-100">
+              <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-700" />
+            </div>
+            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground">Top Link</p>
+          </div>
+          <p className="text-lg sm:text-xl font-bold text-foreground">{topLink.clicks || 0}</p>
+          <p className="text-[10px] text-muted-foreground truncate">{topLink.shortCode ? `/${topLink.shortCode}` : 'None'}</p>
         </div>
       </div>
 
