@@ -327,6 +327,8 @@ export async function GET(
       }
 
       const db = await getDb();
+
+      // Update URL clicks and analytics
       await db.transact([
         db.tx.urls[url.id].update({
           clicks: (url.clicks || 0) + 1,
@@ -334,6 +336,32 @@ export async function GET(
         }),
       ]);
       console.log('[Analytics] Click analytics saved successfully for:', shortCode);
+
+      // Update subscription clicksUsed counter
+      try {
+        const subscriptionResult = await db.query({
+          subscriptions: {
+            $: {
+              where: {
+                userId: url.userId,
+              },
+            },
+          },
+        });
+
+        if (subscriptionResult.subscriptions && subscriptionResult.subscriptions.length > 0) {
+          const subscription = subscriptionResult.subscriptions[0];
+          await db.transact([
+            db.tx.subscriptions[subscription.id].update({
+              clicksUsed: (subscription.clicksUsed || 0) + 1,
+            }),
+          ]);
+          console.log('[Subscription] Updated clicksUsed for user:', url.userId);
+        }
+      } catch (subError) {
+        console.error('[Subscription] Error updating clicksUsed:', subError);
+        // Don't fail the redirect if subscription update fails
+      }
     } catch (updateError) {
       console.error('Error saving analytics:', updateError);
       // Continue anyway, redirect is more important
