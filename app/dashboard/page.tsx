@@ -5,14 +5,19 @@ import { db } from '@/lib/instant';
 import { AuthHeader } from '@/components/auth/auth-header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link2, MousePointerClick, Calendar, Copy, CheckCircle2, Trash2, ExternalLink, Plus, LogOut, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
+import { Link2, MousePointerClick, Calendar, Copy, CheckCircle2, Trash2, ExternalLink, Plus, LogOut, ChevronDown, ChevronUp, BarChart3, LayoutDashboard, List } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUserProfile } from '@/lib/useUserProfile';
 import { ClickSparkline } from '@/components/analytics/click-sparkline';
 import { ClickMap } from '@/components/analytics/click-map';
 import { DeviceStats } from '@/components/analytics/device-stats';
+import { OverviewStats } from '@/components/analytics/overview-stats';
+import { LinksTable } from '@/components/analytics/links-table';
+import { OverviewSparklines } from '@/components/analytics/overview-sparklines';
 
 export default function Dashboard() {
   const { user, isLoading } = db.useAuth();
@@ -110,7 +115,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-white">
         <AuthHeader />
         <div className="container mx-auto px-4 py-16">
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-[1400px] mx-auto">
             <div className="animate-pulse space-y-8">
               <div className="h-10 bg-gray-200 rounded w-1/4" />
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -154,7 +159,7 @@ export default function Dashboard() {
       <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-white pointer-events-none" />
 
       <div className="relative z-10 container mx-auto px-3 sm:px-4 py-6 sm:py-12 md:py-16">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-[1400px] mx-auto">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -189,53 +194,63 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Stats Cards */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
-            className="grid grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-10 md:mb-12"
-          >
-            <Card className="p-3 sm:p-6 border border-gray-200 rounded-lg bg-white">
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4">
-                <div className="p-2 bg-black/5 rounded-lg shrink-0">
-                  <Link2 className="w-4 h-4 sm:w-6 sm:h-6 text-black" />
-                </div>
-                <div className="text-center sm:text-left">
-                  <p className="text-[10px] sm:text-sm text-gray-500">Total Links</p>
-                  <p className="text-lg sm:text-3xl font-bold text-black">{totalLinks}</p>
-                </div>
-              </div>
-            </Card>
+          {/* Enhanced Stats with Tabs */}
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="overview" className="flex items-center gap-2">
+                <LayoutDashboard className="w-4 h-4" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger value="links" className="flex items-center gap-2">
+                <List className="w-4 h-4" />
+                Links
+              </TabsTrigger>
+            </TabsList>
 
-            <Card className="p-3 sm:p-6 border border-gray-200 rounded-lg bg-white">
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4">
-                <div className="p-2 bg-black/5 rounded-lg shrink-0">
-                  <MousePointerClick className="w-4 h-4 sm:w-6 sm:h-6 text-black" />
-                </div>
-                <div className="text-center sm:text-left">
-                  <p className="text-[10px] sm:text-sm text-gray-500">Total Clicks</p>
-                  <p className="text-lg sm:text-3xl font-bold text-black">{totalClicks}</p>
-                </div>
-              </div>
-            </Card>
+            <TabsContent value="overview" className="space-y-6">
+              {/* Overview Stats */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <OverviewStats urls={urls} />
+              </motion.div>
 
-            <Card className="p-3 sm:p-6 border border-gray-200 rounded-lg bg-white">
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4">
-                <div className="p-2 bg-black/5 rounded-lg shrink-0">
-                  <Calendar className="w-4 h-4 sm:w-6 sm:h-6 text-black" />
-                </div>
-                <div className="text-center sm:text-left">
-                  <p className="text-[10px] sm:text-sm text-gray-500">Member Since</p>
-                  <p className="text-sm sm:text-lg font-bold text-black">
-                    {new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+              {/* Activity Trends Sparklines */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+              >
+                <OverviewSparklines urls={urls} />
+              </motion.div>
+
+              {/* Section Separator */}
+              <Separator className="my-6" />
+
+              {/* Links Performance Table */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+              >
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-black">Link Performance</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Detailed analytics for all your shortened links
                   </p>
                 </div>
-              </div>
-            </Card>
-          </motion.div>
+                <LinksTable
+                  urls={urls}
+                  onCopy={copyToClipboard}
+                  copiedId={copiedId}
+                />
+              </motion.div>
+            </TabsContent>
 
-          {/* Links Table */}
+            <TabsContent value="links" className="space-y-6">
+              {/* Links Table */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -598,6 +613,8 @@ export default function Dashboard() {
               )}
             </Card>
           </motion.div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

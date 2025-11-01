@@ -1,6 +1,6 @@
 'use client';
 
-import { Smartphone, Monitor, Tablet, Globe, MapPin } from 'lucide-react';
+import { Smartphone, Monitor, Tablet, Globe, MapPin, Wifi, Share2, Languages, Bot, Users, Shield, Clock, Calendar } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card } from '@/components/ui/card';
 
@@ -10,6 +10,18 @@ interface ClickAnalytics {
   browser?: string;
   country?: string;
   city?: string;
+  isp?: string;
+  org?: string;
+  referrerApp?: string;
+  referrerDomain?: string;
+  language?: string;
+  isBot?: boolean;
+  ipHash?: string;
+  timestamp?: number;
+  timezone?: string;
+  isProxy?: boolean;
+  isMobileConnection?: boolean;
+  isHosting?: boolean;
 }
 
 interface DeviceStatsProps {
@@ -132,6 +144,157 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
+  })();
+
+  // Aggregate ISPs
+  const ispData = (() => {
+    const counts: Record<string, number> = {};
+    clicks.forEach(click => {
+      if (click.isp) {
+        const isp = click.isp;
+        counts[isp] = (counts[isp] || 0) + 1;
+      }
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  })();
+
+  // Aggregate referrer apps
+  const referrerAppData = (() => {
+    const counts: Record<string, number> = {};
+    clicks.forEach(click => {
+      if (click.referrerApp) {
+        const app = click.referrerApp;
+        counts[app] = (counts[app] || 0) + 1;
+      }
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  })();
+
+  // Aggregate referrer domains
+  const referrerDomainData = (() => {
+    const counts: Record<string, number> = {};
+    clicks.forEach(click => {
+      if (click.referrerDomain) {
+        const domain = click.referrerDomain;
+        counts[domain] = (counts[domain] || 0) + 1;
+      }
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  })();
+
+  // Aggregate languages
+  const languageData = (() => {
+    const counts: Record<string, number> = {};
+    clicks.forEach(click => {
+      if (click.language) {
+        const lang = click.language;
+        counts[lang] = (counts[lang] || 0) + 1;
+      }
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  })();
+
+  // Calculate bot vs human traffic
+  const trafficTypeData = (() => {
+    const botCount = clicks.filter(click => click.isBot).length;
+    const humanCount = clicks.length - botCount;
+    return [
+      { name: 'Human', value: humanCount },
+      { name: 'Bot', value: botCount }
+    ].filter(item => item.value > 0);
+  })();
+
+  // Calculate unique vs total clicks
+  const uniqueClicksData = (() => {
+    const uniqueIPs = new Set(clicks.map(click => click.ipHash).filter(Boolean));
+    return [
+      { name: 'Unique Visitors', value: uniqueIPs.size },
+      { name: 'Total Clicks', value: clicks.length }
+    ];
+  })();
+
+  // Aggregate timezones
+  const timezoneData = (() => {
+    const counts: Record<string, number> = {};
+    clicks.forEach(click => {
+      if (click.timezone) {
+        const tz = click.timezone;
+        counts[tz] = (counts[tz] || 0) + 1;
+      }
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  })();
+
+  // Calculate proxy vs clean traffic
+  const proxyData = (() => {
+    const proxyCount = clicks.filter(click => click.isProxy).length;
+    const cleanCount = clicks.length - proxyCount;
+    return [
+      { name: 'Clean', value: cleanCount },
+      { name: 'Proxy/VPN', value: proxyCount }
+    ].filter(item => item.value > 0);
+  })();
+
+  // Calculate hourly click patterns
+  const hourlyData = (() => {
+    const counts: Record<number, number> = {};
+    // Initialize all 24 hours
+    for (let i = 0; i < 24; i++) {
+      counts[i] = 0;
+    }
+    // Count clicks per hour
+    clicks.forEach(click => {
+      if (click.timestamp) {
+        const date = new Date(click.timestamp);
+        const hour = date.getHours();
+        counts[hour] = (counts[hour] || 0) + 1;
+      }
+    });
+    return Object.entries(counts)
+      .map(([hour, value]) => ({
+        name: `${hour.toString().padStart(2, '0')}:00`,
+        value
+      }))
+      .sort((a, b) => parseInt(a.name) - parseInt(b.name));
+  })();
+
+  // Calculate day of week patterns
+  const dayOfWeekData = (() => {
+    const counts: Record<string, number> = {
+      'Sunday': 0,
+      'Monday': 0,
+      'Tuesday': 0,
+      'Wednesday': 0,
+      'Thursday': 0,
+      'Friday': 0,
+      'Saturday': 0
+    };
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    clicks.forEach(click => {
+      if (click.timestamp) {
+        const date = new Date(click.timestamp);
+        const dayName = dayNames[date.getDay()];
+        counts[dayName] = (counts[dayName] || 0) + 1;
+      }
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
   })();
 
   // Specific device colors using corporate palette
@@ -315,6 +478,96 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
           icon={
             <div className="w-8 h-8 border border-gray-500/20 rounded-lg flex items-center justify-center bg-gray-50">
               <MapPin className="w-4 h-4 text-gray-700" strokeWidth={1.5} />
+            </div>
+          }
+        />
+        <StatCard
+          title="Top ISPs"
+          data={ispData}
+          icon={
+            <div className="w-8 h-8 border border-pink-500/20 rounded-lg flex items-center justify-center bg-pink-50">
+              <Wifi className="w-4 h-4 text-pink-500" strokeWidth={1.5} />
+            </div>
+          }
+        />
+        <StatCard
+          title="Top Referrer Apps"
+          data={referrerAppData}
+          icon={
+            <div className="w-8 h-8 border border-black/20 rounded-lg flex items-center justify-center bg-gray-50">
+              <Share2 className="w-4 h-4 text-black" strokeWidth={1.5} />
+            </div>
+          }
+        />
+        <StatCard
+          title="Top Referrer Domains"
+          data={referrerDomainData}
+          icon={
+            <div className="w-8 h-8 border border-gray-500/20 rounded-lg flex items-center justify-center bg-gray-50">
+              <Globe className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+            </div>
+          }
+        />
+        <StatCard
+          title="Top Languages"
+          data={languageData}
+          icon={
+            <div className="w-8 h-8 border border-pink-500/20 rounded-lg flex items-center justify-center bg-pink-50">
+              <Languages className="w-4 h-4 text-pink-500" strokeWidth={1.5} />
+            </div>
+          }
+        />
+        <StatCard
+          title="Traffic Type"
+          data={trafficTypeData}
+          icon={
+            <div className="w-8 h-8 border border-black/20 rounded-lg flex items-center justify-center bg-gray-50">
+              <Bot className="w-4 h-4 text-black" strokeWidth={1.5} />
+            </div>
+          }
+        />
+        <StatCard
+          title="Visitor Stats"
+          data={uniqueClicksData}
+          icon={
+            <div className="w-8 h-8 border border-gray-500/20 rounded-lg flex items-center justify-center bg-gray-50">
+              <Users className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+            </div>
+          }
+        />
+        <StatCard
+          title="Top Timezones"
+          data={timezoneData}
+          icon={
+            <div className="w-8 h-8 border border-pink-500/20 rounded-lg flex items-center justify-center bg-pink-50">
+              <Globe className="w-4 h-4 text-pink-500" strokeWidth={1.5} />
+            </div>
+          }
+        />
+        <StatCard
+          title="Network Type"
+          data={proxyData}
+          icon={
+            <div className="w-8 h-8 border border-black/20 rounded-lg flex items-center justify-center bg-gray-50">
+              <Shield className="w-4 h-4 text-black" strokeWidth={1.5} />
+            </div>
+          }
+        />
+        <StatCard
+          title="Clicks by Hour"
+          data={hourlyData.filter(h => h.value > 0).slice(0, 5).sort((a, b) => b.value - a.value)}
+          icon={
+            <div className="w-8 h-8 border border-gray-500/20 rounded-lg flex items-center justify-center bg-gray-50">
+              <Clock className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+            </div>
+          }
+        />
+        <StatCard
+          title="Clicks by Day"
+          data={dayOfWeekData}
+          icon={
+            <div className="w-8 h-8 border border-pink-500/20 rounded-lg flex items-center justify-center bg-pink-50">
+              <Calendar className="w-4 h-4 text-pink-500" strokeWidth={1.5} />
             </div>
           }
         />
