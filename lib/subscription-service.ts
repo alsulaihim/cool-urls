@@ -1,22 +1,24 @@
-import { init } from '@instantdb/admin';
 import type { PlanId } from './pricing';
 import { getPlanById } from './pricing';
 
-// Lazy initialization for build-time compatibility
-let dbInstance: ReturnType<typeof init> | null = null;
+// Type for the InstantDB instance
+type InstantDBInstance = any;
 
-function getDb() {
+// Lazy initialization for build-time compatibility
+let dbInstance: InstantDBInstance | null = null;
+
+async function getDb() {
   if (!dbInstance) {
     const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID;
     const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN;
 
     // Only initialize if we have valid credentials (runtime check)
     if (!APP_ID || !ADMIN_TOKEN) {
-      // During build time, credentials might not be available
-      // Return a mock that will throw at runtime if actually used
       throw new Error('InstantDB credentials not configured. This should only be called at runtime, not during build.');
     }
 
+    // Dynamic import to prevent module evaluation during build
+    const { init } = await import('@instantdb/admin');
     dbInstance = init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
   }
   return dbInstance;
@@ -81,8 +83,9 @@ export async function createSubscription(params: {
     subscriptionData.createdAt = now;
   }
 
-  await getDb().transact([
-    getDb().tx.subscriptions[params.userId].update(subscriptionData),
+  const db = await getDb();
+  await db.transact([
+    db.tx.subscriptions[params.userId].update(subscriptionData),
   ]);
 
   console.log(`[Subscription] ${existing ? 'Updated' : 'Created'} subscription for user ${params.userId}: ${params.planId}`);
@@ -123,8 +126,9 @@ export async function updateSubscription(params: {
     updates.currentPeriodEnd = params.currentPeriodEnd;
   }
 
-  await getDb().transact([
-    getDb().tx.subscriptions[params.userId].update(updates),
+  const db = await getDb();
+  await db.transact([
+    db.tx.subscriptions[params.userId].update(updates),
   ]);
 }
 
@@ -132,7 +136,8 @@ export async function updateSubscription(params: {
  * Get a user's subscription
  */
 export async function getSubscription(userId: string): Promise<Subscription | null> {
-  const result = await getDb().query({
+  const db = await getDb();
+  const result = await db.query({
     subscriptions: {
       $: {
         where: { userId },
@@ -154,8 +159,9 @@ export async function createFreeSubscription(userId: string): Promise<void> {
   const now = Date.now();
   const oneMonthFromNow = now + 30 * 24 * 60 * 60 * 1000;
 
-  await getDb().transact([
-    getDb().tx.subscriptions[userId].update({
+  const db = await getDb();
+  await db.transact([
+    db.tx.subscriptions[userId].update({
       userId,
       planId: 'free',
       status: 'active',
@@ -178,8 +184,9 @@ export async function incrementClickUsage(userId: string, clicks: number = 1): P
   const subscription = await getSubscription(userId);
 
   if (subscription) {
-    await getDb().transact([
-      getDb().tx.subscriptions[userId].update({
+    const db = await getDb();
+  await db.transact([
+    db.tx.subscriptions[userId].update({
         clicksUsed: subscription.clicksUsed + clicks,
         updatedAt: Date.now(),
       }),
@@ -191,8 +198,9 @@ export async function incrementClickUsage(userId: string, clicks: number = 1): P
  * Reset monthly click usage (called by cron job at start of billing period)
  */
 export async function resetClickUsage(userId: string): Promise<void> {
-  await getDb().transact([
-    getDb().tx.subscriptions[userId].update({
+  const db = await getDb();
+  await db.transact([
+    db.tx.subscriptions[userId].update({
       clicksUsed: 0,
       updatedAt: Date.now(),
     }),
@@ -228,8 +236,9 @@ export async function recordPayment(params: {
 }): Promise<void> {
   const paymentId = `payment_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-  await getDb().transact([
-    getDb().tx.payments[paymentId].update({
+  const db = await getDb();
+  await db.transact([
+    db.tx.payments[paymentId].update({
       userId: params.userId,
       subscriptionId: params.subscriptionId,
       provider: params.provider,
@@ -248,7 +257,8 @@ export async function recordPayment(params: {
  * Get user's payment history
  */
 export async function getPaymentHistory(userId: string, limit: number = 10) {
-  const result = await getDb().query({
+  const db = await getDb();
+  const result = await db.query({
     payments: {
       $: {
         where: { userId },
