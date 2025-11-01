@@ -20,31 +20,7 @@ export interface Subscription {
 }
 
 export function useSubscription(userId: string | undefined) {
-  // TEMPORARY: Subscriptions entity doesn't exist in InstantDB backend yet
-  // The schema file has it defined, but it needs to be manually created in the InstantDB dashboard
-  //
-  // To fix: Go to InstantDB dashboard and create the 'subscriptions' entity with these fields:
-  // - userId: string (unique, indexed)
-  // - planId: string
-  // - status: string
-  // - provider: string
-  // - providerSubscriptionId: string (optional)
-  // - providerCustomerId: string (optional)
-  // - currentPeriodStart: number
-  // - currentPeriodEnd: number
-  // - cancelAtPeriodEnd: boolean
-  // - clicksUsed: number
-  // - clicksLimit: number
-  // - createdAt: number
-  // - updatedAt: number
-  // - cancelledAt: number (optional)
-  //
-  // Until then, all users default to Free plan
-
-  return { subscription: null, isLoading: false };
-
-  // UNCOMMENT THIS WHEN SUBSCRIPTIONS ENTITY EXISTS:
-  /*
+  // Query subscriptions from InstantDB
   const { data, isLoading, error } = db.useQuery(
     userId ? { subscriptions: { $: { where: { userId } } } } : null as any
   );
@@ -59,5 +35,4 @@ export function useSubscription(userId: string | undefined) {
     : null;
 
   return { subscription: subscription || null, isLoading };
-  */
 }
