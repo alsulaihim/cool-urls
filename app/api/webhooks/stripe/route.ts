@@ -117,8 +117,8 @@ export async function POST(request: NextRequest) {
             updates.status = 'cancelled';
           }
 
-          updates.cancelAtPeriodEnd = subscription.cancel_at_period_end;
-          updates.currentPeriodEnd = subscription.current_period_end * 1000; // Convert to ms
+          updates.cancelAtPeriodEnd = (subscription as any).cancel_at_period_end;
+          updates.currentPeriodEnd = (subscription as any).current_period_end * 1000; // Convert to ms
 
           // Detect plan change by checking the price ID
           const currentPriceId = subscription.items.data[0]?.price.id;
