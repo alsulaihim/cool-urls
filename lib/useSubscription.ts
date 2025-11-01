@@ -21,18 +21,27 @@ export interface Subscription {
 
 export function useSubscription(userId: string | undefined) {
   // Query subscriptions from InstantDB
-  const { data, isLoading, error } = db.useQuery(
+  // Permissions have been configured to allow users to view their own subscriptions
+  const result = db.useQuery(
     userId ? { subscriptions: { $: { where: { userId } } } } : null as any
   );
 
-  if (error) {
-    console.warn('Subscriptions query error:', error);
+  if (!result || result.error) {
+    console.warn('Subscriptions query error:', result?.error);
+    // Fallback to null subscription on error
     return { subscription: null, isLoading: false };
   }
 
+  const { data, isLoading } = result;
+
+  if (isLoading) {
+    return { subscription: null, isLoading: true };
+  }
+
+  // Extract subscription data
   const subscription = userId && data
     ? (data as any)?.subscriptions?.[0] as Subscription | undefined
     : null;
 
-  return { subscription: subscription || null, isLoading };
+  return { subscription: subscription || null, isLoading: false };
 }

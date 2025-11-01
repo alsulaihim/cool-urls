@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { db } from '@/lib/instant';
 import { Button } from '@/components/ui/button';
 import { AuthModal } from './auth-modal';
-import { LogOut, User, BarChart3, Zap, Crown, Rocket, Star } from 'lucide-react';
+import { LogOut, User, BarChart3, Zap, Crown, Rocket, Star, Sparkles, TrendingUp, Flame, Gem } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSubscription } from '@/lib/useSubscription';
@@ -64,14 +64,26 @@ export function AuthHeader() {
                   {!subLoading && currentPlan && (
                     <Link href="/pricing">
                       <div className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:opacity-80 ${
-                        currentPlan.id === 'enterprise'
+                        currentPlan.id === 'premium'
+                          ? 'bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-300'
+                          : currentPlan.id === 'scale'
+                          ? 'bg-orange-100 text-orange-700 border border-orange-200'
+                          : currentPlan.id === 'enterprise'
                           ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                          : currentPlan.id === 'business'
+                          ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
                           : currentPlan.id === 'growth'
                           ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                          : currentPlan.id === 'starter'
+                          ? 'bg-green-100 text-green-700 border border-green-200'
                           : 'bg-gray-100 text-gray-700 border border-gray-200'
                       }`}>
+                        {currentPlan.id === 'premium' && <Gem className="w-3 h-3" />}
+                        {currentPlan.id === 'scale' && <Flame className="w-3 h-3" />}
                         {currentPlan.id === 'enterprise' && <Crown className="w-3 h-3" />}
+                        {currentPlan.id === 'business' && <TrendingUp className="w-3 h-3" />}
                         {currentPlan.id === 'growth' && <Rocket className="w-3 h-3" />}
+                        {currentPlan.id === 'starter' && <Sparkles className="w-3 h-3" />}
                         {currentPlan.id === 'free' && <Star className="w-3 h-3" />}
                         <span>{currentPlan.name}</span>
                       </div>
