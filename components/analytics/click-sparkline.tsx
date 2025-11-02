@@ -1,6 +1,6 @@
 'use client';
 
-import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, Activity } from 'lucide-react';
 
@@ -80,9 +80,9 @@ export function ClickSparkline({ data, timeRange = '7d' }: ClickSparklineProps) 
           </div>
         </div>
       </div>
-      <div className="w-full h-32 bg-pink-50 rounded-lg p-2 border border-pink-200">
+      <div className="w-full h-64 bg-pink-50 rounded-lg p-4 border border-pink-200">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData}>
+          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
             <defs>
               <linearGradient id="clickGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#EC4899" stopOpacity={0.3}/>
@@ -90,8 +90,28 @@ export function ClickSparkline({ data, timeRange = '7d' }: ClickSparklineProps) 
                 <stop offset="95%" stopColor="#EC4899" stopOpacity={0.05}/>
               </linearGradient>
             </defs>
-            <XAxis dataKey="time" hide />
-            <YAxis hide />
+            <CartesianGrid strokeDasharray="3 3" stroke="#FFC0CB" opacity={0.3} />
+            <XAxis
+              dataKey="time"
+              tickFormatter={(timestamp) => {
+                const date = new Date(timestamp);
+                if (timeRange === '24h') {
+                  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }
+                return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+              }}
+              tick={{ fill: '#6B7280', fontSize: 11 }}
+              stroke="#D1D5DB"
+              angle={-45}
+              textAnchor="end"
+              height={60}
+            />
+            <YAxis
+              tick={{ fill: '#6B7280', fontSize: 11 }}
+              stroke="#D1D5DB"
+              label={{ value: 'Clicks', angle: -90, position: 'insideLeft', style: { fill: '#6B7280', fontSize: 12 } }}
+              allowDecimals={false}
+            />
             <Tooltip
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
@@ -111,6 +131,13 @@ export function ClickSparkline({ data, timeRange = '7d' }: ClickSparklineProps) 
                 return null;
               }}
             />
+            <Legend
+              verticalAlign="top"
+              height={36}
+              iconType="circle"
+              wrapperStyle={{ paddingBottom: '10px' }}
+              formatter={() => 'Clicks'}
+            />
             <Area
               type="monotone"
               dataKey="clicks"
@@ -118,6 +145,7 @@ export function ClickSparkline({ data, timeRange = '7d' }: ClickSparklineProps) 
               strokeWidth={2}
               fill="url(#clickGradient)"
               animationDuration={800}
+              name="Clicks"
             />
           </AreaChart>
         </ResponsiveContainer>
