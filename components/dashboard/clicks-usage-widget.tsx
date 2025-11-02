@@ -20,23 +20,23 @@ export function ClicksUsageWidget({ clicksUsed, planId, compact = false }: Click
   // Determine color based on usage
   const getColorClasses = () => {
     if (usagePercent >= 90) return {
-      bg: 'bg-red-50',
+      bg: 'bg-white',
       border: 'border-red-200',
       text: 'text-red-700',
       progress: 'bg-red-500',
       badge: 'bg-red-100 text-red-700',
     };
     if (usagePercent >= 75) return {
-      bg: 'bg-orange-50',
+      bg: 'bg-white',
       border: 'border-orange-200',
       text: 'text-orange-700',
       progress: 'bg-orange-500',
       badge: 'bg-orange-100 text-orange-700',
     };
     return {
-      bg: 'bg-green-50',
-      border: 'border-green-200',
-      text: 'text-green-700',
+      bg: 'bg-white',
+      border: 'border-gray-200',
+      text: 'text-gray-900',
       progress: 'bg-green-500',
       badge: 'bg-green-100 text-green-700',
     };
