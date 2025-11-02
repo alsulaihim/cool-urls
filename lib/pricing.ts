@@ -43,7 +43,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     clicksLimit: 1000,
     isBranded: true,
     stripePriceId: 'price_1SOPDNFslEt6ImixLcKFinPI',
-    paypalPlanId: 'P-TEST-STARTER', // TODO: Replace with real PayPal plan ID
+    paypalPlanId: 'P-4WR29071861086255NEDRAZA',
     features: [
       'Up to 1,000 clicks per month',
       'Custom branded URLs with -go suffix',
@@ -64,6 +64,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     isBranded: true,
     isPopular: true,
     stripePriceId: 'price_1SOPDOFslEt6ImixxImtx2i1',
+    paypalPlanId: 'P-0NL797317C096192DNEDRAZQ',
     features: [
       'Up to 25,000 clicks per month',
       'Custom branded URLs with -go suffix',
@@ -85,6 +86,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     clicksLimit: 50000,
     isBranded: true,
     stripePriceId: 'price_1SOPDOFslEt6ImixfrTHqjSm',
+    paypalPlanId: 'P-1JP3304933369332PNEDRAZY',
     features: [
       'Up to 50,000 clicks per month',
       'Custom branded URLs with -go suffix',
@@ -108,6 +110,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     clicksLimit: 100000,
     isBranded: true,
     stripePriceId: 'price_1SOPDPFslEt6Imixj3qEg0un',
+    paypalPlanId: 'P-211250920K272762ENEDRAZY',
     features: [
       'Up to 100,000 clicks per month',
       'Custom branded URLs with -go suffix',
@@ -133,6 +136,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     clicksLimit: 500000,
     isBranded: true,
     stripePriceId: 'price_1SOPDQFslEt6ImixxgeKln1a',
+    paypalPlanId: 'P-3WH93136UP459172KNEDRA2A',
     features: [
       'Up to 500,000 clicks per month',
       'Custom branded URLs with -go suffix',
@@ -160,6 +164,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     clicksLimit: 1000000,
     isBranded: true,
     stripePriceId: 'price_1SOPDRFslEt6ImixU0B7ohJd',
+    paypalPlanId: 'P-1R81717797901360SNEDRA2I',
     features: [
       'Up to 1,000,000+ clicks per month',
       'Custom branded URLs with -go suffix',
