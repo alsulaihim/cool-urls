@@ -195,6 +195,15 @@ export function getPlanByStripePriceId(stripePriceId: string): PricingPlan | nul
   ) || null;
 }
 
+// Helper function to get plan by PayPal plan ID
+export function getPlanByPayPalPlanId(paypalPlanId: string): PricingPlan | null {
+  const plans = getAllPlans();
+  return plans.find(plan =>
+    plan.paypalPlanId === paypalPlanId ||
+    plan.paypalYearlyPlanId === paypalPlanId
+  ) || null;
+}
+
 // Helper function to get all plans as array
 export function getAllPlans(): PricingPlan[] {
   return Object.values(PRICING_PLANS);

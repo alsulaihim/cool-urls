@@ -77,6 +77,7 @@ const _schema = i.schema({
       provider: i.string(),
       providerCustomerId: i.string().optional(),
       providerSubscriptionId: i.string().optional(),
+      paypalSubscriptionId: i.string().optional().indexed(),
       status: i.string(),
       updatedAt: i.number(),
       userId: i.string().unique().indexed(),

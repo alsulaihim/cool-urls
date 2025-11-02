@@ -1,0 +1,15 @@
+{
+  "html.validate.styles": false,
+  "css.validate": false,
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "files.associations": {
+    "email-templates/*.html": "html"
+  },
+  "webhint.ignoreFiles": [
+    "email-templates/**/*.html"
+  ],
+  "edge-devtools.webhint": false
+}
+

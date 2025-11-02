@@ -1,0 +1,20 @@
+# EditorConfig for Cool URLs
+root = true
+
+# Default settings
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# TypeScript/JavaScript
+[*.{ts,tsx,js,jsx}]
+indent_style = space
+indent_size = 2
+
+# Email templates - disable inline style warnings
+[email-templates/*.html]
+# Inline styles are REQUIRED for email clients
+# These warnings are expected and should be ignored
+
