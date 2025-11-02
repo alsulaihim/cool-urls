@@ -80,9 +80,9 @@ export function ClickSparkline({ data, timeRange = '7d' }: ClickSparklineProps) 
           </div>
         </div>
       </div>
-      <div className="w-full h-64 bg-pink-50 rounded-lg p-4 border border-pink-200">
+      <div className="w-full h-64 bg-pink-50 rounded-lg p-2 border border-pink-200">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+          <AreaChart data={chartData} margin={{ top: 25, right: 10, left: -10, bottom: 5 }}>
             <defs>
               <linearGradient id="clickGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#EC4899" stopOpacity={0.3}/>
@@ -96,15 +96,13 @@ export function ClickSparkline({ data, timeRange = '7d' }: ClickSparklineProps) 
               tickFormatter={(timestamp) => {
                 const date = new Date(timestamp);
                 if (timeRange === '24h') {
-                  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  return date.toLocaleTimeString([], { hour: 'numeric' });
                 }
                 return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
               }}
-              tick={{ fill: '#6B7280', fontSize: 11 }}
+              tick={{ fill: '#6B7280', fontSize: 10 }}
               stroke="#D1D5DB"
-              angle={-45}
-              textAnchor="end"
-              height={60}
+              interval="preserveStartEnd"
             />
             <YAxis
               tick={{ fill: '#6B7280', fontSize: 11 }}
