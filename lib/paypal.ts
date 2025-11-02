@@ -1,25 +1,25 @@
-import { PayPalSDK } from '@paypal/paypal-server-sdk';
+import { Client as PayPalClient, Environment } from '@paypal/paypal-server-sdk';
 
 // Lazy singleton instance
-let paypalInstance: PayPalSDK | null = null;
+let paypalInstance: PayPalClient | null = null;
 
 // Get PayPal instance with lazy initialization
-export function getPayPal(): PayPalSDK {
+export function getPayPal(): PayPalClient {
   if (!paypalInstance) {
     const clientId = process.env.PAYPAL_CLIENT_ID;
     const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-    const environment = process.env.NODE_ENV === 'production' ? 'live' : 'sandbox';
+    const isProduction = process.env.NODE_ENV === 'production';
 
     if (!clientId || !clientSecret) {
       throw new Error('PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET must be set in environment variables');
     }
 
-    paypalInstance = new PayPalSDK({
+    paypalInstance = new PayPalClient({
       clientCredentialsAuthCredentials: {
         oAuthClientId: clientId,
         oAuthClientSecret: clientSecret,
       },
-      environment,
+      environment: isProduction ? Environment.Production : Environment.Sandbox,
       logging: {
         logLevel: 'info',
         logRequest: { logBody: true },

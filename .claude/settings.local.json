@@ -26,7 +26,8 @@
       "Bash(brew install:*)",
       "Bash(stripe login:*)",
       "Bash(stripe listen:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(source .env.local)"
     ],
     "deny": [],
     "ask": []

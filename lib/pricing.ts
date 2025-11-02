@@ -43,6 +43,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     clicksLimit: 1000,
     isBranded: true,
     stripePriceId: 'price_1SOPDNFslEt6ImixLcKFinPI',
+    paypalPlanId: 'P-TEST-STARTER', // TODO: Replace with real PayPal plan ID
     features: [
       'Up to 1,000 clicks per month',
       'Custom branded URLs with -go suffix',
