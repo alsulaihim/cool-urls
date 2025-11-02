@@ -1,6 +1,6 @@
 'use client';
 
-import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, Activity } from 'lucide-react';
 
@@ -82,7 +82,7 @@ export function ClickSparkline({ data, timeRange = '7d' }: ClickSparklineProps) 
       </div>
       <div className="w-full h-64 bg-pink-50 rounded-lg p-2 border border-pink-200">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 25, right: 10, left: -10, bottom: 5 }}>
+          <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
             <defs>
               <linearGradient id="clickGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#EC4899" stopOpacity={0.3}/>
@@ -129,13 +129,6 @@ export function ClickSparkline({ data, timeRange = '7d' }: ClickSparklineProps) 
                 return null;
               }}
             />
-            <Legend
-              verticalAlign="top"
-              height={36}
-              iconType="circle"
-              wrapperStyle={{ paddingBottom: '10px' }}
-              formatter={() => 'Clicks'}
-            />
             <Area
               type="monotone"
               dataKey="clicks"
@@ -143,7 +136,6 @@ export function ClickSparkline({ data, timeRange = '7d' }: ClickSparklineProps) 
               strokeWidth={2}
               fill="url(#clickGradient)"
               animationDuration={800}
-              name="Clicks"
             />
           </AreaChart>
         </ResponsiveContainer>
