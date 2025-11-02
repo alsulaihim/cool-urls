@@ -210,9 +210,6 @@ export async function GET(
   try {
     const { shortCode } = await params;
     console.log('[Redirect] Looking for shortCode:', shortCode);
-    console.log('🔍 [REQUEST URL] Full request URL:', request.url);
-    console.log('🔍 [REQUEST URL] nextUrl:', request.nextUrl.toString());
-    console.log('🔍 [REQUEST URL] Search params:', request.nextUrl.searchParams.toString());
 
     // Query all URLs from InstantDB
     const db = await getDb();
@@ -265,12 +262,6 @@ export async function GET(
       queryParams[key] = value;
     });
     const hasParams = Object.keys(queryParams).length > 0;
-
-    // Debug logging for URL parameters
-    if (hasParams) {
-      console.log('🔍 [URL PARAMS] Captured parameters:', queryParams);
-      console.log('🔍 [URL PARAMS] Full URL:', request.nextUrl.toString());
-    }
 
     // Get geolocation data
     const geoData = await getGeolocation(ip);
@@ -326,9 +317,6 @@ export async function GET(
       };
 
       console.log('[Analytics] Saving analytics:', newClickData);
-      if (newClickData.urlParams) {
-        console.log('🔍 [URL PARAMS] Including URL params in analytics:', newClickData.urlParams);
-      }
 
       // Parse existing analytics data
       let analyticsArray = [];

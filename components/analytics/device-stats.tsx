@@ -302,14 +302,6 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
   const urlParamsData = (() => {
     const paramCounts: Record<string, Record<string, number>> = {};
 
-    // Debug: Log clicks with urlParams
-    const clicksWithParams = clicks.filter(click => click.urlParams);
-    console.log('[URL Params Debug] Total clicks:', clicks.length);
-    console.log('[URL Params Debug] Clicks with params:', clicksWithParams.length);
-    if (clicksWithParams.length > 0) {
-      console.log('[URL Params Debug] Sample click with params:', clicksWithParams[0]);
-    }
-
     clicks.forEach(click => {
       if (click.urlParams) {
         Object.entries(click.urlParams).forEach(([key, value]) => {
@@ -331,7 +323,6 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
       result.push({ paramName, values });
     });
 
-    console.log('[URL Params Debug] urlParamsData result:', result);
     return result;
   })();
 
