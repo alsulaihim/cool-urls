@@ -9,8 +9,6 @@ import { Input } from '@/components/ui/input';
 import {
   Link2,
   Search,
-  Trash2,
-  Ban,
   CheckCircle,
   ExternalLink,
   Copy,
@@ -25,7 +23,6 @@ import Link from 'next/link';
  */
 export default function AdminUrlsPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'disabled'>('all');
 
   // Query all URLs
   const { data, isLoading } = db.useQuery({
@@ -35,9 +32,9 @@ export default function AdminUrlsPage() {
 
   // Filter and search URLs
   const filteredUrls = useMemo(() => {
-    if (!data?.urls) return [];
+    const urls = data?.urls || [];
 
-    return data.urls
+    return urls
       .filter(url => {
         const matchesSearch = searchQuery === '' ||
           url.shortCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -47,7 +44,7 @@ export default function AdminUrlsPage() {
         return matchesSearch;
       })
       .sort((a, b) => b.createdAt - a.createdAt);
-  }, [data?.urls, searchQuery, filterStatus]);
+  }, [data?.urls, searchQuery]);
 
   // Get user profile for a userId
   const getUserProfile = (userId: string) => {
@@ -186,6 +183,8 @@ export default function AdminUrlsPage() {
                           <button
                             onClick={() => copyToClipboard(shortUrl)}
                             className="p-1 hover:bg-gray-100 rounded"
+                            aria-label="Copy short URL to clipboard"
+                            title="Copy to clipboard"
                           >
                             <Copy className="w-4 h-4 text-gray-500" />
                           </button>

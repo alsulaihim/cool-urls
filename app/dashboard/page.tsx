@@ -44,9 +44,6 @@ export default function Dashboard() {
   const allUrls = data?.urls || [];
   const urls = user ? allUrls.filter((url) => url.userId === user.id) : [];
 
-  const totalClicks = urls.reduce((sum: number, url: any) => sum + (url.clicks || 0), 0);
-  const totalLinks = urls.length;
-
   // Get user's display name (from profile or email)
   const getDisplayName = (): string => {
     // Use profile name if available
@@ -94,7 +91,7 @@ export default function Dashboard() {
     setExpandedLinkId(expandedLinkId === id ? null : id);
   };
 
-  const getAnalyticsForUrl = (url: any) => {
+  const getAnalyticsForUrl = (url: { id: string; analyticsData?: string }) => {
     console.log('[Dashboard] Getting analytics for URL:', url.id);
     console.log('[Dashboard] Raw analyticsData:', url.analyticsData);
 
