@@ -8,11 +8,16 @@ export function getPayPal(): PayPalClient {
   if (!paypalInstance) {
     const clientId = process.env.PAYPAL_CLIENT_ID;
     const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
-    const isProduction = process.env.NODE_ENV === 'production';
+    // Allow explicit control of PayPal mode via PAYPAL_MODE env var
+    // If not set, defaults to production when NODE_ENV is production
+    const paypalMode = process.env.PAYPAL_MODE || (process.env.NODE_ENV === 'production' ? 'production' : 'sandbox');
+    const isProduction = paypalMode === 'production';
 
     if (!clientId || !clientSecret) {
       throw new Error('PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET must be set in environment variables');
     }
+
+    console.log(`[PayPal] Initializing in ${isProduction ? 'Production' : 'Sandbox'} mode`);
 
     paypalInstance = new PayPalClient({
       clientCredentialsAuthCredentials: {
