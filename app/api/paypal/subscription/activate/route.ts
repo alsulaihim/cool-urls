@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     // Get subscription details from PayPal
     const subscription = await getPayPalSubscription(subscriptionId);
 
+    console.log('[PayPal Activate] Subscription details:', JSON.stringify(subscription, null, 2));
     console.log('[PayPal Activate] Subscription status:', subscription.status);
 
     if (subscription.status !== 'ACTIVE' && subscription.status !== 'APPROVED') {
@@ -32,8 +33,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get plan ID from PayPal plan ID
-    const plan = getPlanByPayPalPlanId(subscription.planId);
+    // Get plan ID from PayPal plan ID (PayPal API returns plan_id with underscore)
+    const paypalPlanId = subscription.plan_id || subscription.planId;
+    console.log('[PayPal Activate] PayPal plan ID:', paypalPlanId);
+
+    const plan = getPlanByPayPalPlanId(paypalPlanId);
 
     if (!plan) {
       return NextResponse.json(
@@ -72,7 +76,7 @@ export async function POST(request: NextRequest) {
         providerSubscriptionId: subscriptionId,
         status: 'active',
         clicksUsed: 0,
-        clicksLimit: 0,
+        clicksLimit: plan.clicksLimit,
         cancelAtPeriodEnd: false,
         currentPeriodStart: Date.now(),
         currentPeriodEnd: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
