@@ -125,6 +125,7 @@ export default function PayPalCheckout({
               label: 'subscribe',
             }}
             createSubscription={async (data, actions) => {
+              console.log('🔵 PayPal: Creating subscription...', { userId, email, planId });
               setLoading(true);
               setError(null);
 
@@ -143,14 +144,17 @@ export default function PayPalCheckout({
                 });
 
                 const result = await response.json();
+                console.log('🔵 PayPal: API response:', result);
 
                 if (!response.ok) {
+                  console.error('🔴 PayPal: API error:', result);
                   throw new Error(result.error || 'Failed to create subscription');
                 }
 
+                console.log('✅ PayPal: Subscription created:', result.subscriptionId);
                 return result.subscriptionId;
               } catch (err: any) {
-                console.error('PayPal subscription creation error:', err);
+                console.error('🔴 PayPal subscription creation error:', err);
                 setError(err.message || 'Failed to create subscription');
                 setLoading(false);
                 throw err;
@@ -196,7 +200,8 @@ export default function PayPalCheckout({
             }}
             onError={(err) => {
               console.error('PayPal error:', err);
-              setError('An error occurred with PayPal. Please try again.');
+              console.error('PayPal error details:', JSON.stringify(err, null, 2));
+              setError(`PayPal error: ${err?.message || 'An error occurred with PayPal. Please try again.'}`);
               setLoading(false);
             }}
           />
