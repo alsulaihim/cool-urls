@@ -268,9 +268,10 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
               {!sentEmail ? (
                 <>
                   {/* OAuth Providers */}
-                  <div className="flex gap-3 mb-6">
-                    {/* Apple Sign In Button */}
-                    {APPLE_SERVICE_ID && APPLE_CLIENT_NAME && (
+                  {(GOOGLE_CLIENT_ID || (APPLE_SERVICE_ID && APPLE_CLIENT_NAME)) ? (
+                    <div className="flex gap-3 mb-6">
+                      {/* Apple Sign In Button */}
+                      {APPLE_SERVICE_ID && APPLE_CLIENT_NAME && (
                       <Button
                         type="button"
                         variant="outline"
@@ -349,17 +350,26 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                         </GoogleOAuthProvider>
                       </div>
                     )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-sm text-amber-800">
+                        <strong>Note:</strong> OAuth providers (Google/Apple Sign In) are not configured. Please use Magic Link authentication below.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Divider */}
-                  <div className="relative mb-6">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-300"></div>
+                  {(GOOGLE_CLIENT_ID || (APPLE_SERVICE_ID && APPLE_CLIENT_NAME)) && (
+                    <div className="relative mb-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300"></div>
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-4 bg-white text-gray-500">Or continue with email</span>
+                      </div>
                     </div>
-                    <div className="relative flex justify-center text-sm">
-                      <span className="px-4 bg-white text-gray-500">Or continue with email</span>
-                    </div>
-                  </div>
+                  )}
 
                   {/* Magic Link Form */}
                   <form onSubmit={handleSubmit} className="space-y-4">
