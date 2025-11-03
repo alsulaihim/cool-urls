@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       subscriptions: {
         $: {
           where: {
-            paypalSubscriptionId: subscriptionId,
+            providerSubscriptionId: subscriptionId,
           },
         },
       },
@@ -69,9 +69,11 @@ export async function POST(request: NextRequest) {
         userId,
         planId: plan.id,
         provider: 'paypal',
-        paypalSubscriptionId: subscriptionId,
+        providerSubscriptionId: subscriptionId,
         status: 'active',
         clicksUsed: 0,
+        clicksLimit: 0,
+        cancelAtPeriodEnd: false,
         currentPeriodStart: Date.now(),
         currentPeriodEnd: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
         createdAt: Date.now(),

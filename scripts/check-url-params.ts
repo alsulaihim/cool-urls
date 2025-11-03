@@ -10,12 +10,12 @@ async function checkUrlParams() {
   console.log('Checking URL parameters in database...\n');
 
   // Query all URLs
-  const { data } = await db.query({
+  const result = await db.query({
     urls: {},
   });
 
   // Find netflix-go link
-  const netflixLink = data.urls.find((url: any) => url.shortCode === 'netflix-go');
+  const netflixLink = result.urls.find((url: any) => url.shortCode === 'netflix-go');
 
   if (!netflixLink) {
     console.log('netflix-go link not found!');

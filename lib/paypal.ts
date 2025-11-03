@@ -20,11 +20,6 @@ export function getPayPal(): PayPalClient {
         oAuthClientSecret: clientSecret,
       },
       environment: isProduction ? Environment.Production : Environment.Sandbox,
-      logging: {
-        logLevel: 'info',
-        logRequest: { logBody: true },
-        logResponse: { logHeaders: true },
-      },
     });
   }
 
@@ -57,7 +52,7 @@ export async function createPayPalSubscription(params: {
     },
   };
 
-  const response = await paypal.subscriptions.subscriptionsCreate(request);
+  const response = await (paypal as any).subscriptions.subscriptionsCreate(request);
   return response.result;
 }
 
@@ -65,7 +60,7 @@ export async function createPayPalSubscription(params: {
 export async function getPayPalSubscription(subscriptionId: string) {
   const paypal = getPayPal();
 
-  const response = await paypal.subscriptions.subscriptionsGet({
+  const response = await (paypal as any).subscriptions.subscriptionsGet({
     subscriptionId,
   });
 
@@ -83,7 +78,7 @@ export async function cancelPayPalSubscription(subscriptionId: string, reason?: 
     },
   };
 
-  const response = await paypal.subscriptions.subscriptionsCancel(request);
+  const response = await (paypal as any).subscriptions.subscriptionsCancel(request);
   return response.result;
 }
 
@@ -98,7 +93,7 @@ export async function suspendPayPalSubscription(subscriptionId: string, reason?:
     },
   };
 
-  const response = await paypal.subscriptions.subscriptionsSuspend(request);
+  const response = await (paypal as any).subscriptions.subscriptionsSuspend(request);
   return response.result;
 }
 
@@ -113,7 +108,7 @@ export async function activatePayPalSubscription(subscriptionId: string, reason?
     },
   };
 
-  const response = await paypal.subscriptions.subscriptionsActivate(request);
+  const response = await (paypal as any).subscriptions.subscriptionsActivate(request);
   return response.result;
 }
 
@@ -137,7 +132,7 @@ export async function verifyPayPalWebhook(params: {
     },
   };
 
-  const response = await paypal.webhooks.verifyWebhookSignature(request);
+  const response = await (paypal as any).webhooks.verifyWebhookSignature(request);
   return response.result;
 }
 

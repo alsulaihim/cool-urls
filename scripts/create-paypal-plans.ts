@@ -37,7 +37,7 @@ async function createPayPalPlans() {
           },
         };
 
-        const productResponse = await paypal.products.productsCreate(productRequest);
+        const productResponse = await (paypal as any).products.productsCreate(productRequest);
         const productId = productResponse.result.id;
         console.log(`  ✓ Product created: ${productId}`);
 
@@ -72,7 +72,7 @@ async function createPayPalPlans() {
           },
         };
 
-        const planResponse = await paypal.subscriptions.plansCreate(planRequest);
+        const planResponse = await (paypal as any).subscriptions.plansCreate(planRequest);
         const planId = planResponse.result.id;
         console.log(`  ✓ Plan created: ${planId}`);
         console.log(`  → Add to lib/pricing.ts: paypalPlanId: '${planId}'\n`);

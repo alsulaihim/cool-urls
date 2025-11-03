@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
           subscriptions: {
             $: {
               where: {
-                paypalSubscriptionId: resource.id,
+                providerSubscriptionId: resource.id,
               },
             },
           },
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
           subscriptions: {
             $: {
               where: {
-                paypalSubscriptionId: resource.id,
+                providerSubscriptionId: resource.id,
               },
             },
           },
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
           await db.transact([
             db.tx.subscriptions[subscription.id].update({
               status: eventType === 'BILLING.SUBSCRIPTION.CANCELLED' ? 'canceled' : 'expired',
-              canceledAt: Date.now(),
+              cancelledAt: Date.now(),
               updatedAt: Date.now(),
             }),
           ]);
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
           subscriptions: {
             $: {
               where: {
-                paypalSubscriptionId: resource.id,
+                providerSubscriptionId: resource.id,
               },
             },
           },
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
           subscriptions: {
             $: {
               where: {
-                paypalSubscriptionId: resource.id,
+                providerSubscriptionId: resource.id,
               },
             },
           },
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
             subscriptions: {
               $: {
                 where: {
-                  paypalSubscriptionId: resource.billing_agreement_id,
+                  providerSubscriptionId: resource.billing_agreement_id,
                 },
               },
             },
