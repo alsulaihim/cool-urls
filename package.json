@@ -17,7 +17,6 @@
   "dependencies": {
     "@instantdb/admin": "^0.22.34",
     "@instantdb/react": "^0.22.34",
-    "@paypal/paypal-server-sdk": "^1.1.0",
     "@paypal/react-paypal-js": "^8.9.2",
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
