@@ -78,6 +78,11 @@ async function getAccessToken(): Promise<string> {
   tokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
 
   console.log('[PayPal] Access token obtained successfully');
+
+  if (!accessToken) {
+    throw new Error('PayPal access token is empty');
+  }
+
   return accessToken;
 }
 
