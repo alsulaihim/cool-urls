@@ -39,6 +39,10 @@ export async function createPayPalSubscription(params: {
 }) {
   const paypal = getPayPal();
 
+  console.log('[PayPal] Creating subscription with plan:', params.planId);
+  console.log('[PayPal] SDK object keys:', Object.keys(paypal));
+  console.log('[PayPal] Has subscriptions?', 'subscriptions' in paypal);
+
   const request = {
     body: {
       planId: params.planId,
@@ -57,8 +61,14 @@ export async function createPayPalSubscription(params: {
     },
   };
 
-  const response = await (paypal as any).subscriptions.subscriptionsCreate(request);
-  return response.result;
+  try {
+    const response = await (paypal as any).subscriptions.subscriptionsCreate(request);
+    return response.result;
+  } catch (error: any) {
+    console.error('[PayPal] Subscription creation failed:', error);
+    console.error('[PayPal] Error details:', error.message, error.stack);
+    throw new Error(`PayPal subscription creation failed: ${error.message}`);
+  }
 }
 
 // Helper to get subscription details
