@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/instant-admin';
 import { cancelPayPalSubscription } from '@/lib/paypal';
-import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-10-29.clover',
-});
+import { getStripe } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
+  const stripe = getStripe();
   try {
     const body = await request.json();
     const { subscriptionId, reason } = body as {
