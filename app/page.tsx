@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { AuthHeader } from '@/components/auth/auth-header';
+import { AuthModal } from '@/components/auth/auth-modal';
 import { SetupBanner } from '@/components/setup-banner';
 import { db } from '@/lib/instant';
 import { nanoid } from 'nanoid';
@@ -18,6 +19,7 @@ export default function Home() {
   const { user } = db.useAuth();
   const [url, setUrl] = useState('');
   const [prefix, setPrefix] = useState('');
+  const [showAuthInline, setShowAuthInline] = useState(false);
   const [shortUrl, setShortUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -423,7 +425,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="mt-6 sm:mt-8 space-y-4"
+              className="mt-6 sm:mt-8 space-y-6"
             >
               {/* Dashboard Link */}
               <Link href="/dashboard">
@@ -449,7 +451,7 @@ export default function Home() {
 
               {/* Upgrade Link */}
               <Link href="/pricing">
-                <Card className="border-2 border-black p-4 sm:p-6 rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer">
+                <Card className="border border-gray-200 p-4 sm:p-6 rounded-lg bg-white hover:bg-gray-50 transition-colors cursor-pointer">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="p-2 sm:p-3 bg-black rounded-lg shrink-0">
@@ -480,38 +482,60 @@ export default function Home() {
               className="mt-6 sm:mt-8 space-y-4"
             >
               {/* Login CTA */}
-              <Card className="border border-gray-200 p-6 sm:p-8 rounded-lg bg-gradient-to-br from-gray-50 to-white text-center">
+              <Card className="border border-gray-200 p-6 sm:p-8 rounded-lg bg-gradient-to-br from-gray-50 to-white">
                 <div className="max-w-md mx-auto">
-                  <div className="inline-flex p-3 sm:p-4 bg-black/5 rounded-full mb-3 sm:mb-4">
-                    <LogIn className="w-6 h-6 sm:w-8 sm:h-8 text-black" />
+                  <div className="text-center">
+                    <div className="inline-flex p-3 sm:p-4 bg-black/5 rounded-full mb-3 sm:mb-4">
+                      <LogIn className="w-6 h-6 sm:w-8 sm:h-8 text-black" />
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-bold text-black mb-2">
+                      Want to track your links?
+                    </h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-2">
+                      Sign in to access your personal dashboard, view analytics, and manage all your shortened URLs in one place.
+                    </p>
+
+                    {!showAuthInline ? (
+                      <>
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                          <Button
+                            onClick={() => setShowAuthInline(true)}
+                            className="bg-black text-white hover:bg-gray-800 h-11 px-6 w-full sm:w-auto"
+                          >
+                            <LogIn className="w-4 h-4 mr-2" />
+                            Sign In / Sign Up
+                          </Button>
+                          <Link href="/dashboard" className="w-full sm:w-auto">
+                            <Button variant="outline" className="border-gray-300 hover:bg-gray-50 h-11 px-6 w-full">
+                              <BarChart3 className="w-4 h-4 mr-2" />
+                              Preview Dashboard
+                            </Button>
+                          </Link>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-4 px-2">
+                          Free forever • No password needed • Magic link authentication
+                        </p>
+                      </>
+                    ) : null}
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-black mb-2">
-                    Want to track your links?
-                  </h3>
-                  <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-2">
-                    Sign in to access your personal dashboard, view analytics, and manage all your shortened URLs in one place.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button
-                      onClick={() => {
-                        const signInButton = document.querySelector('[data-auth-trigger]') as HTMLButtonElement;
-                        signInButton?.click();
-                      }}
-                      className="bg-black text-white hover:bg-gray-800 h-11 px-6 w-full sm:w-auto"
-                    >
-                      <LogIn className="w-4 h-4 mr-2" />
-                      Sign In / Sign Up
-                    </Button>
-                    <Link href="/dashboard" className="w-full sm:w-auto">
-                      <Button variant="outline" className="border-gray-300 hover:bg-gray-50 h-11 px-6 w-full">
-                        <BarChart3 className="w-4 h-4 mr-2" />
-                        Preview Dashboard
-                      </Button>
-                    </Link>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-4 px-2">
-                    Free forever • No password needed • Magic link authentication
-                  </p>
+
+                  {/* Inline Auth Form */}
+                  <AnimatePresence>
+                    {showAuthInline && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                        animate={{ opacity: 1, height: 'auto', marginTop: 24 }}
+                        exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <AuthModal
+                          isOpen={true}
+                          onClose={() => setShowAuthInline(false)}
+                          inline={true}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </Card>
 
