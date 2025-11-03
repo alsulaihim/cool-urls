@@ -12,6 +12,7 @@ import { AuthHeader } from '@/components/auth/auth-header';
 import { useSubscription } from '@/lib/useSubscription';
 import { getPlanById } from '@/lib/pricing';
 import PlanChangeModal from '@/components/subscription/plan-change-modal';
+import CancelSubscriptionModal from '@/components/subscription/cancel-subscription-modal';
 
 export default function PricingPage() {
   const { user } = db.useAuth();
@@ -21,6 +22,7 @@ export default function PricingPage() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showPlanChangeModal, setShowPlanChangeModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const plans = getAllPlans();
   const userCurrentPlan = subscription ? getPlanById(subscription.planId) : getPlanById('free');
@@ -87,6 +89,12 @@ export default function PricingPage() {
   const handleCheckoutCancel = () => {
     setShowCheckout(false);
     setSelectedPlan('free');
+  };
+
+  const handleCancelSuccess = () => {
+    // InstantDB will automatically refetch subscription data
+    // Redirect to dashboard with success message
+    router.push('/dashboard?subscription-canceled=true');
   };
 
   return (
@@ -251,27 +259,54 @@ export default function PricingPage() {
 
               {/* CTA Button */}
               {!showCheckout && (
-                <motion.button
-                  key={`btn-${selectedPlan}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                  onClick={handleSubscribe}
-                  disabled={!!(user && userCurrentPlan && selectedPlan === userCurrentPlan.id)}
-                  className={`w-full mt-6 py-3 px-6 rounded-md font-medium text-sm transition-colors ${
-                    user && userCurrentPlan && selectedPlan === userCurrentPlan.id
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-black hover:bg-gray-800 text-white'
-                  }`}
-                >
-                  {user && userCurrentPlan && selectedPlan === userCurrentPlan.id
-                    ? 'Current Plan'
-                    : currentPlan.price === 0
-                    ? 'Get Started'
-                    : user && subscription && subscription.providerSubscriptionId && userCurrentPlan && userCurrentPlan.id !== 'free'
-                    ? (currentPlan.price > userCurrentPlan.price ? 'Upgrade Plan' : 'Downgrade Plan')
-                    : 'Continue'}
-                </motion.button>
+                <>
+                  <motion.button
+                    key={`btn-${selectedPlan}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
+                    onClick={handleSubscribe}
+                    disabled={!!(user && userCurrentPlan && selectedPlan === userCurrentPlan.id)}
+                    className={`w-full mt-6 py-3 px-6 rounded-md font-medium text-sm transition-colors ${
+                      user && userCurrentPlan && selectedPlan === userCurrentPlan.id
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-black hover:bg-gray-800 text-white'
+                    }`}
+                  >
+                    {user && userCurrentPlan && selectedPlan === userCurrentPlan.id
+                      ? 'Current Plan'
+                      : currentPlan.price === 0
+                      ? 'Get Started'
+                      : user && subscription && subscription.providerSubscriptionId && userCurrentPlan && userCurrentPlan.id !== 'free'
+                      ? (currentPlan.price > userCurrentPlan.price ? 'Upgrade Plan' : 'Downgrade Plan')
+                      : 'Continue'}
+                  </motion.button>
+
+                  {/* Cancel Subscription Button - only show for current paid plan */}
+                  {user && userCurrentPlan && selectedPlan === userCurrentPlan.id && userCurrentPlan.id !== 'free' && subscription && subscription.providerSubscriptionId && !subscription.cancelAtPeriodEnd && (
+                    <motion.button
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3, delay: 0.3 }}
+                      onClick={() => setShowCancelModal(true)}
+                      className="w-full mt-3 py-2.5 px-6 rounded-md font-medium text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors border border-red-200"
+                    >
+                      Cancel Subscription
+                    </motion.button>
+                  )}
+
+                  {/* Subscription Canceled Notice */}
+                  {user && subscription && subscription.cancelAtPeriodEnd && userCurrentPlan && selectedPlan === userCurrentPlan.id && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3, delay: 0.3 }}
+                      className="w-full mt-3 py-2.5 px-4 rounded-md text-xs text-orange-700 bg-orange-50 border border-orange-200"
+                    >
+                      Your subscription will be canceled at the end of the billing period.
+                    </motion.div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -343,6 +378,18 @@ export default function PricingPage() {
             userId={user.id}
             subscriptionId={subscription.providerSubscriptionId || ''}
             onSuccess={handlePlanChangeSuccess}
+          />
+        )}
+
+        {/* Cancel Subscription Modal */}
+        {user && subscription && showCancelModal && userCurrentPlan && (
+          <CancelSubscriptionModal
+            isOpen={showCancelModal}
+            onClose={() => setShowCancelModal(false)}
+            currentPlan={userCurrentPlan}
+            provider={subscription.provider as 'stripe' | 'paypal'}
+            subscriptionId={subscription.id}
+            onSuccess={handleCancelSuccess}
           />
         )}
       </div>

@@ -56,13 +56,7 @@ export default function UnifiedCheckout({
               : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
           }`}
         >
-          <div className="flex items-center justify-center gap-2">
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.77.77 0 0 1 .758-.653h8.431c2.908 0 5.171 1.975 5.171 4.697 0 3.495-2.758 6.199-6.157 6.199H9.15l-1.285 7.371a.64.64 0 0 1-.633.636h-.156z"/>
-              <path d="M20.91 7.168c0 2.953-2.356 5.309-5.309 5.309h-3.48l-1.443 8.268h5.099c2.908 0 5.171-1.975 5.171-4.697 0-3.495-2.758-6.199-6.157-6.199h-3.997l.116-.681z"/>
-            </svg>
-            <span>PayPal</span>
-          </div>
+          <span>PayPal</span>
         </button>
       </div>
 
