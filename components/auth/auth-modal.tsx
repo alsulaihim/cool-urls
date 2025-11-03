@@ -121,9 +121,10 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
         throw signInErr;
       }
 
-      // Check if user cancelled
+      // Check if user cancelled or missing data
       if (!resp || !resp.authorization || !resp.authorization.id_token) {
         console.log('❌ Apple Sign In cancelled by user or missing data. Response:', resp);
+        setError('Apple Sign In was not completed. This may be due to domain configuration. Please try Magic Link authentication instead.');
         setIsLoading(false);
         return;
       }
@@ -299,6 +300,11 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                             const googleButton = document.querySelector('[aria-labelledby="button-label"]') as HTMLElement;
                             if (googleButton) {
                               googleButton.click();
+                            } else {
+                              // If button not found, reset loading state
+                              console.error('Google Sign In button not found');
+                              setError('Google Sign In is not properly loaded. Please refresh the page.');
+                              setIsLoading(false);
                             }
                           } catch (err: any) {
                             setError(err.body?.message || 'Google sign-in failed');
