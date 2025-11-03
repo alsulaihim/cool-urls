@@ -33,10 +33,18 @@ export default function PayPalCheckout({
   useEffect(() => {
     fetch('/api/paypal/config')
       .then(res => res.json())
-      .then(data => setClientId(data.clientId))
+      .then(data => {
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        if (!data.clientId) {
+          throw new Error('PayPal is not configured. Please contact support.');
+        }
+        setClientId(data.clientId);
+      })
       .catch(err => {
         console.error('Failed to load PayPal config:', err);
-        setError('Failed to load PayPal. Please try again.');
+        setError(err.message || 'Failed to load PayPal. Please try again or use Stripe payment.');
       });
   }, []);
 
@@ -112,7 +120,7 @@ export default function PayPalCheckout({
           <PayPalButtons
             style={{
               layout: 'vertical',
-              color: 'gold',
+              color: 'black',
               shape: 'rect',
               label: 'subscribe',
             }}
