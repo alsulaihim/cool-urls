@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyPayPalWebhook, getPayPalSubscription } from '@/lib/paypal';
 import { getDb } from '@/lib/instant-admin';
+import { handleSubscriptionExpiration } from '@/lib/subscription-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -86,13 +87,9 @@ export async function POST(request: NextRequest) {
 
         if (subscriptions.subscriptions && subscriptions.subscriptions.length > 0) {
           const subscription = subscriptions.subscriptions[0];
-          await db.transact([
-            db.tx.subscriptions[subscription.id].update({
-              status: eventType === 'BILLING.SUBSCRIPTION.CANCELLED' ? 'canceled' : 'expired',
-              cancelledAt: Date.now(),
-              updatedAt: Date.now(),
-            }),
-          ]);
+          // Downgrade to free plan while preserving clicks used
+          await handleSubscriptionExpiration(subscription.userId);
+          console.log(`[PayPal Webhook] Downgraded user ${subscription.userId} to free plan`);
         }
         break;
       }

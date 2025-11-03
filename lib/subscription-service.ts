@@ -285,3 +285,42 @@ export async function getPaymentHistory(userId: string, limit: number = 10) {
 
   return result.payments || [];
 }
+
+/**
+ * Handle subscription expiration after cancellation
+ * Downgrades to free plan while preserving clicks used and access until period end
+ */
+export async function handleSubscriptionExpiration(userId: string): Promise<void> {
+  const subscription = await getSubscription(userId);
+
+  if (!subscription) {
+    console.warn(`[Subscription] No subscription found for user ${userId}`);
+    return;
+  }
+
+  const now = Date.now();
+  const freePlan = getPlanById('free');
+
+  // Get the current clicks used to preserve them
+  const currentClicksUsed = subscription.clicksUsed;
+
+  const db = await getDb();
+  await db.transact([
+    db.tx.subscriptions[userId].update({
+      planId: 'free',
+      status: 'active',
+      provider: 'none',
+      providerSubscriptionId: null,
+      providerCustomerId: null,
+      clicksLimit: freePlan.clicksLimit,
+      clicksUsed: currentClicksUsed, // Preserve clicks used
+      cancelAtPeriodEnd: false,
+      cancelledAt: now,
+      updatedAt: now,
+      // Note: We keep currentPeriodStart and currentPeriodEnd as is
+      // This allows users to see when their paid period ended
+    }),
+  ]);
+
+  console.log(`[Subscription] Downgraded user ${userId} to free plan, preserved ${currentClicksUsed} clicks used`);
+}

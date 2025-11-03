@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronDown, ArrowLeft, Home } from 'lucide-react';
+import { Check, ChevronDown, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { getAllPlans, formatPrice, type PlanId } from '@/lib/pricing';
 import { db } from '@/lib/instant';
@@ -16,7 +16,7 @@ import CancelSubscriptionModal from '@/components/subscription/cancel-subscripti
 
 export default function PricingPage() {
   const { user } = db.useAuth();
-  const { subscription, isLoading: subLoading } = useSubscription(user?.id);
+  const { subscription } = useSubscription(user?.id);
   const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('growth');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -243,16 +243,20 @@ export default function PricingPage() {
               >
                 <ul className="space-y-2.5">
                   {currentPlan.features.map((feature, i) => (
-                    <motion.li
+                    <li
                       key={i}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.2, delay: i * 0.03 }}
                       className="flex items-start gap-2.5"
                     >
-                      <Check className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
-                      <span className="text-sm text-gray-700">{feature}</span>
-                    </motion.li>
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.2, delay: i * 0.03 }}
+                        className="flex items-start gap-2.5 w-full"
+                      >
+                        <Check className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+                        <span className="text-sm text-gray-700">{feature}</span>
+                      </motion.div>
+                    </li>
                   ))}
                 </ul>
               </motion.div>
@@ -282,8 +286,8 @@ export default function PricingPage() {
                       : 'Continue'}
                   </motion.button>
 
-                  {/* Cancel Subscription Button - only show for current paid plan */}
-                  {user && userCurrentPlan && selectedPlan === userCurrentPlan.id && userCurrentPlan.id !== 'free' && subscription && subscription.providerSubscriptionId && !subscription.cancelAtPeriodEnd && (
+                  {/* Cancel Subscription Button - show whenever user has active paid subscription */}
+                  {user && userCurrentPlan && userCurrentPlan.id !== 'free' && subscription && subscription.providerSubscriptionId && !subscription.cancelAtPeriodEnd && (
                     <motion.button
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -296,7 +300,7 @@ export default function PricingPage() {
                   )}
 
                   {/* Subscription Canceled Notice */}
-                  {user && subscription && subscription.cancelAtPeriodEnd && userCurrentPlan && selectedPlan === userCurrentPlan.id && (
+                  {user && subscription && subscription.cancelAtPeriodEnd && userCurrentPlan && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}

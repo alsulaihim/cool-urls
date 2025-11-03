@@ -11,7 +11,7 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(request: NextRequest) {
   // Dynamic import to avoid build-time evaluation
-  const { createSubscription, updateSubscription, recordPayment } = await import('@/lib/subscription-service');
+  const { createSubscription, updateSubscription, recordPayment, handleSubscriptionExpiration } = await import('@/lib/subscription-service');
 
   // Get Stripe instance
   const stripe = getStripe();
@@ -150,12 +150,10 @@ export async function POST(request: NextRequest) {
         const userId = (subscription as any).metadata.userId;
 
         if (userId) {
-          await updateSubscription({
-            userId,
-            status: 'cancelled',
-          });
+          // Downgrade to free plan while preserving clicks used
+          await handleSubscriptionExpiration(userId);
 
-          console.log(`[Webhook] Subscription cancelled for user ${userId}`);
+          console.log(`[Webhook] Subscription cancelled and downgraded to free for user ${userId}`);
         }
         break;
       }

@@ -50,13 +50,48 @@ export async function POST(request: NextRequest) {
       provider: subscription.provider,
       providerSubscriptionId: subscription.providerSubscriptionId,
       status: subscription.status,
+      cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
     });
+
+    // Check if subscription is already marked for cancellation
+    if (subscription.cancelAtPeriodEnd) {
+      console.log('[Cancel Subscription] Subscription is already scheduled for cancellation');
+      return NextResponse.json({
+        success: true,
+        message: 'Subscription is already scheduled to be canceled at the end of the billing period',
+      });
+    }
 
     // Cancel with the provider
     if (subscription.provider === 'stripe' && subscription.providerSubscriptionId) {
       console.log('[Cancel Subscription] Canceling Stripe subscription...');
 
       try {
+        // First check the current status of the Stripe subscription
+        const stripeSubscription = await stripe.subscriptions.retrieve(subscription.providerSubscriptionId);
+
+        console.log('[Cancel Subscription] Stripe subscription status:', {
+          status: stripeSubscription.status,
+          cancel_at_period_end: stripeSubscription.cancel_at_period_end,
+        });
+
+        // If already cancelled or scheduled for cancellation, don't try to cancel again
+        if (stripeSubscription.status === 'canceled' || stripeSubscription.cancel_at_period_end) {
+          console.log('[Cancel Subscription] Stripe subscription is already cancelled or scheduled for cancellation');
+          // Just update our database to reflect this
+          await db.transact([
+            db.tx.subscriptions[subscriptionId].update({
+              cancelAtPeriodEnd: true,
+              updatedAt: Date.now(),
+            }),
+          ]);
+
+          return NextResponse.json({
+            success: true,
+            message: 'Subscription is already scheduled to be canceled at the end of the billing period',
+          });
+        }
+
         // Cancel at period end (keeps active until end of billing period)
         await stripe.subscriptions.update(subscription.providerSubscriptionId, {
           cancel_at_period_end: true,
@@ -68,6 +103,26 @@ export async function POST(request: NextRequest) {
         console.log('[Cancel Subscription] Stripe subscription canceled at period end');
       } catch (stripeError: any) {
         console.error('[Cancel Subscription] Stripe error:', stripeError);
+
+        // Check if the error is about subscription already being cancelled
+        if (stripeError.message?.includes('canceled subscription') ||
+            stripeError.message?.includes('cancellation_details')) {
+          console.log('[Cancel Subscription] Subscription already cancelled, updating database');
+
+          // Update database to reflect cancellation
+          await db.transact([
+            db.tx.subscriptions[subscriptionId].update({
+              cancelAtPeriodEnd: true,
+              updatedAt: Date.now(),
+            }),
+          ]);
+
+          return NextResponse.json({
+            success: true,
+            message: 'Subscription is already scheduled to be canceled at the end of the billing period',
+          });
+        }
+
         throw new Error(`Failed to cancel Stripe subscription: ${stripeError.message}`);
       }
     } else if (subscription.provider === 'paypal' && subscription.providerSubscriptionId) {
@@ -78,6 +133,26 @@ export async function POST(request: NextRequest) {
         console.log('[Cancel Subscription] PayPal subscription canceled');
       } catch (paypalError: any) {
         console.error('[Cancel Subscription] PayPal error:', paypalError);
+
+        // If PayPal returns an error that subscription is already cancelled, handle gracefully
+        if (paypalError.message?.includes('SUBSCRIPTION_STATUS_INVALID') ||
+            paypalError.message?.includes('already') ||
+            paypalError.message?.includes('cancelled')) {
+          console.log('[Cancel Subscription] PayPal subscription is already cancelled');
+          // Update our database to reflect this
+          await db.transact([
+            db.tx.subscriptions[subscriptionId].update({
+              cancelAtPeriodEnd: true,
+              updatedAt: Date.now(),
+            }),
+          ]);
+
+          return NextResponse.json({
+            success: true,
+            message: 'Subscription is already scheduled to be canceled at the end of the billing period',
+          });
+        }
+
         throw new Error(`Failed to cancel PayPal subscription: ${paypalError.message}`);
       }
     } else {
