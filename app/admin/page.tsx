@@ -2,8 +2,9 @@
 
 import { db } from '@/lib/instant';
 import { Card } from '@/components/ui/card';
-import { Users, Link2, MousePointerClick, Activity } from 'lucide-react';
+import { Users, Link2, MousePointerClick, Activity, DollarSign, CreditCard, TrendingUp } from 'lucide-react';
 import { useMemo } from 'react';
+import { PRICING_PLANS } from '@/lib/pricing';
 
 /**
  * Admin Dashboard
@@ -16,6 +17,8 @@ export default function AdminDashboard() {
     urls: {},
     userProfiles: {},
     adminUsers: {},
+    subscriptions: {},
+    payments: {},
     auditLogs: {
       $: {
         limit: 10,
@@ -62,6 +65,27 @@ export default function AdminDashboard() {
       }
     ).length || 0;
 
+    // Calculate revenue metrics
+    const subscriptions = data.subscriptions || [];
+    const payments = data.payments || [];
+
+    const activeSubscriptions = subscriptions.filter(s => s.status === 'active').length;
+    const mrr = subscriptions
+      .filter(s => s.status === 'active' && s.provider !== 'none')
+      .reduce((sum, s) => {
+        const plan = PRICING_PLANS[s.planId as keyof typeof PRICING_PLANS];
+        return sum + (plan?.price || 0);
+      }, 0);
+
+    const totalRevenue = payments
+      .filter(p => p.status === 'succeeded')
+      .reduce((sum, p) => sum + (p.amount / 100), 0);
+
+    const recentPayments = payments.filter(
+      p => p.status === 'succeeded' && p.createdAt >= thirtyDaysAgo
+    );
+    const last30DaysRevenue = recentPayments.reduce((sum, p) => sum + (p.amount / 100), 0);
+
     return {
       totalUsers,
       totalUrls,
@@ -70,6 +94,10 @@ export default function AdminDashboard() {
       newUsersToday,
       newUrlsToday,
       activeUsers,
+      activeSubscriptions,
+      mrr,
+      totalRevenue,
+      last30DaysRevenue,
     };
   }, [data]);
 
@@ -165,6 +193,54 @@ export default function AdminDashboard() {
               <p className="text-2xl font-bold text-gray-900">{metrics.activeUsers}</p>
               <p className="text-sm text-gray-600 mt-1">Active Users</p>
               <p className="text-xs text-gray-500 mt-2">Last 30 days</p>
+            </div>
+          </Card>
+        </div>
+
+        {/* Revenue Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-emerald-600" />
+              </div>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">${metrics.mrr.toLocaleString()}</p>
+              <p className="text-sm text-gray-600 mt-1">Monthly Recurring Revenue</p>
+              <p className="text-xs text-gray-500 mt-2">
+                ${(metrics.mrr * 12).toLocaleString()} annual
+              </p>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <CreditCard className="w-6 h-6 text-indigo-600" />
+              </div>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{metrics.activeSubscriptions}</p>
+              <p className="text-sm text-gray-600 mt-1">Active Subscriptions</p>
+              <p className="text-xs text-gray-500 mt-2">
+                Paying customers
+              </p>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-amber-600" />
+              </div>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">${metrics.last30DaysRevenue.toFixed(2)}</p>
+              <p className="text-sm text-gray-600 mt-1">Revenue (Last 30 Days)</p>
+              <p className="text-xs text-gray-500 mt-2">
+                ${metrics.totalRevenue.toFixed(2)} all-time
+              </p>
             </div>
           </Card>
         </div>

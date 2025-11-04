@@ -5,16 +5,21 @@ import { db } from '@/lib/instant';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Link2, 
-  BarChart3, 
-  FileText, 
+import {
+  LayoutDashboard,
+  Users,
+  Link2,
+  BarChart3,
+  FileText,
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  CreditCard,
+  DollarSign,
+  TrendingUp,
+  AlertCircle,
+  Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -22,7 +27,12 @@ const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/urls', label: 'URLs', icon: Link2 },
+  { href: '/admin/subscriptions', label: 'Subscriptions', icon: CreditCard },
+  { href: '/admin/payments', label: 'Payments', icon: DollarSign },
+  { href: '/admin/payments/failed', label: 'Failed Payments', icon: AlertCircle },
+  { href: '/admin/revenue', label: 'Revenue', icon: TrendingUp },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/admin/bulk-actions', label: 'Bulk Actions', icon: Layers },
   { href: '/admin/audit', label: 'Audit Logs', icon: FileText },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];

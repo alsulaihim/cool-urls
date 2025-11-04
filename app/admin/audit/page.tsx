@@ -36,6 +36,9 @@ export default function AdminAuditLogsPage() {
     { value: 'all', label: 'All Actions', icon: Shield },
     { value: 'user', label: 'User Actions', icon: User },
     { value: 'url', label: 'URL Actions', icon: Link2 },
+    { value: 'subscription', label: 'Subscription Actions', icon: AlertCircle },
+    { value: 'payment', label: 'Payment Actions', icon: AlertCircle },
+    { value: 'usage', label: 'Usage Actions', icon: Monitor },
     { value: 'admin', label: 'Admin Actions', icon: Settings },
   ];
 
@@ -69,13 +72,13 @@ export default function AdminAuditLogsPage() {
 
   // Get action badge color
   const getActionBadgeColor = (action: string) => {
-    if (action.includes('delete') || action.includes('suspend') || action.includes('revoke')) {
+    if (action.includes('delete') || action.includes('suspend') || action.includes('revoke') || action.includes('cancel')) {
       return 'bg-red-100 text-red-700 border-red-200';
     }
-    if (action.includes('grant') || action.includes('create')) {
+    if (action.includes('grant') || action.includes('create') || action.includes('credit') || action.includes('extend')) {
       return 'bg-green-100 text-green-700 border-green-200';
     }
-    if (action.includes('update') || action.includes('moderate')) {
+    if (action.includes('update') || action.includes('moderate') || action.includes('plan_change') || action.includes('reset')) {
       return 'bg-blue-100 text-blue-700 border-blue-200';
     }
     return 'bg-gray-100 text-gray-700 border-gray-200';

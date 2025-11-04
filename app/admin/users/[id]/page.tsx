@@ -5,16 +5,22 @@ import { db } from '@/lib/instant';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  ArrowLeft, 
-  Ban, 
-  CheckCircle, 
-  Trash2, 
+import {
+  ArrowLeft,
+  Ban,
+  CheckCircle,
+  Trash2,
   Link2,
   MousePointerClick,
   Calendar,
-  Shield
+  Shield,
+  CreditCard,
+  DollarSign
 } from 'lucide-react';
+import { SubscriptionBadge } from '@/components/admin/subscription-badge';
+import { ProviderBadge } from '@/components/admin/provider-badge';
+import { PaymentStatusBadge } from '@/components/admin/payment-status-badge';
+import { PRICING_PLANS } from '@/lib/pricing';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createAuditLog, getIpAddress, getUserAgent } from '@/lib/admin/audit';
@@ -55,11 +61,27 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
         },
       },
     },
+    subscriptions: {
+      $: {
+        where: {
+          userId,
+        },
+      },
+    },
+    payments: {
+      $: {
+        where: {
+          userId,
+        },
+      },
+    },
   });
 
   const userProfile = data?.userProfiles?.[0];
   const userStatus = data?.userStatus?.[0];
   const userUrls = data?.urls || [];
+  const subscription = data?.subscriptions?.[0];
+  const payments = data?.payments || [];
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -300,6 +322,128 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
             <p className="text-lg font-bold text-gray-900">
               {new Date(userProfile.createdAt).toLocaleDateString()}
             </p>
+          </Card>
+        </div>
+
+        {/* Subscription & Payment Info */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Subscription Card */}
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Subscription</h2>
+              {subscription && <SubscriptionBadge status={subscription.status} />}
+            </div>
+            {subscription ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Plan</p>
+                    <p className="text-lg font-semibold text-gray-900 mt-1">
+                      {PRICING_PLANS[subscription.planId as keyof typeof PRICING_PLANS]?.name || subscription.planId}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Provider</p>
+                    <div className="mt-1">
+                      <ProviderBadge provider={subscription.provider} />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Usage</p>
+                    <p className="text-sm font-medium text-gray-900 mt-1">
+                      {subscription.clicksUsed.toLocaleString()} / {subscription.clicksLimit.toLocaleString()}
+                    </p>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                      <div
+                        className={`h-1.5 rounded-full ${
+                          (subscription.clicksUsed / subscription.clicksLimit) * 100 >= 90
+                            ? 'bg-red-600'
+                            : 'bg-green-600'
+                        }`}
+                        style={{
+                          width: `${Math.min((subscription.clicksUsed / subscription.clicksLimit) * 100, 100)}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Next Billing</p>
+                    <p className="text-sm font-medium text-gray-900 mt-1">
+                      {subscription.cancelAtPeriodEnd ? (
+                        <span className="text-red-600">Cancelling</span>
+                      ) : (
+                        new Date(subscription.currentPeriodEnd).toLocaleDateString()
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <Link href={`/admin/subscriptions/${subscription.id}`}>
+                  <Button variant="outline" className="w-full mt-2">
+                    View Full Subscription
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500">No active subscription</p>
+                <p className="text-sm text-gray-400 mt-1">User is on free plan</p>
+              </div>
+            )}
+          </Card>
+
+          {/* Payment History Card */}
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment History</h2>
+            {payments.length > 0 ? (
+              <div className="space-y-3">
+                {payments
+                  .sort((a, b) => b.createdAt - a.createdAt)
+                  .slice(0, 5)
+                  .map((payment) => (
+                    <div
+                      key={payment.id}
+                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          ${(payment.amount / 100).toFixed(2)} {payment.currency.toUpperCase()}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {new Date(payment.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <PaymentStatusBadge status={payment.status} />
+                    </div>
+                  ))}
+                {payments.length > 5 && (
+                  <Link href="/admin/payments" className="block">
+                    <Button variant="outline" className="w-full mt-2" size="sm">
+                      View All Payments
+                    </Button>
+                  </Link>
+                )}
+                <div className="pt-3 border-t border-gray-200 mt-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-600">Total Spent</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      $
+                      {(
+                        payments
+                          .filter((p) => p.status === 'succeeded')
+                          .reduce((sum, p) => sum + p.amount, 0) / 100
+                      ).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500">No payment history</p>
+                <p className="text-sm text-gray-400 mt-1">User hasn't made any payments yet</p>
+              </div>
+            )}
           </Card>
         </div>
 
