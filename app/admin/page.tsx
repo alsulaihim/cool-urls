@@ -36,6 +36,11 @@ export default function AdminDashboard() {
         activeAdmins: 0,
         newUsersToday: 0,
         newUrlsToday: 0,
+        activeUsers: 0,
+        activeSubscriptions: 0,
+        mrr: 0,
+        totalRevenue: 0,
+        last30DaysRevenue: 0,
       };
     }
 
