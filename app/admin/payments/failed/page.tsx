@@ -73,7 +73,7 @@ export default function FailedPaymentsPage() {
       return {
         ...payment,
         userName: user?.name || 'Unknown',
-        userEmail: user?.email || 'N/A',
+        userId: payment.userId,
         planName: plan.name,
         subscriptionId: subscription?.id,
         subscriptionStatus: subscription?.status,
@@ -254,7 +254,7 @@ export default function FailedPaymentsPage() {
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900">{payment.userName}</p>
-                            <p className="text-xs text-gray-500">{payment.userEmail}</p>
+                            <p className="text-xs text-gray-500 font-mono">{payment.userId}</p>
                           </div>
                           {payment.isRecent && (
                             <Badge className="bg-red-100 text-red-700 hover:bg-red-100">NEW</Badge>
