@@ -10,6 +10,12 @@ import Link from 'next/link';
 import { ProviderBadge } from '@/components/admin/provider-badge';
 import { PRICING_PLANS } from '@/lib/pricing';
 
+type PaymentProvider = 'stripe' | 'paypal' | 'none';
+
+function normalizeProvider(provider: unknown): PaymentProvider {
+  return provider === 'stripe' || provider === 'paypal' ? provider : 'none';
+}
+
 /**
  * Failed Payments Monitor
  *
@@ -274,7 +280,7 @@ export default function FailedPaymentsPage() {
                           </div>
                           <div>
                             <p className="text-xs text-gray-600">Provider</p>
-                            <ProviderBadge provider={payment.provider} />
+                            <ProviderBadge provider={normalizeProvider(payment.provider)} />
                           </div>
                           <div>
                             <p className="text-xs text-gray-600">Failed</p>
