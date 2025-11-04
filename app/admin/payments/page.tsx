@@ -56,7 +56,7 @@ export default function PaymentsPage() {
       return {
         ...payment,
         userName: user?.name || 'Unknown',
-        userEmail: user?.email || 'N/A',
+        userId: payment.userId,
         planName: plan.name,
         subscriptionId: subscription?.id,
       };
@@ -94,7 +94,7 @@ export default function PaymentsPage() {
       filtered = filtered.filter(
         (payment) =>
           payment.userName?.toLowerCase().includes(query) ||
-          payment.userEmail?.toLowerCase().includes(query) ||
+          payment.userId?.toLowerCase().includes(query) ||
           payment.providerPaymentId?.toLowerCase().includes(query)
       );
     }
@@ -301,7 +301,7 @@ export default function PaymentsPage() {
                           <div className="text-sm font-medium text-gray-900">
                             {payment.userName}
                           </div>
-                          <div className="text-sm text-gray-500">{payment.userEmail}</div>
+                          <div className="text-sm text-gray-500 font-mono">{payment.userId}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
