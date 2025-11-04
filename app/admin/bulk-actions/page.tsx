@@ -45,12 +45,11 @@ export default function BulkActionsPage() {
       const subscriptions = data.subscriptions || [];
 
       // Create CSV
-      const headers = ['Name', 'Email', 'User ID', 'Plan', 'Status', 'Created At'];
+      const headers = ['Name', 'User ID', 'Plan', 'Status', 'Created At'];
       const rows = users.map((user) => {
         const sub = subscriptions.find((s) => s.userId === user.userId);
         return [
           user.name || 'N/A',
-          user.email || 'N/A',
           user.userId,
           sub?.planId || 'free',
           sub?.status || 'active',
