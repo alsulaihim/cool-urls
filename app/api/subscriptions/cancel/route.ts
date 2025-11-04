@@ -65,7 +65,29 @@ export async function POST(request: NextRequest) {
 
       try {
         // First check the current status of the Stripe subscription
-        const stripeSubscription = await stripe.subscriptions.retrieve(subscription.providerSubscriptionId);
+        let stripeSubscription;
+        try {
+          stripeSubscription = await stripe.subscriptions.retrieve(subscription.providerSubscriptionId);
+        } catch (retrieveError: any) {
+          console.error('[Cancel Subscription] Error retrieving subscription:', retrieveError);
+
+          // If subscription doesn't exist in Stripe, consider it cancelled
+          if (retrieveError.statusCode === 404 || retrieveError.type === 'invalid_request_error') {
+            await db.transact([
+              db.tx.subscriptions[subscriptionId].update({
+                cancelAtPeriodEnd: true,
+                status: 'cancelled',
+                updatedAt: Date.now(),
+              }),
+            ]);
+
+            return NextResponse.json({
+              success: true,
+              message: 'Subscription is already canceled',
+            });
+          }
+          throw retrieveError;
+        }
 
         console.log('[Cancel Subscription] Stripe subscription status:', {
           status: stripeSubscription.status,
@@ -73,7 +95,9 @@ export async function POST(request: NextRequest) {
         });
 
         // If already cancelled or scheduled for cancellation, don't try to cancel again
-        if (stripeSubscription.status === 'canceled' || stripeSubscription.cancel_at_period_end) {
+        if (stripeSubscription.status === 'canceled' ||
+            stripeSubscription.status === 'cancelled' ||
+            stripeSubscription.cancel_at_period_end === true) {
           console.log('[Cancel Subscription] Stripe subscription is already cancelled or scheduled for cancellation');
           // Just update our database to reflect this
           await db.transact([
@@ -99,11 +123,18 @@ export async function POST(request: NextRequest) {
 
         console.log('[Cancel Subscription] Stripe subscription canceled at period end');
       } catch (stripeError: any) {
-        console.error('[Cancel Subscription] Stripe error:', stripeError);
+        console.error('[Cancel Subscription] Stripe error:', {
+          message: stripeError.message,
+          type: stripeError.type,
+          code: stripeError.code,
+        });
 
         // Check if the error is about subscription already being cancelled
-        if (stripeError.message?.includes('canceled subscription') ||
-            stripeError.message?.includes('cancellation_details')) {
+        const errorMessage = stripeError.message?.toLowerCase() || '';
+        if (errorMessage.includes('canceled subscription') ||
+            errorMessage.includes('cancellation_details') ||
+            errorMessage.includes('can only update') ||
+            stripeError.code === 'resource_missing') {
           console.log('[Cancel Subscription] Subscription already cancelled, updating database');
 
           // Update database to reflect cancellation
