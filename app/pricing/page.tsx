@@ -55,8 +55,8 @@ export default function PricingPage() {
       return;
     }
 
-    // If user has an active subscription, show plan change modal instead of checkout
-    if (subscription && subscription.providerSubscriptionId && userCurrentPlan && userCurrentPlan.id !== 'free') {
+    // If user has an active subscription (not cancelled), show plan change modal instead of checkout
+    if (subscription && subscription.providerSubscriptionId && userCurrentPlan && userCurrentPlan.id !== 'free' && !subscription.cancelAtPeriodEnd) {
       setShowPlanChangeModal(true);
       return;
     }
@@ -281,7 +281,7 @@ export default function PricingPage() {
                       ? 'Current Plan'
                       : currentPlan.price === 0
                       ? 'Get Started'
-                      : user && subscription && subscription.providerSubscriptionId && userCurrentPlan && userCurrentPlan.id !== 'free'
+                      : user && subscription && subscription.providerSubscriptionId && userCurrentPlan && userCurrentPlan.id !== 'free' && !subscription.cancelAtPeriodEnd
                       ? (currentPlan.price > userCurrentPlan.price ? 'Upgrade Plan' : 'Downgrade Plan')
                       : 'Continue'}
                   </motion.button>
