@@ -96,7 +96,6 @@ export async function POST(request: NextRequest) {
 
         // If already cancelled or scheduled for cancellation, don't try to cancel again
         if (stripeSubscription.status === 'canceled' ||
-            stripeSubscription.status === 'cancelled' ||
             stripeSubscription.cancel_at_period_end === true) {
           console.log('[Cancel Subscription] Stripe subscription is already cancelled or scheduled for cancellation');
           // Just update our database to reflect this
