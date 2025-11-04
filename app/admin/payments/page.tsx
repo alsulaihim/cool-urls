@@ -7,9 +7,22 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Download, CheckCircle, XCircle, Clock, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
-import { PaymentStatusBadge } from '@/components/admin/payment-status-badge';
+import { PaymentStatusBadge, PaymentStatus } from '@/components/admin/payment-status-badge';
 import { ProviderBadge } from '@/components/admin/provider-badge';
 import { PRICING_PLANS } from '@/lib/pricing';
+
+type PaymentProvider = 'stripe' | 'paypal' | 'none';
+
+function normalizeStatus(status: unknown): PaymentStatus {
+  if (status === 'succeeded' || status === 'failed' || status === 'pending' || status === 'refunded') {
+    return status;
+  }
+  return 'pending';
+}
+
+function normalizeProvider(provider: unknown): PaymentProvider {
+  return provider === 'stripe' || provider === 'paypal' ? provider : 'none';
+}
 
 /**
  * Payment Management Page
@@ -314,10 +327,10 @@ export default function PaymentsPage() {
                         <div className="text-xs text-gray-500">{payment.currency.toUpperCase()}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <PaymentStatusBadge status={payment.status} />
+                        <PaymentStatusBadge status={normalizeStatus(payment.status)} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <ProviderBadge provider={payment.provider} />
+                        <ProviderBadge provider={normalizeProvider(payment.provider)} />
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-xs font-mono text-gray-500 max-w-xs truncate">

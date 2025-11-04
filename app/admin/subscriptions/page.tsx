@@ -7,9 +7,22 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Download, DollarSign, Users, TrendingUp, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
-import { SubscriptionBadge } from '@/components/admin/subscription-badge';
+import { SubscriptionBadge, SubscriptionStatus } from '@/components/admin/subscription-badge';
 import { ProviderBadge } from '@/components/admin/provider-badge';
 import { PRICING_PLANS } from '@/lib/pricing';
+
+type PaymentProvider = 'stripe' | 'paypal' | 'none';
+
+function normalizeStatus(status: unknown): SubscriptionStatus {
+  if (status === 'active' || status === 'cancelled' || status === 'past_due' || status === 'expired' || status === 'trialing') {
+    return status;
+  }
+  return 'active';
+}
+
+function normalizeProvider(provider: unknown): PaymentProvider {
+  return provider === 'stripe' || provider === 'paypal' ? provider : 'none';
+}
 
 /**
  * Subscription Management Dashboard
@@ -55,7 +68,6 @@ export default function SubscriptionsPage() {
       return {
         ...sub,
         userName: user?.name || 'Unknown',
-        userEmail: user?.email || 'N/A',
         planName: plan.name,
         monthlyRevenue: plan.price,
       };
@@ -106,7 +118,6 @@ export default function SubscriptionsPage() {
       filtered = filtered.filter(
         (sub) =>
           sub.userName?.toLowerCase().includes(query) ||
-          sub.userEmail?.toLowerCase().includes(query) ||
           sub.userId?.toLowerCase().includes(query)
       );
     }
@@ -339,17 +350,16 @@ export default function SubscriptionsPage() {
                             <div className="text-sm font-medium text-gray-900">
                               {sub.userName}
                             </div>
-                            <div className="text-sm text-gray-500">{sub.userEmail}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-gray-900">{sub.planName}</div>
                         </td>
                         <td className="px-6 py-4">
-                          <SubscriptionBadge status={sub.status} />
+                          <SubscriptionBadge status={normalizeStatus(sub.status)} />
                         </td>
                         <td className="px-6 py-4">
-                          <ProviderBadge provider={sub.provider} />
+                          <ProviderBadge provider={normalizeProvider(sub.provider)} />
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-gray-900">

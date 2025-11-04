@@ -5,7 +5,7 @@ import { db } from '@/lib/instant';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Mail, RotateCcw, ExternalLink, Clock, XCircle } from 'lucide-react';
+import { AlertCircle, Mail, ExternalLink, Clock, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { ProviderBadge } from '@/components/admin/provider-badge';
 import { PRICING_PLANS } from '@/lib/pricing';
@@ -23,6 +23,7 @@ function normalizeProvider(provider: unknown): PaymentProvider {
  */
 export default function FailedPaymentsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<'24h' | '7d' | '30d' | 'all'>('7d');
+  const [now] = useState(() => Date.now());
 
   const { data, isLoading } = db.useQuery({
     payments: {},
@@ -48,8 +49,6 @@ export default function FailedPaymentsPage() {
     const payments = data.payments || [];
     const profiles = data.userProfiles || [];
     const subs = data.subscriptions || [];
-
-    const now = Date.now();
     const oneDayAgo = now - 24 * 60 * 60 * 1000;
     const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
     const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
@@ -69,7 +68,7 @@ export default function FailedPaymentsPage() {
         try {
           const meta = JSON.parse(payment.metadata);
           failureReason = meta.failureMessage || 'Unknown';
-        } catch (e) {
+        } catch {
           // ignore
         }
       }
@@ -116,7 +115,7 @@ export default function FailedPaymentsPage() {
       all: filtered,
       metrics,
     };
-  }, [data, selectedPeriod]);
+  }, [data, selectedPeriod, now]);
 
   if (isLoading) {
     return (

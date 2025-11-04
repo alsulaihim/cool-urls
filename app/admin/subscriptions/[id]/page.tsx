@@ -17,11 +17,31 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { SubscriptionBadge } from '@/components/admin/subscription-badge';
+import { SubscriptionBadge, SubscriptionStatus } from '@/components/admin/subscription-badge';
 import { ProviderBadge } from '@/components/admin/provider-badge';
-import { PaymentStatusBadge } from '@/components/admin/payment-status-badge';
+import { PaymentStatusBadge, PaymentStatus } from '@/components/admin/payment-status-badge';
 import { ConfirmDialog } from '@/components/admin/confirm-dialog';
 import { PRICING_PLANS } from '@/lib/pricing';
+
+type PaymentProvider = 'stripe' | 'paypal' | 'none';
+
+function normalizeStatus(status: unknown): SubscriptionStatus {
+  if (status === 'active' || status === 'cancelled' || status === 'past_due' || status === 'expired' || status === 'trialing') {
+    return status;
+  }
+  return 'active';
+}
+
+function normalizeProvider(provider: unknown): PaymentProvider {
+  return provider === 'stripe' || provider === 'paypal' ? provider : 'none';
+}
+
+function normalizePaymentStatus(status: unknown): PaymentStatus {
+  if (status === 'succeeded' || status === 'failed' || status === 'pending' || status === 'refunded') {
+    return status;
+  }
+  return 'pending';
+}
 
 /**
  * Subscription Detail Page
@@ -167,12 +187,12 @@ export default function SubscriptionDetailPage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Subscription Details</h1>
               <p className="text-gray-600 mt-1">
-                {user?.name || 'Unknown User'} • {user?.email || 'N/A'}
+                {user?.name || 'Unknown User'}
               </p>
             </div>
             <div className="flex gap-3">
-              <SubscriptionBadge status={subscription.status} />
-              <ProviderBadge provider={subscription.provider} />
+              <SubscriptionBadge status={normalizeStatus(subscription.status)} />
+              <ProviderBadge provider={normalizeProvider(subscription.provider)} />
             </div>
           </div>
         </div>
@@ -195,13 +215,13 @@ export default function SubscriptionDetailPage() {
                 <div>
                   <label className="text-sm text-gray-600">Status</label>
                   <div className="mt-1">
-                    <SubscriptionBadge status={subscription.status} />
+                    <SubscriptionBadge status={normalizeStatus(subscription.status)} />
                   </div>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Payment Provider</label>
                   <div className="mt-1">
-                    <ProviderBadge provider={subscription.provider} />
+                    <ProviderBadge provider={normalizeProvider(subscription.provider)} />
                   </div>
                 </div>
                 <div>
@@ -322,7 +342,7 @@ export default function SubscriptionDetailPage() {
                           </p>
                         </div>
                       </div>
-                      <PaymentStatusBadge status={payment.status} />
+                      <PaymentStatusBadge status={normalizePaymentStatus(payment.status)} />
                     </div>
                   ))}
                 </div>
@@ -443,10 +463,6 @@ export default function SubscriptionDetailPage() {
                 <div>
                   <p className="text-xs text-gray-600">Name</p>
                   <p className="text-sm font-medium text-gray-900">{user?.name || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-600">Email</p>
-                  <p className="text-sm font-medium text-gray-900">{user?.email || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-600">User ID</p>

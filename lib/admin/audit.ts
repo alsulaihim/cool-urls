@@ -18,9 +18,14 @@ export type AuditAction =
   | 'url.delete'
   | 'config.update'
   | 'admin.grant'
-  | 'admin.revoke';
+  | 'admin.revoke'
+  | 'subscription.cancel'
+  | 'subscription.plan_change'
+  | 'subscription.trial_extend'
+  | 'usage.reset'
+  | 'usage.credit_apply';
 
-export type AuditTargetType = 'user' | 'url' | 'system' | 'admin';
+export type AuditTargetType = 'user' | 'url' | 'system' | 'admin' | 'subscription';
 
 /**
  * Create an audit log entry

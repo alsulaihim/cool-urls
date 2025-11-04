@@ -17,13 +17,33 @@ import {
   CreditCard,
   DollarSign
 } from 'lucide-react';
-import { SubscriptionBadge } from '@/components/admin/subscription-badge';
+import { SubscriptionBadge, SubscriptionStatus } from '@/components/admin/subscription-badge';
 import { ProviderBadge } from '@/components/admin/provider-badge';
-import { PaymentStatusBadge } from '@/components/admin/payment-status-badge';
+import { PaymentStatusBadge, PaymentStatus } from '@/components/admin/payment-status-badge';
 import { PRICING_PLANS } from '@/lib/pricing';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createAuditLog, getIpAddress, getUserAgent } from '@/lib/admin/audit';
+
+type PaymentProvider = 'stripe' | 'paypal' | 'none';
+
+function normalizeSubscriptionStatus(status: unknown): SubscriptionStatus {
+  if (status === 'active' || status === 'cancelled' || status === 'past_due' || status === 'expired' || status === 'trialing') {
+    return status;
+  }
+  return 'active';
+}
+
+function normalizeProvider(provider: unknown): PaymentProvider {
+  return provider === 'stripe' || provider === 'paypal' ? provider : 'none';
+}
+
+function normalizePaymentStatus(status: unknown): PaymentStatus {
+  if (status === 'succeeded' || status === 'failed' || status === 'pending' || status === 'refunded') {
+    return status;
+  }
+  return 'pending';
+}
 
 /**
  * User Detail Page
@@ -331,7 +351,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-gray-900">Subscription</h2>
-              {subscription && <SubscriptionBadge status={subscription.status} />}
+              {subscription && <SubscriptionBadge status={normalizeSubscriptionStatus(subscription.status)} />}
             </div>
             {subscription ? (
               <div className="space-y-4">
@@ -345,7 +365,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                   <div>
                     <p className="text-sm text-gray-600">Provider</p>
                     <div className="mt-1">
-                      <ProviderBadge provider={subscription.provider} />
+                      <ProviderBadge provider={normalizeProvider(subscription.provider)} />
                     </div>
                   </div>
                   <div>
@@ -413,7 +433,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                           {new Date(payment.createdAt).toLocaleDateString()}
                         </p>
                       </div>
-                      <PaymentStatusBadge status={payment.status} />
+                      <PaymentStatusBadge status={normalizePaymentStatus(payment.status)} />
                     </div>
                   ))}
                 {payments.length > 5 && (
