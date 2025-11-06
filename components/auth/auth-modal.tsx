@@ -28,6 +28,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
   const [isSubmittingMagic, setIsSubmittingMagic] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState(false);
+  const [showGoogle, setShowGoogle] = useState(true);
   const [sentEmail, setSentEmail] = useState(false);
   const [error, setError] = useState('');
   const [code, setCode] = useState('');
@@ -303,7 +304,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                     )}
 
                     {/* Google Sign In Button */}
-                    {GOOGLE_CLIENT_ID && (
+                    {GOOGLE_CLIENT_ID && showGoogle && (
                       <div className="flex-1">
                         <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
                           <GoogleLogin
@@ -325,7 +326,9 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                               }
                             }}
                             onError={() => {
-                              setError('Google sign-in failed');
+                              // Hide the Google button if origin is not allowed or any GSI error occurs
+                              setShowGoogle(false);
+                              setError('Google sign-in unavailable for this origin. Use Magic Link.');
                               setIsOAuthLoading(false);
                             }}
                             useOneTap={false}
@@ -333,7 +336,6 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                             size="large"
                             text="continue_with"
                             shape="rectangular"
-                            width="100%"
                           />
                         </GoogleOAuthProvider>
                       </div>
