@@ -411,7 +411,7 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
                   <Tooltip
                     content={({ active, payload }) => {
                       if (active && payload && payload.length && payload[0]?.name) {
-                        const deviceType = payload[0].name.toLowerCase();
+                        const deviceType = String(payload[0].name).toLowerCase();
                         return (
                           <Card className="bg-background/95 backdrop-blur-sm border px-3 py-2">
                             <div className="flex items-center gap-2 mb-1">
