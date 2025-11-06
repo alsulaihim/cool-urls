@@ -25,7 +25,8 @@ export function middleware(request: NextRequest) {
   const isRailwayDomain = hostname.includes('.railway.app') || hostname.includes('.up.railway.app');
   const isVercelDomain = hostname.includes('.vercel.app');
   const isLocalhost = hostname.includes('localhost') || hostname.includes('127.0.0.1');
-  const isPlatformDomain = isRailwayDomain || isVercelDomain || isLocalhost;
+  const isHotUrlDomain = hostname.includes('.hoturl.me');
+  const isPlatformDomain = isRailwayDomain || isVercelDomain || isLocalhost || isHotUrlDomain;
 
   // Production: Enforce admin subdomain requirement (only for custom domains)
   // Exception: Allow /admin/login to be accessible from any domain
@@ -34,7 +35,7 @@ export function middleware(request: NextRequest) {
     // Only redirect for custom domains (e.g., hoturl.me)
     const adminUrl = new URL(request.url);
     adminUrl.hostname = `admin.${adminUrl.hostname.replace(/^(www\.)?/, '')}`;
-    adminUrl.port = '8088';
+    // Don't set port - use default HTTPS port (443)
     return NextResponse.redirect(adminUrl);
   }
 
