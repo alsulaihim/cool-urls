@@ -1,141 +1,133 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { db } from '@/lib/instant';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  Settings,
-  Shield,
-  Globe,
-  Bell,
-  Database,
-  Lock,
+  Settings as SettingsIcon,
+  CreditCard,
   Save,
-  RefreshCw,
+  Loader2,
+  CheckCircle,
   AlertCircle,
-  CheckCircle2,
-  Info
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 /**
  * Admin Settings Page
  *
- * System configuration and settings management
+ * Allows admins to configure:
+ * - Payment provider availability (Stripe/PayPal)
+ * - Other app-wide settings
  */
 export default function AdminSettingsPage() {
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const { user } = db.useAuth();
+  const [stripeEnabled, setStripeEnabled] = useState(true);
+  const [paypalEnabled, setPaypalEnabled] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  // Note: System config would be stored in a systemConfig entity in production
-  // For now, we'll use local state for settings management
-  const isLoading = false;
+  // Query app settings
+  const { data, isLoading } = db.useQuery({
+    appSettings: {},
+  });
 
-  // Settings sections
-  const sections = [
-    {
-      id: 'general',
-      title: 'General Settings',
-      description: 'Basic application configuration',
-      icon: Settings,
-      color: 'pink',
-    },
-    {
-      id: 'security',
-      title: 'Security & Authentication',
-      description: 'Security policies and authentication settings',
-      icon: Shield,
-      color: 'blue',
-    },
-    {
-      id: 'urls',
-      title: 'URL Management',
-      description: 'URL shortening and validation rules',
-      icon: Globe,
-      color: 'green',
-    },
-    {
-      id: 'notifications',
-      title: 'Notifications',
-      description: 'Email and alert configuration',
-      icon: Bell,
-      color: 'purple',
-    },
-    {
-      id: 'database',
-      title: 'Database & Storage',
-      description: 'Data retention and backup settings',
-      icon: Database,
-      color: 'gray',
-    },
-  ];
+  // Load current settings
+  useEffect(() => {
+    if (data?.appSettings) {
+      const stripeSetting = data.appSettings.find(s => s.key === 'payment.stripe.enabled');
+      const paypalSetting = data.appSettings.find(s => s.key === 'payment.paypal.enabled');
 
-  // Settings data (in production, this would come from a systemConfig entity)
-  const settings = useMemo(() => {
-    return {
-      general: {
-        siteName: 'HotURL',
-        siteDescription: 'Fast and reliable URL shortening service',
-        defaultTheme: 'light',
-        maintenanceMode: false,
-      },
-      security: {
-        requireEmailVerification: true,
-        sessionTimeout: 30,
-        maxLoginAttempts: 5,
-        passwordMinLength: 8,
-        mfaEnabled: false,
-      },
-      urls: {
-        maxUrlLength: 2048,
-        allowCustomSlugs: true,
-        autoGenerateLength: 6,
-        expireInactiveUrls: false,
-        inactivityDays: 365,
-      },
-      notifications: {
-        emailNotifications: true,
-        adminAlerts: true,
-        suspiciousActivityAlerts: true,
-        weeklyReports: true,
-      },
-      database: {
-        autoBackup: true,
-        backupFrequency: 'daily',
-        retentionDays: 90,
-        analyticsRetention: 365,
-      },
-    };
-  }, []);
+      if (stripeSetting) {
+        setStripeEnabled(stripeSetting.value === 'true');
+      }
+      if (paypalSetting) {
+        setPaypalEnabled(paypalSetting.value === 'true');
+      }
+    }
+  }, [data]);
+
+  const handleToggle = (provider: 'stripe' | 'paypal') => {
+    if (provider === 'stripe') {
+      // Prevent disabling both providers
+      if (stripeEnabled && !paypalEnabled) {
+        setError('At least one payment provider must be enabled');
+        return;
+      }
+      setStripeEnabled(!stripeEnabled);
+    } else {
+      // Prevent disabling both providers
+      if (paypalEnabled && !stripeEnabled) {
+        setError('At least one payment provider must be enabled');
+        return;
+      }
+      setPaypalEnabled(!paypalEnabled);
+    }
+    setHasChanges(true);
+    setError(null);
+    setSaveSuccess(false);
+  };
 
   const handleSave = async () => {
-    setIsSaving(true);
-    setSaveStatus('idle');
+    if (!user) return;
+
+    setSaving(true);
+    setError(null);
 
     try {
-      // Simulate save (in production, this would update systemConfig)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setSaveStatus('success');
-      setTimeout(() => setSaveStatus('idle'), 3000);
-    } catch (error) {
-      setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 3000);
+      const response = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          settings: [
+            {
+              key: 'payment.stripe.enabled',
+              value: String(stripeEnabled),
+            },
+            {
+              key: 'payment.paypal.enabled',
+              value: String(paypalEnabled),
+            },
+          ],
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to save settings');
+      }
+
+      setSaveSuccess(true);
+      setHasChanges(false);
+
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setSaveSuccess(false);
+      }, 3000);
+    } catch (err) {
+      console.error('Save settings error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save settings');
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
   };
 
   if (isLoading) {
     return (
       <div className="p-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/4 mb-8" />
             <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-48 bg-gray-200 rounded-lg" />
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="h-32 bg-gray-200 rounded-lg" />
               ))}
             </div>
           </div>
@@ -146,321 +138,224 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="p-4 lg:p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-            <p className="text-gray-600 mt-1">Manage system configuration and preferences</p>
-          </div>
-
-          {/* Save button */}
-          <div className="flex items-center gap-3">
-            {saveStatus === 'success' && (
-              <div className="flex items-center gap-2 text-green-600">
-                <CheckCircle2 className="w-5 h-5" />
-                <span className="text-sm font-medium">Saved</span>
-              </div>
-            )}
-            {saveStatus === 'error' && (
-              <div className="flex items-center gap-2 text-red-600">
-                <AlertCircle className="w-5 h-5" />
-                <span className="text-sm font-medium">Error</span>
-              </div>
-            )}
-            <Button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="bg-pink-600 hover:bg-pink-700 text-white"
-            >
-              {isSaving ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </Button>
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+              <SettingsIcon className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+              <p className="text-gray-600 text-sm">Configure app-wide settings and preferences</p>
+            </div>
           </div>
         </div>
 
-        {/* Info Banner */}
-        <Card className="p-4 mb-6 bg-blue-50 border-blue-200">
-          <div className="flex gap-3">
-            <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-blue-900">Settings Management</p>
-              <p className="text-sm text-blue-700 mt-1">
-                Changes to these settings will affect the entire application. Be careful when modifying security and database settings.
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Settings Sections */}
-        <div className="space-y-6">
-          {/* General Settings */}
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
-                <Settings className="w-5 h-5 text-pink-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">General Settings</h3>
-                <p className="text-sm text-gray-600">Basic application configuration</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Site Name
-                </label>
-                <Input
-                  type="text"
-                  defaultValue={settings.general.siteName}
-                  className="max-w-md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Site Description
-                </label>
-                <Input
-                  type="text"
-                  defaultValue={settings.general.siteDescription}
-                  className="max-w-2xl"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-                <div>
-                  <p className="font-medium text-gray-900">Maintenance Mode</p>
-                  <p className="text-sm text-gray-600">Temporarily disable public access</p>
-                </div>
-                <Badge className={settings.general.maintenanceMode ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}>
-                  {settings.general.maintenanceMode ? 'Enabled' : 'Disabled'}
-                </Badge>
-              </div>
-            </div>
-          </Card>
-
-          {/* Security Settings */}
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Shield className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Security & Authentication</h3>
-                <p className="text-sm text-gray-600">Security policies and authentication settings</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-                <div>
-                  <p className="font-medium text-gray-900">Email Verification</p>
-                  <p className="text-sm text-gray-600">Require users to verify their email</p>
-                </div>
-                <Badge className={settings.security.requireEmailVerification ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                  {settings.security.requireEmailVerification ? 'Required' : 'Optional'}
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Session Timeout (minutes)
-                  </label>
-                  <Input
-                    type="number"
-                    defaultValue={settings.security.sessionTimeout}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Max Login Attempts
-                  </label>
-                  <Input
-                    type="number"
-                    defaultValue={settings.security.maxLoginAttempts}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-                <div>
-                  <p className="font-medium text-gray-900">Multi-Factor Authentication</p>
-                  <p className="text-sm text-gray-600">Require MFA for admin accounts</p>
-                </div>
-                <Badge className={settings.security.mfaEnabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                  {settings.security.mfaEnabled ? 'Enabled' : 'Disabled'}
-                </Badge>
-              </div>
-            </div>
-          </Card>
-
-          {/* URL Management */}
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <Globe className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">URL Management</h3>
-                <p className="text-sm text-gray-600">URL shortening and validation rules</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Max URL Length
-                  </label>
-                  <Input
-                    type="number"
-                    defaultValue={settings.urls.maxUrlLength}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Short Code Length
-                  </label>
-                  <Input
-                    type="number"
-                    defaultValue={settings.urls.autoGenerateLength}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-                <div>
-                  <p className="font-medium text-gray-900">Custom Slugs</p>
-                  <p className="text-sm text-gray-600">Allow users to create custom short codes</p>
-                </div>
-                <Badge className={settings.urls.allowCustomSlugs ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                  {settings.urls.allowCustomSlugs ? 'Allowed' : 'Disabled'}
-                </Badge>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-                <div>
-                  <p className="font-medium text-gray-900">Auto-Expire Inactive URLs</p>
-                  <p className="text-sm text-gray-600">Delete URLs after {settings.urls.inactivityDays} days of inactivity</p>
-                </div>
-                <Badge className={settings.urls.expireInactiveUrls ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}>
-                  {settings.urls.expireInactiveUrls ? 'Enabled' : 'Disabled'}
-                </Badge>
-              </div>
-            </div>
-          </Card>
-
-          {/* Notifications */}
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Bell className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
-                <p className="text-sm text-gray-600">Email and alert configuration</p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {Object.entries(settings.notifications).map(([key, enabled]) => (
-                <div key={key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+        {/* Success Message */}
+        <AnimatePresence>
+          {saveSuccess && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-6"
+            >
+              <Card className="bg-green-50 border-green-200 p-4">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-gray-900">
-                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                    <p className="text-sm font-medium text-green-900">Settings saved successfully!</p>
+                    <p className="text-xs text-green-700 mt-0.5">
+                      Your changes are now live and will affect all new customer checkouts.
                     </p>
                   </div>
-                  <Badge className={enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                    {enabled ? 'On' : 'Off'}
-                  </Badge>
                 </div>
-              ))}
-            </div>
-          </Card>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          {/* Database & Storage */}
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Database className="w-5 h-5 text-gray-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Database & Storage</h3>
-                <p className="text-sm text-gray-600">Data retention and backup settings</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+        {/* Error Message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <Card className="bg-red-50 border-red-200 p-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
                 <div>
-                  <p className="font-medium text-gray-900">Automatic Backups</p>
-                  <p className="text-sm text-gray-600">Daily automated database backups</p>
-                </div>
-                <Badge className={settings.database.autoBackup ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                  {settings.database.autoBackup ? 'Enabled' : 'Disabled'}
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Backup Retention (days)
-                  </label>
-                  <Input
-                    type="number"
-                    defaultValue={settings.database.retentionDays}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Analytics Retention (days)
-                  </label>
-                  <Input
-                    type="number"
-                    defaultValue={settings.database.analyticsRetention}
-                  />
+                  <p className="text-sm font-medium text-red-900">Error</p>
+                  <p className="text-xs text-red-700 mt-0.5">{error}</p>
                 </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Payment Providers Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Providers</h2>
+          <p className="text-sm text-gray-600 mb-6">
+            Control which payment methods are available to customers during checkout.
+            At least one provider must be enabled.
+          </p>
+
+          <div className="space-y-4">
+            {/* Stripe */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <CreditCard className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="text-lg font-semibold text-gray-900">Stripe</h3>
+                      <Badge
+                        variant={stripeEnabled ? 'default' : 'secondary'}
+                        className={stripeEnabled ? 'bg-green-600' : 'bg-gray-400'}
+                      >
+                        {stripeEnabled ? 'Enabled' : 'Disabled'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      Credit card payments powered by Stripe
+                    </p>
+                    {stripeEnabled && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Customers will see the &quot;Credit Card&quot; option during checkout
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <button
+                    onClick={() => handleToggle('stripe')}
+                    disabled={saving}
+                    className={`
+                      relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2
+                      ${stripeEnabled ? 'bg-black' : 'bg-gray-300'}
+                      ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                    `}
+                    aria-label={`Toggle Stripe ${stripeEnabled ? 'off' : 'on'}`}
+                  >
+                    <span
+                      className={`
+                        inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                        ${stripeEnabled ? 'translate-x-6' : 'translate-x-1'}
+                      `}
+                    />
+                  </button>
+                </div>
+              </div>
+            </Card>
+
+            {/* PayPal */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 2.79a.773.773 0 0 1 .762-.646h8.236c2.763 0 4.634.577 5.564 1.718 1.064 1.244 1.222 3.084.481 5.628-.083.285-.176.563-.278.833-.743 1.959-2.086 3.513-3.888 4.493-1.545.84-3.52 1.266-5.875 1.266h-1.48c-.533 0-.99.386-1.078.912l-.13.77zm7.788-6.228c1.677 0 3.088-.367 4.195-1.092 1.475-.968 2.46-2.41 3.01-4.41.657-2.388.478-4.223-.54-5.458C20.493 3.039 18.627 2.5 16.001 2.5H7.765c-.313 0-.582.232-.632.544L4.027 20.852a.382.382 0 0 0 .378.444h4.606l.893-5.315zm5.815-11.65c.862.977 1.065 2.54.62 4.774-.054.273-.122.537-.204.79-.596 1.834-1.693 3.283-3.263 4.308-1.417.926-3.193 1.395-5.28 1.395h-1.48c-.267 0-.494.193-.537.456l-.13.77-.352 2.09-.234 1.393a.382.382 0 0 0 .378.444h3.234c.313 0 .582-.232.632-.544l.13-.77.893-5.315h1.48c1.984 0 3.663-.367 4.992-1.092 1.77-1.024 2.924-2.762 3.537-5.318.552-2.308.358-4.096-.566-5.312-1.036-1.364-2.902-2.054-5.542-2.054z"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="text-lg font-semibold text-gray-900">PayPal</h3>
+                      <Badge
+                        variant={paypalEnabled ? 'default' : 'secondary'}
+                        className={paypalEnabled ? 'bg-green-600' : 'bg-gray-400'}
+                      >
+                        {paypalEnabled ? 'Enabled' : 'Disabled'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      PayPal subscription payments
+                    </p>
+                    {paypalEnabled && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Customers will see the &quot;PayPal&quot; option during checkout
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <button
+                    onClick={() => handleToggle('paypal')}
+                    disabled={saving}
+                    className={`
+                      relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2
+                      ${paypalEnabled ? 'bg-black' : 'bg-gray-300'}
+                      ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                    `}
+                    aria-label={`Toggle PayPal ${paypalEnabled ? 'off' : 'on'}`}
+                  >
+                    <span
+                      className={`
+                        inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                        ${paypalEnabled ? 'translate-x-6' : 'translate-x-1'}
+                      `}
+                    />
+                  </button>
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
 
-        {/* Bottom save button */}
-        <div className="mt-8 flex justify-end">
+        {/* Save Button */}
+        <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            {hasChanges && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+              >
+                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                  Unsaved changes
+                </Badge>
+              </motion.div>
+            )}
+          </div>
           <Button
             onClick={handleSave}
-            disabled={isSaving}
-            className="bg-pink-600 hover:bg-pink-700 text-white"
-            size="lg"
+            disabled={!hasChanges || saving}
+            className="gap-2"
           >
-            {isSaving ? (
+            {saving ? (
               <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 Saving...
               </>
             ) : (
               <>
-                <Save className="w-4 h-4 mr-2" />
-                Save All Changes
+                <Save className="w-4 h-4" />
+                Save Changes
               </>
             )}
           </Button>
         </div>
+
+        {/* Info Card */}
+        <Card className="mt-6 bg-blue-50 border-blue-200 p-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-blue-900 mb-1">
+                Important Information
+              </p>
+              <ul className="text-xs text-blue-700 space-y-1">
+                <li>• Changes take effect immediately for all new customer checkouts</li>
+                <li>• Existing active subscriptions are not affected</li>
+                <li>• At least one payment provider must remain enabled at all times</li>
+                <li>• Customers will only see enabled payment methods</li>
+              </ul>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );

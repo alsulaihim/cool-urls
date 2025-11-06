@@ -29,7 +29,12 @@
       "Bash(npm run build:*)",
       "Bash(source .env.local)",
       "Bash(ngrok:*)",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "Read(//private/tmp/**)",
+      "Bash(git pull:*)",
+      "Bash(git fetch:*)",
+      "Bash(npx tsc:*)",
+      "Bash(yes:*)"
     ],
     "deny": [],
     "ask": []

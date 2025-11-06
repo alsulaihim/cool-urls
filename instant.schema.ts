@@ -114,6 +114,12 @@ const _schema = i.schema({
       status: i.string(),
       userId: i.string().unique().indexed(),
     }),
+    appSettings: i.entity({
+      key: i.string().unique().indexed(),
+      value: i.string(),
+      updatedAt: i.number(),
+      updatedBy: i.string(),
+    }),
   },
   links: {
     $usersLinkedPrimaryUser: {
