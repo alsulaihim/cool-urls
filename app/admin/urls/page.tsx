@@ -12,7 +12,9 @@ import {
   CheckCircle,
   ExternalLink,
   Copy,
-  MousePointerClick
+  MousePointerClick,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -23,6 +25,8 @@ import Link from 'next/link';
  */
 export default function AdminUrlsPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   // Query all URLs
   const { data, isLoading } = db.useQuery({
@@ -45,6 +49,17 @@ export default function AdminUrlsPage() {
       })
       .sort((a, b) => b.createdAt - a.createdAt);
   }, [data?.urls, searchQuery]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredUrls.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUrls = filteredUrls.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search changes
+  useMemo(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   // Get user profile for a userId
   const getUserProfile = (userId: string) => {
@@ -155,7 +170,7 @@ export default function AdminUrlsPage() {
               </p>
             </Card>
           ) : (
-            filteredUrls.map(url => {
+            paginatedUrls.map(url => {
               const userProfile = getUserProfile(url.userId);
               const shortUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/${url.shortCode}`;
 
@@ -234,10 +249,43 @@ export default function AdminUrlsPage() {
           )}
         </div>
 
-        {/* Pagination info */}
-        {filteredUrls.length > 0 && (
-          <div className="mt-6 text-center text-sm text-gray-600">
-            Showing {filteredUrls.length} of {data?.urls?.length || 0} URLs
+        {/* Pagination Controls */}
+        {filteredUrls.length > itemsPerPage && (
+          <div className="mt-6 flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Showing {startIndex + 1}-{Math.min(endIndex, filteredUrls.length)} of {filteredUrls.length} URLs
+              {searchQuery && ` (filtered from ${data?.urls?.length || 0} total)`}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="gap-1"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </Button>
+
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="gap-1"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         )}
       </div>

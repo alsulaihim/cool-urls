@@ -51,9 +51,9 @@ export default function CancelSubscriptionModal({
       // Success!
       onSuccess();
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Cancel subscription error:', err);
-      setError(err.message || 'Something went wrong');
+      setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -98,6 +98,7 @@ export default function CancelSubscriptionModal({
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close modal"
             >
               <X className="w-5 h-5" />
             </button>
@@ -115,7 +116,7 @@ export default function CancelSubscriptionModal({
                   </p>
                   <p className="text-xs text-red-700">
                     Your subscription will remain active until the end of your current billing period.
-                    After that, you'll be downgraded to the Free plan.
+                    After that, you&apos;ll be downgraded to the Free plan.
                   </p>
                 </div>
               </div>
@@ -153,8 +154,8 @@ export default function CancelSubscriptionModal({
                   </p>
                   <ul className="text-xs text-blue-700 space-y-1">
                     <li>• Your subscription will remain active until the end of the billing period</li>
-                    <li>• You'll keep all features until then</li>
-                    <li>• After that, you'll be moved to the Free plan</li>
+                    <li>• You&apos;ll keep all features until then</li>
+                    <li>• After that, you&apos;ll be moved to the Free plan</li>
                     <li>• You can resubscribe anytime</li>
                   </ul>
                 </div>

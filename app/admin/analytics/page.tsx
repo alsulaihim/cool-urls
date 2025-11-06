@@ -2,7 +2,17 @@
 
 import { useMemo } from 'react';
 import { db } from '@/lib/instant';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { Bar, BarChart, Line, LineChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend, Pie, PieChart, Cell } from 'recharts';
 import {
   BarChart3,
   MousePointerClick,
@@ -10,13 +20,17 @@ import {
   Users,
   TrendingUp,
   Globe,
-  Smartphone
+  Smartphone,
+  ArrowUpRight,
+  ArrowDownRight
 } from 'lucide-react';
+
+const COLORS = ['#8b5cf6', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#6366f1'];
 
 /**
  * Admin Analytics Page
  *
- * Shows comprehensive analytics across all URLs
+ * Shows comprehensive analytics across all URLs with charts and visualizations
  */
 export default function AdminAnalyticsPage() {
   // Query all data
@@ -41,12 +55,25 @@ export default function AdminAnalyticsPage() {
     let clicksToday = 0;
     let clicksThisWeek = 0;
     let clicksThisMonth = 0;
+    let clicksYesterday = 0;
+    let clicksLastWeek = 0;
+
+    // Daily clicks for last 7 days (for sparkline)
+    const dailyClicks: Record<string, number> = {};
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now - i * 24 * 60 * 60 * 1000);
+      const dateKey = date.toISOString().split('T')[0];
+      dailyClicks[dateKey] = 0;
+    }
 
     // Device and location stats
     const deviceStats: Record<string, number> = {};
     const browserStats: Record<string, number> = {};
     const countryStats: Record<string, number> = {};
     const osStats: Record<string, number> = {};
+
+    const twoDaysAgo = now - 2 * 24 * 60 * 60 * 1000;
+    const twoWeeksAgo = now - 14 * 24 * 60 * 60 * 1000;
 
     data.urls.forEach(url => {
       if (url.analyticsData) {
@@ -58,6 +85,14 @@ export default function AdminAnalyticsPage() {
             if (clickTime >= oneDayAgo) clicksToday++;
             if (clickTime >= oneWeekAgo) clicksThisWeek++;
             if (clickTime >= oneMonthAgo) clicksThisMonth++;
+            if (clickTime >= twoDaysAgo && clickTime < oneDayAgo) clicksYesterday++;
+            if (clickTime >= twoWeeksAgo && clickTime < oneWeekAgo) clicksLastWeek++;
+
+            // Track daily clicks for last 7 days
+            const clickDate = new Date(clickTime).toISOString().split('T')[0];
+            if (dailyClicks[clickDate] !== undefined) {
+              dailyClicks[clickDate]++;
+            }
 
             // Device stats
             if (click.deviceType) {
@@ -90,12 +125,44 @@ export default function AdminAnalyticsPage() {
       .sort((a, b) => (b.clicks || 0) - (a.clicks || 0))
       .slice(0, 10);
 
+    // Calculate growth percentages
+    const todayGrowth = clicksYesterday > 0
+      ? ((clicksToday - clicksYesterday) / clicksYesterday) * 100
+      : clicksToday > 0 ? 100 : 0;
+
+    const weekGrowth = clicksLastWeek > 0
+      ? ((clicksThisWeek - clicksLastWeek) / clicksLastWeek) * 100
+      : clicksThisWeek > 0 ? 100 : 0;
+
+    // Format data for charts
+    const dailyClicksData = Object.entries(dailyClicks).map(([date, clicks]) => ({
+      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      clicks,
+    }));
+
+    const deviceChartData = Object.entries(deviceStats)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([name, value]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value }));
+
+    const browserChartData = Object.entries(browserStats)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([name, value]) => ({ name, value }));
+
+    const countryChartData = Object.entries(countryStats)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 8)
+      .map(([name, value]) => ({ name, value }));
+
     return {
       totalClicks,
       totalUrls,
       clicksToday,
       clicksThisWeek,
       clicksThisMonth,
+      todayGrowth,
+      weekGrowth,
       avgClicksPerUrl: totalUrls > 0 ? (totalClicks / totalUrls).toFixed(1) : 0,
       deviceStats: Object.entries(deviceStats)
         .sort(([, a], [, b]) => b - a)
@@ -110,6 +177,10 @@ export default function AdminAnalyticsPage() {
         .sort(([, a], [, b]) => b - a)
         .slice(0, 5),
       topUrls,
+      dailyClicksData,
+      deviceChartData,
+      browserChartData,
+      countryChartData,
     };
   }, [data]);
 
@@ -146,183 +217,363 @@ export default function AdminAnalyticsPage() {
 
   return (
     <div className="p-4 lg:p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="mb-8">
+        <div>
           <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
           <p className="text-gray-600 mt-1">System-wide analytics and statistics</p>
         </div>
 
         {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center">
-                <MousePointerClick className="w-6 h-6 text-pink-600" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Clicks</CardTitle>
+              <MousePointerClick className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analytics.totalClicks.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {analytics.clicksToday} clicks today
+              </p>
+              <div className={`flex items-center gap-1 mt-2 text-xs ${analytics.todayGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {analytics.todayGrowth >= 0 ? (
+                  <ArrowUpRight className="h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="h-3 w-3" />
+                )}
+                <span>{Math.abs(analytics.todayGrowth).toFixed(1)}% from yesterday</span>
               </div>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{analytics.totalClicks.toLocaleString()}</p>
-            <p className="text-sm text-gray-600 mt-1">Total Clicks</p>
-            <p className="text-xs text-green-600 mt-2">
-              +{analytics.clicksToday} today
-            </p>
+            </CardContent>
           </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Link2 className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{analytics.totalUrls}</p>
-            <p className="text-sm text-gray-600 mt-1">Total URLs</p>
-            <p className="text-xs text-gray-500 mt-2">
-              {analytics.avgClicksPerUrl} avg clicks/URL
-            </p>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total URLs</CardTitle>
+              <Link2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analytics.totalUrls}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {analytics.avgClicksPerUrl} avg clicks/URL
+              </p>
+            </CardContent>
           </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-blue-600" />
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Clicks This Week</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{analytics.clicksThisWeek.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {analytics.clicksThisMonth.toLocaleString()} this month
+              </p>
+              <div className={`flex items-center gap-1 mt-2 text-xs ${analytics.weekGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {analytics.weekGrowth >= 0 ? (
+                  <ArrowUpRight className="h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="h-3 w-3" />
+                )}
+                <span>{Math.abs(analytics.weekGrowth).toFixed(1)}% from last week</span>
               </div>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{analytics.clicksThisWeek.toLocaleString()}</p>
-            <p className="text-sm text-gray-600 mt-1">Clicks This Week</p>
-            <p className="text-xs text-gray-500 mt-2">
-              {analytics.clicksThisMonth.toLocaleString()} this month
-            </p>
+            </CardContent>
           </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <Users className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-            <p className="text-3xl font-bold text-gray-900">{data?.userProfiles?.length || 0}</p>
-            <p className="text-sm text-gray-600 mt-1">Total Users</p>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Device Stats */}
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
-                <Smartphone className="w-5 h-5 text-pink-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Top Devices</h3>
-            </div>
-            <div className="space-y-3">
-              {analytics.deviceStats.length === 0 ? (
-                <p className="text-sm text-gray-500">No device data</p>
-              ) : (
-                analytics.deviceStats.map(([device, count]) => (
-                  <div key={device} className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700 capitalize">{device}</span>
-                    <span className="text-sm font-semibold text-gray-900">{count}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
-
-          {/* Browser Stats */}
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Globe className="w-5 h-5 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Top Browsers</h3>
-            </div>
-            <div className="space-y-3">
-              {analytics.browserStats.length === 0 ? (
-                <p className="text-sm text-gray-500">No browser data</p>
-              ) : (
-                analytics.browserStats.map(([browser, count]) => (
-                  <div key={browser} className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">{browser}</span>
-                    <span className="text-sm font-semibold text-gray-900">{count}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
-
-          {/* OS Stats */}
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-purple-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Operating Systems</h3>
-            </div>
-            <div className="space-y-3">
-              {analytics.osStats.length === 0 ? (
-                <p className="text-sm text-gray-500">No OS data</p>
-              ) : (
-                analytics.osStats.map(([os, count]) => (
-                  <div key={os} className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">{os}</span>
-                    <span className="text-sm font-semibold text-gray-900">{count}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
-
-          {/* Country Stats */}
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <Globe className="w-5 h-5 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Top Countries</h3>
-            </div>
-            <div className="space-y-3">
-              {analytics.countryStats.length === 0 ? (
-                <p className="text-sm text-gray-500">No location data</p>
-              ) : (
-                analytics.countryStats.map(([country, count]) => (
-                  <div key={country} className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">{country}</span>
-                    <span className="text-sm font-semibold text-gray-900">{count}</span>
-                  </div>
-                ))
-              )}
-            </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{data?.userProfiles?.length || 0}</div>
+              <p className="text-xs text-muted-foreground mt-1">Registered accounts</p>
+            </CardContent>
           </Card>
         </div>
 
-        {/* Top URLs */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performing URLs</h3>
-          <div className="space-y-3">
-            {analytics.topUrls.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">No URLs yet</p>
-            ) : (
-              analytics.topUrls.map((url, index) => (
-                <div
-                  key={url.id}
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <span className="text-sm font-semibold text-gray-500 w-6">#{index + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{url.shortCode}</p>
-                      <p className="text-xs text-gray-500 truncate">{url.originalUrl}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MousePointerClick className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm font-semibold text-gray-900">{url.clicks || 0}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+        {/* Clicks Over Time Chart */}
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>Clicks Over Time</CardTitle>
+            <CardDescription>Daily clicks for the last 7 days</CardDescription>
+          </CardHeader>
+          <CardContent className="w-full">
+            <ChartContainer
+              config={{
+                clicks: {
+                  label: "Clicks",
+                  color: "hsl(var(--chart-1))",
+                },
+              }}
+              className="h-[350px] w-full"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={analytics.dailyClicksData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis
+                    dataKey="date"
+                    className="text-xs"
+                    tick={{ fill: 'hsl(var(--foreground))' }}
+                  />
+                  <YAxis
+                    className="text-xs"
+                    tick={{ fill: 'hsl(var(--foreground))' }}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Line
+                    type="monotone"
+                    dataKey="clicks"
+                    stroke="#8b5cf6"
+                    strokeWidth={2}
+                    dot={{ fill: '#8b5cf6', r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
         </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Device Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Device Distribution</CardTitle>
+              <CardDescription>Clicks by device type</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.deviceChartData.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">No device data</p>
+              ) : (
+                <ChartContainer
+                  config={{
+                    value: {
+                      label: "Clicks",
+                      color: "hsl(var(--chart-1))",
+                    },
+                  }}
+                  className="h-[300px]"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={analytics.deviceChartData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {analytics.deviceChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Browser Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Top Browsers</CardTitle>
+              <CardDescription>Most popular browsers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.browserChartData.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">No browser data</p>
+              ) : (
+                <ChartContainer
+                  config={{
+                    value: {
+                      label: "Clicks",
+                      color: "hsl(var(--chart-1))",
+                    },
+                  }}
+                  className="h-[300px]"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={analytics.browserChartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis
+                        dataKey="name"
+                        className="text-xs"
+                        tick={{ fill: 'hsl(var(--foreground))' }}
+                      />
+                      <YAxis
+                        className="text-xs"
+                        tick={{ fill: 'hsl(var(--foreground))' }}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="value" fill="#ec4899" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Country Stats */}
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>Geographic Distribution</CardTitle>
+            <CardDescription>Clicks by country</CardDescription>
+          </CardHeader>
+          <CardContent className="w-full">
+            {analytics.countryChartData.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-8">No location data</p>
+            ) : (
+              <ChartContainer
+                config={{
+                  value: {
+                    label: "Clicks",
+                    color: "hsl(var(--chart-1))",
+                  },
+                }}
+                className="h-[350px] w-full"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analytics.countryChartData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      type="number"
+                      className="text-xs"
+                      tick={{ fill: 'hsl(var(--foreground))' }}
+                    />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      width={100}
+                      className="text-xs"
+                      tick={{ fill: 'hsl(var(--foreground))' }}
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top URLs Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Performing URLs</CardTitle>
+            <CardDescription>URLs with the most clicks</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {analytics.topUrls.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-8">No URLs yet</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Short Code</TableHead>
+                    <TableHead className="hidden md:table-cell">Original URL</TableHead>
+                    <TableHead className="text-right">Clicks</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {analytics.topUrls.map((url, index) => (
+                    <TableRow key={url.id}>
+                      <TableCell className="font-medium">{index + 1}</TableCell>
+                      <TableCell className="font-mono text-sm">{url.shortCode}</TableCell>
+                      <TableCell className="hidden md:table-cell truncate max-w-md text-sm text-muted-foreground">
+                        {url.originalUrl}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {(url.clicks || 0).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Device & OS Stats Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Operating Systems</CardTitle>
+              <CardDescription>Breakdown by OS</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.osStats.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No OS data</p>
+              ) : (
+                <div className="space-y-3">
+                  {analytics.osStats.map(([os, count], index) => {
+                    const percentage = (count / analytics.totalClicks) * 100;
+                    return (
+                      <div key={os}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-700">{os}</span>
+                          <span className="text-sm font-semibold text-gray-900">{count}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="h-2 rounded-full"
+                            style={{
+                              width: `${percentage}%`,
+                              backgroundColor: COLORS[index % COLORS.length],
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Top Devices</CardTitle>
+              <CardDescription>Breakdown by device type</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {analytics.deviceStats.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">No device data</p>
+              ) : (
+                <div className="space-y-3">
+                  {analytics.deviceStats.map(([device, count], index) => {
+                    const percentage = (count / analytics.totalClicks) * 100;
+                    return (
+                      <div key={device}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-700 capitalize">{device}</span>
+                          <span className="text-sm font-semibold text-gray-900">{count}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="h-2 rounded-full"
+                            style={{
+                              width: `${percentage}%`,
+                              backgroundColor: COLORS[index % COLORS.length],
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
