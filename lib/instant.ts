@@ -103,6 +103,12 @@ const schema = i.schema({
       createdAt: i.number(),
       updatedAt: i.number(),
     }),
+    appSettings: i.entity({
+      key: i.string().unique().indexed(),
+      value: i.string(),
+      updatedAt: i.number(),
+      updatedBy: i.string(),
+    }),
   },
 });
 
