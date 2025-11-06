@@ -179,6 +179,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.debug('[AuthModal] handleSubmit fired', { email });
 
     // Validate email before proceeding
     if (!email || !email.includes('@')) {
@@ -188,6 +189,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
 
     setError('');
     setIsSubmittingMagic(true);
+    console.debug('[AuthModal] setIsSubmittingMagic(true)');
 
     try {
       // Check if user already exists before sending magic code
@@ -200,11 +202,14 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
 
       await db.auth.sendMagicCode({ email });
       setSentEmail(true);
+      console.debug('[AuthModal] magic code sent, sentEmail=true');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to send magic code';
       setError(message);
+      console.debug('[AuthModal] sendMagicCode error', message);
     } finally {
       setIsSubmittingMagic(false);
+      console.debug('[AuthModal] setIsSubmittingMagic(false)');
     }
   };
 
@@ -377,7 +382,10 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                       <Input
                         type="text"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={(e) => {
+                          console.debug('[AuthModal] name change');
+                          setName(e.target.value);
+                        }}
                         placeholder="Your first name"
                         disabled={isSubmittingMagic}
                         className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
@@ -397,7 +405,10 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                       <Input
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                          console.debug('[AuthModal] email change');
+                          setEmail(e.target.value);
+                        }}
                         placeholder="you@example.com"
                         required
                         disabled={isSubmittingMagic}
