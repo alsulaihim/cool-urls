@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Check, ChevronDown, ArrowLeft, AlertCircle, X } from 'lucide-react';
 import Link from 'next/link';
 import { getAllPlans, formatPrice, type PlanId } from '@/lib/pricing';
 import { db } from '@/lib/instant';
@@ -23,6 +23,7 @@ export default function PricingPage() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [showPlanChangeModal, setShowPlanChangeModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const plans = getAllPlans();
   const userCurrentPlan = subscription ? getPlanById(subscription.planId) : getPlanById('free');
@@ -51,7 +52,8 @@ export default function PricingPage() {
     if (!user) {
       // Save selected plan in sessionStorage
       sessionStorage.setItem('selectedPlan', selectedPlan);
-      router.push('/'); // Redirect to home to trigger auth
+      // Show login prompt instead of silently redirecting
+      setShowLoginPrompt(true);
       return;
     }
 
@@ -396,6 +398,71 @@ export default function PricingPage() {
             onSuccess={handleCancelSuccess}
           />
         )}
+
+        {/* Login Prompt Modal */}
+        <AnimatePresence>
+          {showLoginPrompt && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowLoginPrompt(false)}
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              />
+
+              {/* Modal */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative bg-white rounded-lg shadow-2xl max-w-md w-full p-6"
+              >
+                {/* Close Button */}
+                <button
+                  onClick={() => setShowLoginPrompt(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Close modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                {/* Content */}
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <AlertCircle className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Login Required
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-6">
+                      You need to be logged in to subscribe to a paid plan. Please sign in or create an account to continue.
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setShowLoginPrompt(false);
+                          router.push('/');
+                        }}
+                        className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-md transition-colors"
+                      >
+                        Go to Login
+                      </button>
+                      <button
+                        onClick={() => setShowLoginPrompt(false)}
+                        className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
