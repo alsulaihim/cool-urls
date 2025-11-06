@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { db } from '@/lib/instant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,47 +24,40 @@ const APPLE_SERVICE_ID = process.env.NEXT_PUBLIC_APPLE_SERVICE_ID || '';
 export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  // Separate loading states to avoid cross-disabling inputs
+  const [isSubmittingMagic, setIsSubmittingMagic] = useState(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [isOAuthLoading, setIsOAuthLoading] = useState(false);
   const [sentEmail, setSentEmail] = useState(false);
   const [error, setError] = useState('');
   const [code, setCode] = useState('');
   const [isExistingUser, setIsExistingUser] = useState(false);
   const [nonce] = useState(crypto.randomUUID());
 
-  // If loading gets toggled unintentionally (e.g., by third-party widgets),
-  // ensure typing re-enables inputs before submission. Once email is sent,
-  // we do not override loading (sentEmail === true indicates submit in-flight/completed).
-  useEffect(() => {
-    if (isLoading && !sentEmail) {
-      setIsLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email, name]);
-
   // Apple Sign In handler
   const handleAppleSignIn = async () => {
     try {
-      setIsLoading(true);
+      setIsOAuthLoading(true);
       setError('');
 
       // Check if AppleID is available
       if (typeof window === 'undefined' || !(window as any).AppleID) {
         setError('Apple Sign In is not available. Please try another method.');
-        setIsLoading(false);
+        setIsOAuthLoading(false);
         return;
       }
 
       // Check if Services ID is configured
       if (!APPLE_SERVICE_ID) {
         setError('Apple Sign In is not configured. Please add NEXT_PUBLIC_APPLE_SERVICE_ID to your environment variables.');
-        setIsLoading(false);
+        setIsOAuthLoading(false);
         return;
       }
 
       // Check if client name is configured
       if (!APPLE_CLIENT_NAME) {
         setError('Apple Sign In is not configured. Please add NEXT_PUBLIC_APPLE_CLIENT_NAME to your environment variables.');
-        setIsLoading(false);
+        setIsOAuthLoading(false);
         return;
       }
 
@@ -75,7 +68,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
 
       if (isLocalhost) {
         setError('Apple Sign In is not available on localhost. Please use ngrok tunnel, or test on your deployed environment.');
-        setIsLoading(false);
+        setIsOAuthLoading(false);
         return;
       }
 
@@ -117,7 +110,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
         // Check if it's a user cancellation FIRST before logging as error
         if (signInErr?.error === 'popup_closed_by_user' || signInErr?.error === 'user_cancelled_authorize') {
           console.log('ℹ️  Apple Sign In popup was closed');
-          setIsLoading(false);
+          setIsOAuthLoading(false);
           return;
         }
 
@@ -135,7 +128,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
       if (!resp || !resp.authorization || !resp.authorization.id_token) {
         console.log('❌ Apple Sign In cancelled by user or missing data. Response:', resp);
         setError('Apple Sign In was not completed. This may be due to domain configuration. Please try Magic Link authentication instead.');
-        setIsLoading(false);
+        setIsOAuthLoading(false);
         return;
       }
 
@@ -172,7 +165,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
       // Check if error is due to user cancellation
       if (err?.error === 'popup_closed_by_user' || err?.error === 'user_cancelled_authorize') {
         console.log('ℹ️  User cancelled Apple Sign In');
-        setIsLoading(false);
+        setIsOAuthLoading(false);
         return;
       }
 
@@ -180,7 +173,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
       const errorMessage = err?.error || err?.body?.message || err?.message || 'Apple sign-in failed. Please try again.';
       setError(errorMessage);
     } finally {
-      setIsLoading(false);
+      setIsOAuthLoading(false);
     }
   };
 
@@ -194,7 +187,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
     }
 
     setError('');
-    setIsLoading(true);
+    setIsSubmittingMagic(true);
 
     try {
       // Check if user already exists before sending magic code
@@ -211,14 +204,14 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
       const message = err instanceof Error ? err.message : 'Failed to send magic code';
       setError(message);
     } finally {
-      setIsLoading(false);
+      setIsSubmittingMagic(false);
     }
   };
 
   const handleCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
+    setIsVerifyingCode(true);
 
     try {
       // Sign in with magic code
@@ -261,7 +254,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
       const message = err instanceof Error ? err.message : 'Invalid verification code';
       setError(message);
     } finally {
-      setIsLoading(false);
+      setIsVerifyingCode(false);
     }
   };
 
@@ -294,7 +287,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                         type="button"
                         variant="outline"
                         onClick={handleAppleSignIn}
-                        disabled={isLoading}
+                        disabled={isOAuthLoading}
                         className="flex-1 h-11 border-gray-300 flex items-center justify-center gap-2"
                       >
                         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -312,7 +305,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                             nonce={nonce}
                             onSuccess={async ({ credential }) => {
                               try {
-                                setIsLoading(true);
+                                setIsOAuthLoading(true);
                                 setError('');
                                 await db.auth.signInWithIdToken({
                                   clientName: GOOGLE_CLIENT_NAME,
@@ -323,12 +316,12 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                               } catch (err: any) {
                                 setError(err.body?.message || 'Google sign-in failed');
                               } finally {
-                                setIsLoading(false);
+                                setIsOAuthLoading(false);
                               }
                             }}
                             onError={() => {
                               setError('Google sign-in failed');
-                              setIsLoading(false);
+                              setIsOAuthLoading(false);
                             }}
                             useOneTap={false}
                             theme="outline"
@@ -386,7 +379,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Your first name"
-                        disabled={isLoading}
+                        disabled={isSubmittingMagic}
                         className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
                       />
                     </div>
@@ -407,7 +400,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@example.com"
                         required
-                        disabled={isLoading}
+                        disabled={isSubmittingMagic}
                         className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
                       />
                     </div>
@@ -421,10 +414,10 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
 
                   <Button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isSubmittingMagic}
                     className="w-full h-11 bg-black text-white font-medium hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
                   >
-                    {isLoading ? (
+                    {isSubmittingMagic ? (
                       <span className="flex items-center justify-center gap-2">
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         Sending...
@@ -458,6 +451,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                         placeholder="Enter 6-digit code"
                         required
                         maxLength={6}
+                        disabled={isVerifyingCode}
                         className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
                       />
                     </div>
@@ -471,10 +465,10 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
 
                   <Button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isVerifyingCode}
                     className="w-full h-11 bg-black text-white font-medium hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
                   >
-                    {isLoading ? (
+                    {isVerifyingCode ? (
                       <span className="flex items-center justify-center gap-2">
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         Verifying...
