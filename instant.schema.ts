@@ -26,6 +26,12 @@ const _schema = i.schema({
       role: i.string(),
       userId: i.string().unique().indexed(),
     }),
+    appSettings: i.entity({
+      key: i.string().unique().indexed(),
+      updatedAt: i.number(),
+      updatedBy: i.string(),
+      value: i.string(),
+    }),
     auditLogs: i.entity({
       action: i.string(),
       adminEmail: i.string(),
@@ -73,11 +79,11 @@ const _schema = i.schema({
       createdAt: i.number(),
       currentPeriodEnd: i.number(),
       currentPeriodStart: i.number(),
+      paypalSubscriptionId: i.string().indexed().optional(),
       planId: i.string(),
       provider: i.string(),
       providerCustomerId: i.string().optional(),
       providerSubscriptionId: i.string().optional(),
-      paypalSubscriptionId: i.string().optional().indexed(),
       status: i.string(),
       updatedAt: i.number(),
       userId: i.string().unique().indexed(),
@@ -113,12 +119,6 @@ const _schema = i.schema({
       reason: i.string().optional(),
       status: i.string(),
       userId: i.string().unique().indexed(),
-    }),
-    appSettings: i.entity({
-      key: i.string().unique().indexed(),
-      value: i.string(),
-      updatedAt: i.number(),
-      updatedBy: i.string(),
     }),
   },
   links: {
