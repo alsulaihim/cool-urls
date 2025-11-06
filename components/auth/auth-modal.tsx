@@ -361,7 +361,10 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
 
                   {/* Magic Link Form */}
                   <form
-                    onSubmit={handleSubmit}
+                    onSubmit={(e) => {
+                      // Block implicit form submits; submission is button-driven
+                      e.preventDefault();
+                    }}
                     className="space-y-4"
                     onKeyDown={(e) => {
                       // Prevent form submission on Enter key unless the submit button is focused
@@ -424,7 +427,8 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                   )}
 
                   <Button
-                    type="submit"
+                    type="button"
+                    onClick={handleSubmit}
                     disabled={isSubmittingMagic}
                     className="w-full h-11 bg-black text-white font-medium hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
                   >
@@ -444,7 +448,13 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                 </form>
                 </>
               ) : (
-                <form onSubmit={handleCodeSubmit} className="space-y-4">
+                <form
+                  onSubmit={(e) => {
+                    // Block implicit submit; submission is button-driven
+                    e.preventDefault();
+                  }}
+                  className="space-y-4"
+                >
                   <p className="text-sm text-gray-600 mb-4">
                     We sent a verification code to <strong>{email}</strong>
                   </p>
@@ -475,7 +485,8 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                   )}
 
                   <Button
-                    type="submit"
+                    type="button"
+                    onClick={handleCodeSubmit}
                     disabled={isVerifyingCode}
                     className="w-full h-11 bg-black text-white font-medium hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
                   >
