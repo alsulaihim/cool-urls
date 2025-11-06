@@ -56,9 +56,9 @@ export default function PlanChangeModal({
       // Success!
       onSuccess();
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Plan change error:', err);
-      setError(err.message || 'Something went wrong');
+      setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -107,10 +107,14 @@ export default function PlanChangeModal({
               </div>
             </div>
             <button
+              type="button"
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close"
+              title="Close modal"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5" aria-hidden="true" />
+              <span className="sr-only">Close</span>
             </button>
           </div>
 
@@ -164,12 +168,12 @@ export default function PlanChangeModal({
                   <p className="text-xs text-blue-700">
                     {isUpgrade ? (
                       <>
-                        You'll be charged approximately <span className="font-semibold">${priceDiff}</span> today for the remainder of your billing period.
+                        You&apos;ll be charged approximately <span className="font-semibold">${priceDiff}</span> today for the remainder of your billing period.
                         Your next bill will be <span className="font-semibold">${newPlan.price}</span> on your regular billing date.
                       </>
                     ) : (
                       <>
-                        You'll receive a credit of approximately <span className="font-semibold">${priceDiff}</span> for the unused time on your current plan.
+                        You&apos;ll receive a credit of approximately <span className="font-semibold">${priceDiff}</span> for the unused time on your current plan.
                         This credit will be applied to your next invoice.
                       </>
                     )}

@@ -24,7 +24,6 @@ import {
  * Perform bulk operations on users, subscriptions, and URLs
  */
 export default function BulkActionsPage() {
-  const { user: currentAdmin } = db.useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
@@ -69,7 +68,7 @@ export default function BulkActionsPage() {
       URL.revokeObjectURL(url);
 
       setResult({ success: true, message: `Exported ${users.length} users to CSV` });
-    } catch (error) {
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       setResult({ success: false, message: 'Failed to export users' });
     } finally {
       setIsProcessing(false);
@@ -105,7 +104,7 @@ export default function BulkActionsPage() {
       URL.revokeObjectURL(url);
 
       setResult({ success: true, message: `Exported ${urls.length} URLs to CSV` });
-    } catch (error) {
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       setResult({ success: false, message: 'Failed to export analytics' });
     } finally {
       setIsProcessing(false);
@@ -144,7 +143,7 @@ export default function BulkActionsPage() {
       URL.revokeObjectURL(url);
 
       setResult({ success: true, message: `Exported ${payments.length} payments to CSV` });
-    } catch (error) {
+    } catch (_error) { // eslint-disable-line @typescript-eslint/no-unused-vars
       setResult({ success: false, message: 'Failed to export payments' });
     } finally {
       setIsProcessing(false);
@@ -340,8 +339,14 @@ export default function BulkActionsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Recipients</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <label htmlFor="recipients-select" className="block text-sm font-medium text-gray-700 mb-2">
+                  Recipients
+                </label>
+                <select
+                  id="recipients-select"
+                  name="recipients"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
                   <option>All Users ({userCount})</option>
                   <option>Paying Customers ({subscriptionCount})</option>
                   <option>Free Plan Users ({userCount - subscriptionCount})</option>

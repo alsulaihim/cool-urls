@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
     // Save subscription to database
     const db = await getDb();
 
-    // Check if subscription already exists
-    const existingSubscription = await db.query({
+    // Check if subscription already exists by provider subscription ID
+    const existingByProvider = await db.query({
       subscriptions: {
         $: {
           where: {
@@ -62,28 +62,66 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (existingSubscription.subscriptions && existingSubscription.subscriptions.length > 0) {
-      console.log('[PayPal Activate] Subscription already exists');
+    if (existingByProvider.subscriptions && existingByProvider.subscriptions.length > 0) {
+      console.log('[PayPal Activate] Subscription already exists by provider ID');
       return NextResponse.json({ success: true });
     }
 
-    // Create new subscription record
-    await db.transact([
-      db.tx.subscriptions[crypto.randomUUID()].update({
-        userId,
-        planId: plan.id,
-        provider: 'paypal',
-        providerSubscriptionId: subscriptionId,
-        status: 'active',
-        clicksUsed: 0,
-        clicksLimit: plan.clicksLimit,
-        cancelAtPeriodEnd: false,
-        currentPeriodStart: Date.now(),
-        currentPeriodEnd: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      }),
-    ]);
+    // Check if user already has a subscription
+    const existingByUser = await db.query({
+      subscriptions: {
+        $: {
+          where: {
+            userId,
+          },
+        },
+      },
+    });
+
+    const now = Date.now();
+    const oneMonthFromNow = now + 30 * 24 * 60 * 60 * 1000; // 30 days
+
+    if (existingByUser.subscriptions && existingByUser.subscriptions.length > 0) {
+      // User already has a subscription - update it
+      const existingSub = existingByUser.subscriptions[0];
+      console.log('[PayPal Activate] User already has a subscription, updating it');
+
+      await db.transact([
+        db.tx.subscriptions[existingSub.id].update({
+          planId: plan.id,
+          provider: 'paypal',
+          providerSubscriptionId: subscriptionId,
+          status: 'active',
+          clicksLimit: plan.clicksLimit,
+          cancelAtPeriodEnd: false,
+          currentPeriodStart: now,
+          currentPeriodEnd: oneMonthFromNow,
+          updatedAt: now,
+        }),
+      ]);
+
+      console.log('[PayPal Activate] Subscription updated in database');
+    } else {
+      // Create new subscription record
+      console.log('[PayPal Activate] Creating new subscription');
+
+      await db.transact([
+        db.tx.subscriptions[crypto.randomUUID()].update({
+          userId,
+          planId: plan.id,
+          provider: 'paypal',
+          providerSubscriptionId: subscriptionId,
+          status: 'active',
+          clicksUsed: 0,
+          clicksLimit: plan.clicksLimit,
+          cancelAtPeriodEnd: false,
+          currentPeriodStart: now,
+          currentPeriodEnd: oneMonthFromNow,
+          createdAt: now,
+          updatedAt: now,
+        }),
+      ]);
+    }
 
     console.log('[PayPal Activate] Subscription saved to database');
 
