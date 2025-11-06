@@ -29,6 +29,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState(false);
   const [showGoogle, setShowGoogle] = useState(true);
+  const [googleReady, setGoogleReady] = useState(false);
   const [sentEmail, setSentEmail] = useState(false);
   const [error, setError] = useState('');
   const [code, setCode] = useState('');
@@ -306,38 +307,55 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                     {/* Google Sign In Button */}
                     {GOOGLE_CLIENT_ID && showGoogle && (
                       <div className="flex-1">
-                        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-                          <GoogleLogin
-                            nonce={nonce}
-                            onSuccess={async ({ credential }) => {
-                              try {
-                                setIsOAuthLoading(true);
-                                setError('');
-                                await db.auth.signInWithIdToken({
-                                  clientName: GOOGLE_CLIENT_NAME,
-                                  idToken: credential!,
-                                  nonce,
-                                });
-                                onClose();
-                              } catch (err: any) {
-                                setError(err.body?.message || 'Google sign-in failed');
-                              } finally {
+                        {!googleReady ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled={isOAuthLoading}
+                            onClick={() => setGoogleReady(true)}
+                            className="w-full h-11 border-gray-300 flex items-center justify-center gap-2"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-5 h-5">
+                              <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.8 32.3 29.3 35 24 35c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 6 1.1 8.2 3l5.7-5.7C34.6 3.6 29.6 1.5 24 1.5 12 1.5 2.5 11 2.5 23S12 44.5 24 44.5 45.5 35 45.5 23c0-0.8-0.1-1.7-0.2-2.5z"/>
+                              <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16 18.9 13 24 13c3.1 0 6 1.1 8.2 3l5.7-5.7C34.6 3.6 29.6 1.5 24 1.5 16.1 1.5 9.2 5.9 6.3 14.7z"/>
+                              <path fill="#4CAF50" d="M24 44.5c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.3 35 26.8 36 24 36c-5.2 0-9.6-3.3-11.2-8l-6.6 5.1C9.2 40.1 16.1 44.5 24 44.5z"/>
+                              <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.4 4.1-5.3 7-11.3 7-5.2 0-9.6-3.3-11.2-8l-6.6 5.1C9.2 40.1 16.1 44.5 24 44.5 35.9 44.5 45.5 35 45.5 23 45.5 22.2 45.4 21.3 43.6 20.5z"/>
+                            </svg>
+                            Continue with Google
+                          </Button>
+                        ) : (
+                          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+                            <GoogleLogin
+                              nonce={nonce}
+                              onSuccess={async ({ credential }) => {
+                                try {
+                                  setIsOAuthLoading(true);
+                                  setError('');
+                                  await db.auth.signInWithIdToken({
+                                    clientName: GOOGLE_CLIENT_NAME,
+                                    idToken: credential!,
+                                    nonce,
+                                  });
+                                  onClose();
+                                } catch (err: any) {
+                                  setError(err.body?.message || 'Google sign-in failed');
+                                } finally {
+                                  setIsOAuthLoading(false);
+                                }
+                              }}
+                              onError={() => {
+                                setShowGoogle(false);
+                                setError('Google sign-in unavailable for this origin. Use Magic Link.');
                                 setIsOAuthLoading(false);
-                              }
-                            }}
-                            onError={() => {
-                              // Hide the Google button if origin is not allowed or any GSI error occurs
-                              setShowGoogle(false);
-                              setError('Google sign-in unavailable for this origin. Use Magic Link.');
-                              setIsOAuthLoading(false);
-                            }}
-                            useOneTap={false}
-                            theme="outline"
-                            size="large"
-                            text="continue_with"
-                            shape="rectangular"
-                          />
-                        </GoogleOAuthProvider>
+                              }}
+                              useOneTap={false}
+                              theme="outline"
+                              size="large"
+                              text="continue_with"
+                              shape="rectangular"
+                            />
+                          </GoogleOAuthProvider>
+                        )}
                       </div>
                     )}
                     </div>
