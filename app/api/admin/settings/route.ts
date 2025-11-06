@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { init } from '@instantdb/admin';
+import { init, id } from '@instantdb/admin';
 
 const APP_ID = process.env.NEXT_PUBLIC_INSTANT_APP_ID!;
 const ADMIN_TOKEN = process.env.INSTANT_ADMIN_TOKEN!;
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get current settings to check if they exist
-    const { data: currentSettings } = await db.query({
+    const currentSettings = await db.query({
       appSettings: {},
     });
 
@@ -68,18 +68,17 @@ export async function POST(request: NextRequest) {
 
       if (existingSetting) {
         // Update existing setting
-        await db.update({
-          appSettings: {
-            id: existingSetting.id,
+        await db.transact([
+          db.tx.appSettings[existingSetting.id].update({
             value: setting.value,
             updatedAt: now,
             updatedBy: 'admin', // In production, use actual admin user ID
-          },
-        });
+          }),
+        ]);
       } else {
         // Create new setting
         await db.transact([
-          db.tx.appSettings[db.id()].update({
+          db.tx.appSettings[id()].update({
             key: setting.key,
             value: setting.value,
             updatedAt: now,
@@ -109,7 +108,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
-    const { data } = await db.query({
+    const data = await db.query({
       appSettings: {},
     });
 

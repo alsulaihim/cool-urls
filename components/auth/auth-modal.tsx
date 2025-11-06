@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import { db } from '@/lib/instant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,10 +16,342 @@ interface AuthModalProps {
   inline?: boolean;
 }
 
+interface AuthContentProps {
+  email: string;
+  setEmail: (email: string) => void;
+  name: string;
+  setName: (name: string) => void;
+  sentEmail: boolean;
+  onClose: () => void;
+  error: string;
+  showGoogle: boolean;
+  isOAuthLoading: boolean;
+  isSubmittingMagic: boolean;
+  code: string;
+  setCode: (code: string) => void;
+  isVerifyingCode: boolean;
+  isExistingUser: boolean;
+  handleAppleSignIn: () => void;
+  handleSubmit: (e?: React.FormEvent | React.MouseEvent) => void;
+  handleCodeSubmit: () => void;
+  setShowGoogle: (show: boolean) => void;
+  setSentEmail: (sent: boolean) => void;
+  setError: (error: string) => void;
+  nonce: string;
+}
+
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_NAME = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_NAME || 'google-web';
 const APPLE_CLIENT_NAME = process.env.NEXT_PUBLIC_APPLE_CLIENT_NAME || 'apple-web';
 const APPLE_SERVICE_ID = process.env.NEXT_PUBLIC_APPLE_SERVICE_ID || '';
+
+
+// Extracted AuthContent component to prevent recreation on state changes
+// This fixes the input losing focus issue after typing the first character
+const AuthContent = memo(({
+  email,
+  setEmail,
+  name,
+  setName,
+  sentEmail,
+  onClose,
+  error,
+  showGoogle,
+  isOAuthLoading,
+  isSubmittingMagic,
+  code,
+  setCode,
+  isVerifyingCode,
+  isExistingUser,
+  handleAppleSignIn,
+  handleSubmit,
+  handleCodeSubmit,
+  setShowGoogle,
+  setSentEmail,
+  setError,
+  nonce
+}: AuthContentProps) => (
+  <>
+    <style jsx global>{`
+      .google-btn-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .google-btn-wrapper > div {
+        width: 100% !important;
+      }
+      .google-btn-wrapper iframe {
+        width: 100% !important;
+        height: 44px !important;
+      }
+    `}</style>
+    <div className="flex justify-between items-center mb-6">
+      <h2 className="text-2xl font-bold text-black">
+        {sentEmail ? 'Check your email' : 'Sign In / Sign Up'}
+      </h2>
+      <button
+        onClick={onClose}
+        className="text-gray-400 hover:text-gray-600"
+        aria-label="Close dialog"
+      >
+        <X className="w-5 h-5" />
+      </button>
+    </div>
+
+    {!sentEmail ? (
+      <>
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAppleSignIn}
+            disabled={isOAuthLoading}
+            className="flex-1 h-11 border-gray-300 flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.05 20.28c-.98.95-2.05.89-3.08.42-1.09-.48-2.09-.49-3.24 0-1.44.62-2.2.51-3.06-.42C2.79 15.26 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.74.78 0 2.24-.91 3.78-.79 1.04.06 1.98.45 2.68 1.39-2.44 1.45-2.08 4.63.44 5.54-.52 1.36-.74 1.88-1.98 3.09zM11.89 7.15c-.04-2.01 1.64-3.64 3.62-3.82.22 2.19-2 3.82-3.62 3.82z"/>
+            </svg>
+            Apple
+          </Button>
+
+          {showGoogle ? (
+            <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+              {isOAuthLoading ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={true}
+                  className="flex-1 h-11 border-gray-300 flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  Google
+                </Button>
+              ) : (
+                <div className="flex-1 google-btn-wrapper">
+                  <GoogleLogin
+                    nonce={nonce}
+                    onSuccess={async (credentialResponse) => {
+                      if (!credentialResponse.credential) {
+                        setError('No credentials received');
+                        return;
+                      }
+
+                      try {
+                        await db.auth.signInWithIdToken({
+                          clientName: GOOGLE_CLIENT_NAME,
+                          idToken: credentialResponse.credential,
+                          nonce: nonce,
+                        });
+
+                        onClose();
+                        setEmail('');
+                        setName('');
+                        setCode('');
+                        setSentEmail(false);
+                      } catch (err) {
+                        console.error('Google auth error:', err);
+                        setError('Authentication failed. Please try again.');
+                      }
+                    }}
+                    onError={() => {
+                      setError('Google Sign-In failed');
+                    }}
+                    useOneTap={false}
+                    auto_select={false}
+                    text="signin_with"
+                    theme="outline"
+                    size="large"
+                    shape="rectangular"
+                    width="100%"
+                  />
+                </div>
+              )}
+            </GoogleOAuthProvider>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={true}
+              className="flex-1 h-11 border-gray-300 opacity-50"
+            >
+              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Google Sign-In Loading...
+            </Button>
+          )}
+        </div>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-2 text-gray-500">Or continue with email</span>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              What shall we call you? <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                key="name-input"
+                type="text"
+                value={name}
+                onChange={(e) => {
+                  console.debug('[AuthModal] name onChange START', {
+                    value: e.target.value,
+                    isSubmittingMagic,
+                    disabled: isSubmittingMagic
+                  });
+                  setName(e.target.value);
+                  console.debug('[AuthModal] name onChange END');
+                }}
+                placeholder="Your first name"
+                disabled={isSubmittingMagic}
+                className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
+                autoComplete="given-name"
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Only needed if this is your first time signing in
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                key="email-input"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  console.debug('[AuthModal] email change');
+                  setEmail(e.target.value);
+                }}
+                placeholder="you@example.com"
+                required
+                disabled={isSubmittingMagic}
+                className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
+                autoComplete="email"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-md text-sm border border-red-200">
+              {error}
+            </div>
+          )}
+
+          <Button
+            type="button"
+            onClick={(e) => {
+              console.debug('[AuthModal] Button clicked explicitly');
+              handleSubmit(e);
+            }}
+            disabled={isSubmittingMagic}
+            className="w-full h-11 bg-black text-white font-medium hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
+          >
+            {isSubmittingMagic ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Sending...
+              </span>
+            ) : (
+              'Send Magic Link'
+            )}
+          </Button>
+
+          <p className="text-xs text-gray-500 text-center mt-4">
+            We&apos;ll send you a magic link to sign in without a password
+          </p>
+        </div>
+      </>
+    ) : (
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
+        className="space-y-4"
+      >
+        <p className="text-sm text-gray-600 mb-4">
+          We sent a verification code to <strong>{email}</strong>
+        </p>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Verification Code
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              type="text"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="000000"
+              maxLength={6}
+              disabled={isVerifyingCode}
+              className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
+            />
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 text-red-600 px-4 py-3 rounded-md text-sm border border-red-200">
+            {error}
+          </div>
+        )}
+
+        <Button
+          type="button"
+          onClick={handleCodeSubmit}
+          disabled={isVerifyingCode}
+          className="w-full h-11 bg-black text-white font-medium hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
+        >
+          {isVerifyingCode ? (
+            <span className="flex items-center justify-center gap-2">
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Verifying...
+            </span>
+          ) : (
+            'Verify Code'
+          )}
+        </Button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setSentEmail(false);
+            setCode('');
+            setError('');
+          }}
+          className="w-full text-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          Use a different email
+        </button>
+      </form>
+    )}
+  </>
+));
+
+AuthContent.displayName = 'AuthContent';
 
 export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
   const [email, setEmail] = useState('');
@@ -29,12 +361,34 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState(false);
   const [showGoogle, setShowGoogle] = useState(true);
-  const [googleReady, setGoogleReady] = useState(false);
   const [sentEmail, setSentEmail] = useState(false);
   const [error, setError] = useState('');
   const [code, setCode] = useState('');
   const [isExistingUser, setIsExistingUser] = useState(false);
   const [nonce] = useState(crypto.randomUUID());
+
+  // Refs to maintain focus
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize Apple Sign-In SDK
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).AppleID && APPLE_SERVICE_ID) {
+      const AppleID = (window as any).AppleID;
+      try {
+        AppleID.auth.init({
+          clientId: APPLE_SERVICE_ID,
+          scope: 'name email',
+          redirectURI: window.location.origin + '/api/auth/apple/callback',
+          state: crypto.randomUUID(),
+          nonce: nonce,
+          usePopup: true
+        });
+      } catch (err) {
+        console.debug('Apple Sign-In initialization:', err);
+      }
+    }
+  }, [nonce]);
 
   // Apple Sign In handler
   const handleAppleSignIn = async () => {
@@ -49,203 +403,176 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
         return;
       }
 
-      // Check if Services ID is configured
-      if (!APPLE_SERVICE_ID) {
-        setError('Apple Sign In is not configured. Please add NEXT_PUBLIC_APPLE_SERVICE_ID to your environment variables.');
-        setIsOAuthLoading(false);
-        return;
-      }
+      const AppleID = (window as any).AppleID;
 
-      // Check if client name is configured
-      if (!APPLE_CLIENT_NAME) {
-        setError('Apple Sign In is not configured. Please add NEXT_PUBLIC_APPLE_CLIENT_NAME to your environment variables.');
-        setIsOAuthLoading(false);
-        return;
-      }
-
-      // Initialize Apple ID authentication
-      // Note: Apple doesn't allow localhost URLs
-      // For local development, Apple Sign In will only work if using a tunnel (ngrok) or deployed URL
-      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-      if (isLocalhost) {
-        setError('Apple Sign In is not available on localhost. Please use ngrok tunnel, or test on your deployed environment.');
-        setIsOAuthLoading(false);
-        return;
-      }
-
-      const redirectURI = window.location.origin;
-
-      console.log('🍎 Initializing Apple Sign In with:', {
-        clientId: APPLE_SERVICE_ID,
-        redirectURI,
-        clientName: APPLE_CLIENT_NAME,
-      });
-
+      // Try to initialize if not already done (fallback)
       try {
-        (window as any).AppleID.auth.init({
+        await AppleID.auth.init({
           clientId: APPLE_SERVICE_ID,
           scope: 'name email',
-          redirectURI: redirectURI,
-          usePopup: true,
-        });
-        console.log('✅ Apple SDK initialized successfully');
-      } catch (initErr) {
-        console.error('❌ Failed to initialize Apple SDK:', initErr);
-        throw new Error('Failed to initialize Apple Sign In. Please check your configuration.');
-      }
-
-      // Generate nonce for security
-      const nonce = crypto.randomUUID();
-      console.log('🔐 Generated nonce:', nonce);
-
-      // Call Apple Sign In
-      console.log('🚀 Calling Apple Sign In...');
-      let resp;
-      try {
-        resp = await (window as any).AppleID.auth.signIn({
+          redirectURI: window.location.origin + '/api/auth/apple/callback',
+          state: crypto.randomUUID(),
           nonce: nonce,
-          usePopup: true,
+          usePopup: true
         });
-        console.log('✅ Apple Sign In response received:', JSON.stringify(resp, null, 2));
-      } catch (signInErr: any) {
-        // Check if it's a user cancellation FIRST before logging as error
-        if (signInErr?.error === 'popup_closed_by_user' || signInErr?.error === 'user_cancelled_authorize') {
-          console.log('ℹ️  Apple Sign In popup was closed');
-          setIsOAuthLoading(false);
-          return;
-        }
-
-        // If it's a real error, log it
-        console.error('❌ Apple signIn() failed:', signInErr);
-        console.error('❌ signIn error type:', typeof signInErr);
-        console.error('❌ signIn error keys:', signInErr ? Object.keys(signInErr) : 'null');
-        console.error('❌ signIn error.error value:', signInErr?.error);
-        console.error('❌ Full error structure:', JSON.stringify(signInErr, null, 2));
-
-        throw signInErr;
+      } catch (initError) {
+        // Already initialized, continue
+        console.debug('AppleID init:', initError);
       }
 
-      // Check if user cancelled or missing data
-      if (!resp || !resp.authorization || !resp.authorization.id_token) {
-        console.log('❌ Apple Sign In cancelled by user or missing data. Response:', resp);
-        setError('Apple Sign In was not completed. This may be due to domain configuration. Please try Magic Link authentication instead.');
-        setIsOAuthLoading(false);
-        return;
-      }
-
-      console.log('✅ Got ID token from Apple');
-
-      // Sign in with InstantDB
-      console.log('🔄 Signing in with InstantDB...');
-      try {
-        const result = await db.auth.signInWithIdToken({
-          clientName: APPLE_CLIENT_NAME,
-          idToken: resp.authorization.id_token,
-          nonce: nonce,
-        });
-        console.log('✅ InstantDB sign in result:', result);
-      } catch (dbErr) {
-        console.error('❌ InstantDB sign in failed:', dbErr);
-        throw dbErr;
-      }
-
-      console.log('✅ Successfully signed in with InstantDB');
-      onClose();
-    } catch (err: any) {
-      console.error('❌ Apple sign-in error:', err);
-      console.error('❌ Error type:', typeof err);
-      console.error('❌ Error constructor:', err?.constructor?.name);
-      console.error('❌ Error details:', {
-        error: err?.error,
-        message: err?.message,
-        body: err?.body,
-        stack: err?.stack,
-        stringified: JSON.stringify(err),
+      // Sign in needs to be called with the config
+      const response = await AppleID.auth.signIn({
+        clientId: APPLE_SERVICE_ID,
+        scope: 'name email',
+        redirectURI: window.location.origin + '/api/auth/apple/callback',
+        state: crypto.randomUUID(),
+        nonce: nonce,
+        usePopup: true
       });
 
-      // Check if error is due to user cancellation
-      if (err?.error === 'popup_closed_by_user' || err?.error === 'user_cancelled_authorize') {
-        console.log('ℹ️  User cancelled Apple Sign In');
-        setIsOAuthLoading(false);
-        return;
-      }
+      if (response && response.authorization) {
+        // Send the authorization data to our backend
+        const authResponse = await fetch('/api/auth/apple', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id_token: response.authorization.id_token,
+            code: response.authorization.code,
+            state: response.authorization.state,
+            nonce: response.authorization.nonce,
+            user: response.user
+          }),
+        });
 
-      // Show error message
-      const errorMessage = err?.error || err?.body?.message || err?.message || 'Apple sign-in failed. Please try again.';
-      setError(errorMessage);
+        const authData = await authResponse.json();
+
+        if (!authResponse.ok) {
+          throw new Error(authData.error || 'Apple Sign In failed');
+        }
+
+        // Sign in with InstantDB using the verified token
+        await db.auth.signInWithIdToken({
+          clientName: APPLE_CLIENT_NAME,
+          idToken: authData.idToken,
+          nonce: nonce
+        });
+
+        onClose();
+        // Reset form
+        setEmail('');
+        setName('');
+        setCode('');
+        setSentEmail(false);
+      } else {
+        throw new Error('No authorization data received from Apple');
+      }
+    } catch (err: unknown) {
+      console.error('Apple Sign In error details:', {
+        error: err,
+        message: err instanceof Error ? err.message : 'Unknown error',
+        type: typeof err,
+        stringified: JSON.stringify(err)
+      });
+
+      // Check if it's a user cancellation
+      if (err && typeof err === 'object' && 'error' in err) {
+        const appleError = err as { error: string };
+        if (appleError.error === 'popup_closed_by_user') {
+          setError('Sign in was cancelled');
+        } else {
+          setError('Apple Sign In failed. Please try again.');
+        }
+      } else {
+        setError(err instanceof Error ? err.message : 'Apple Sign In failed. Please try again.');
+      }
     } finally {
       setIsOAuthLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.debug('[AuthModal] handleSubmit fired', { email });
+  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
+    console.debug('[AuthModal] handleSubmit START', {
+      email,
+      eventType: e?.type,
+      target: e ? (e.target as HTMLElement)?.tagName : 'NO_EVENT',
+      currentTarget: e ? (e.currentTarget as HTMLElement)?.tagName : 'NO_EVENT',
+      isSubmittingMagic
+    });
 
-    // Validate email before proceeding
-    if (!email || !email.includes('@')) {
-      setError('Please enter a valid email address');
+    // Prevent duplicate submissions
+    if (isSubmittingMagic) {
+      console.debug('[AuthModal] handleSubmit BLOCKED - already submitting');
       return;
     }
 
-    setError('');
+    // Stop event propagation to prevent any bubbling issues
+    if (e) {
+      e.stopPropagation();
+    }
+
+    if (!email) {
+      setError('Please enter your email address');
+      return;
+    }
+
     setIsSubmittingMagic(true);
-    console.debug('[AuthModal] setIsSubmittingMagic(true)');
+    setError('');
 
     try {
-      // Check if user already exists before sending magic code
-      const { data } = await db.queryOnce({ userProfiles: {} });
-      const profiles = (data as any)?.userProfiles || [];
+      const response = await fetch('/api/auth/check-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
 
-      // Find if any profile with this email exists (we'll match on email after auth)
-      // For now, we'll check after they sign in
-      setIsExistingUser(false); // Will be checked after sign-in
+      const data = await response.json();
+      setIsExistingUser(data.exists);
 
+      // Send magic code using InstantDB
       await db.auth.sendMagicCode({ email });
       setSentEmail(true);
-      console.debug('[AuthModal] magic code sent, sentEmail=true');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to send magic code';
-      setError(message);
-      console.debug('[AuthModal] sendMagicCode error', message);
+      setError(err instanceof Error ? err.message : 'Failed to send magic link');
     } finally {
       setIsSubmittingMagic(false);
-      console.debug('[AuthModal] setIsSubmittingMagic(false)');
     }
+
+    console.debug('[AuthModal] handleSubmit END', { sentEmail, error });
   };
 
-  const handleCodeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const handleCodeSubmit = async () => {
+    if (!code || code.length !== 6) {
+      setError('Please enter the 6-digit code');
+      return;
+    }
+
     setIsVerifyingCode(true);
+    setError('');
 
     try {
-      // Sign in with magic code
-      const result = await db.auth.signInWithMagicCode({ email, code });
+      // Verify the magic code
+      await db.auth.signInWithMagicCode({ email, code });
 
-      if (result) {
-        // Wait a bit for auth to complete
+      // Create profile if user provided a name and is a new user
+      if (name && !isExistingUser) {
+        // Small delay to ensure auth is fully processed
         setTimeout(async () => {
           try {
-            // Check if profile already exists
-            const { data } = await db.queryOnce({ userProfiles: {} });
-            const existingProfile = (data as any)?.userProfiles?.find(
-              (p: any) => p.userId === result.user.id
+            // Use email as userId (InstantDB uses email as the user ID for magic link auth)
+            const userId = email;
+            // Try to create profile - will fail silently if already exists
+            await db.transact(
+              db.tx.userProfiles[uuidv4()].update({
+                userId: userId,
+                name: name.trim() || 'Anonymous',
+                createdAt: Date.now(),
+              })
             );
-
-            // Only create profile if it doesn't exist AND name was provided
-            if (!existingProfile && name.trim()) {
-              await db.transact(
-                db.tx.userProfiles[uuidv4()].update({
-                  userId: result.user.id,
-                  name: name.trim(),
-                  createdAt: Date.now(),
-                })
-              );
-            }
           } catch (profileError) {
-            console.error('Error saving profile:', profileError);
+            // Profile might already exist, which is fine
+            console.debug('Profile creation attempt:', profileError);
           }
         }, 500);
       }
@@ -267,278 +594,33 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
 
   if (!isOpen) return null;
 
-  // Content component used by both inline and modal modes
-  const AuthContent = () => (
-    <>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-black">
-          {sentEmail ? 'Check your email' : 'Sign In / Sign Up'}
-        </h2>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label="Close dialog"
-        >
-          {inline ? <ArrowUp className="w-5 h-5" /> : <X className="w-5 h-5" />}
-        </button>
-      </div>
-
-              {!sentEmail ? (
-                <>
-                  {/* OAuth Providers */}
-                  {(GOOGLE_CLIENT_ID || (APPLE_SERVICE_ID && APPLE_CLIENT_NAME)) ? (
-                    <div className="flex gap-3 mb-6">
-                      {/* Apple Sign In Button */}
-                      {APPLE_SERVICE_ID && APPLE_CLIENT_NAME && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleAppleSignIn}
-                        disabled={isOAuthLoading}
-                        className="flex-1 h-11 border-gray-300 flex items-center justify-center gap-2"
-                      >
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-                        </svg>
-                        <span>Apple</span>
-                      </Button>
-                    )}
-
-                    {/* Google Sign In Button */}
-                    {GOOGLE_CLIENT_ID && showGoogle && (
-                      <div className="flex-1">
-                        {!googleReady ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            disabled={isOAuthLoading}
-                            onClick={() => setGoogleReady(true)}
-                            className="w-full h-11 border-gray-300 flex items-center justify-center gap-2"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="w-5 h-5">
-                              <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.8 32.3 29.3 35 24 35c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 6 1.1 8.2 3l5.7-5.7C34.6 3.6 29.6 1.5 24 1.5 12 1.5 2.5 11 2.5 23S12 44.5 24 44.5 45.5 35 45.5 23c0-0.8-0.1-1.7-0.2-2.5z"/>
-                              <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16 18.9 13 24 13c3.1 0 6 1.1 8.2 3l5.7-5.7C34.6 3.6 29.6 1.5 24 1.5 16.1 1.5 9.2 5.9 6.3 14.7z"/>
-                              <path fill="#4CAF50" d="M24 44.5c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.3 35 26.8 36 24 36c-5.2 0-9.6-3.3-11.2-8l-6.6 5.1C9.2 40.1 16.1 44.5 24 44.5z"/>
-                              <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.4 4.1-5.3 7-11.3 7-5.2 0-9.6-3.3-11.2-8l-6.6 5.1C9.2 40.1 16.1 44.5 24 44.5 35.9 44.5 45.5 35 45.5 23 45.5 22.2 45.4 21.3 43.6 20.5z"/>
-                            </svg>
-                            Continue with Google
-                          </Button>
-                        ) : (
-                          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-                            <GoogleLogin
-                              nonce={nonce}
-                              onSuccess={async ({ credential }) => {
-                                try {
-                                  setIsOAuthLoading(true);
-                                  setError('');
-                                  await db.auth.signInWithIdToken({
-                                    clientName: GOOGLE_CLIENT_NAME,
-                                    idToken: credential!,
-                                    nonce,
-                                  });
-                                  onClose();
-                                } catch (err: any) {
-                                  setError(err.body?.message || 'Google sign-in failed');
-                                } finally {
-                                  setIsOAuthLoading(false);
-                                }
-                              }}
-                              onError={() => {
-                                setShowGoogle(false);
-                                setError('Google sign-in unavailable for this origin. Use Magic Link.');
-                                setIsOAuthLoading(false);
-                              }}
-                              useOneTap={false}
-                              theme="outline"
-                              size="large"
-                              text="continue_with"
-                              shape="rectangular"
-                            />
-                          </GoogleOAuthProvider>
-                        )}
-                      </div>
-                    )}
-                    </div>
-                  ) : (
-                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                      <p className="text-sm text-amber-800">
-                        <strong>Note:</strong> OAuth providers (Google/Apple Sign In) are not configured. Please use Magic Link authentication below.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Divider */}
-                  {(GOOGLE_CLIENT_ID || (APPLE_SERVICE_ID && APPLE_CLIENT_NAME)) && (
-                    <div className="relative mb-6">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300"></div>
-                      </div>
-                      <div className="relative flex justify-center text-sm">
-                        <span className="px-4 bg-white text-gray-500">Or continue with email</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Magic Link Form */}
-                  <form
-                    onSubmit={(e) => {
-                      // Block implicit form submits; submission is button-driven
-                      e.preventDefault();
-                    }}
-                    className="space-y-4"
-                    onKeyDown={(e) => {
-                      // Prevent form submission on Enter key unless the submit button is focused
-                      if (e.key === 'Enter' && e.target !== e.currentTarget) {
-                        const target = e.target as HTMLElement;
-                        if (target.tagName !== 'BUTTON') {
-                          e.preventDefault();
-                        }
-                      }
-                    }}
-                  >
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      What shall we call you? <span className="text-gray-400 font-normal">(optional)</span>
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input
-                        type="text"
-                        value={name}
-                        onChange={(e) => {
-                          console.debug('[AuthModal] name change');
-                          setName(e.target.value);
-                        }}
-                        placeholder="Your first name"
-                        disabled={isSubmittingMagic}
-                        className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Only needed if this is your first time signing in
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input
-                        type="email"
-                        value={email}
-                        onChange={(e) => {
-                          console.debug('[AuthModal] email change');
-                          setEmail(e.target.value);
-                        }}
-                        placeholder="you@example.com"
-                        required
-                        disabled={isSubmittingMagic}
-                        className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {error && (
-                    <div className="bg-red-50 text-red-600 px-4 py-3 rounded-md text-sm border border-red-200">
-                      {error}
-                    </div>
-                  )}
-
-                  <Button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={isSubmittingMagic}
-                    className="w-full h-11 bg-black text-white font-medium hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
-                  >
-                    {isSubmittingMagic ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Sending...
-                      </span>
-                    ) : (
-                      'Send Magic Link'
-                    )}
-                  </Button>
-
-                  <p className="text-xs text-gray-500 text-center mt-4">
-                    We&apos;ll send you a magic link to sign in without a password
-                  </p>
-                </form>
-                </>
-              ) : (
-                <form
-                  onSubmit={(e) => {
-                    // Block implicit submit; submission is button-driven
-                    e.preventDefault();
-                  }}
-                  className="space-y-4"
-                >
-                  <p className="text-sm text-gray-600 mb-4">
-                    We sent a verification code to <strong>{email}</strong>
-                  </p>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Verification Code
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input
-                        type="text"
-                        value={code}
-                        onChange={(e) => setCode(e.target.value)}
-                        placeholder="Enter 6-digit code"
-                        required
-                        maxLength={6}
-                        disabled={isVerifyingCode}
-                        className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {error && (
-                    <div className="bg-red-50 text-red-600 px-4 py-3 rounded-md text-sm border border-red-200">
-                      {error}
-                    </div>
-                  )}
-
-                  <Button
-                    type="button"
-                    onClick={handleCodeSubmit}
-                    disabled={isVerifyingCode}
-                    className="w-full h-11 bg-black text-white font-medium hover:bg-gray-800 rounded-md transition-colors disabled:opacity-50"
-                  >
-                    {isVerifyingCode ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Verifying...
-                      </span>
-                    ) : (
-                      'Verify Code'
-                    )}
-                  </Button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSentEmail(false);
-                      setCode('');
-                      setError('');
-                    }}
-                    className="text-sm text-gray-600 hover:text-black transition-colors w-full text-center mt-2"
-                  >
-                    Use a different email
-                  </button>
-                </form>
-              )}
-    </>
-  );
-
   // Inline mode: render content directly without modal wrapper or card
   if (inline) {
-    return <AuthContent />;
+    return (
+      <AuthContent
+        email={email}
+        setEmail={setEmail}
+        name={name}
+        setName={setName}
+        sentEmail={sentEmail}
+        onClose={onClose}
+        error={error}
+        showGoogle={showGoogle}
+        isOAuthLoading={isOAuthLoading}
+        isSubmittingMagic={isSubmittingMagic}
+        code={code}
+        setCode={setCode}
+        isVerifyingCode={isVerifyingCode}
+        isExistingUser={isExistingUser}
+        handleAppleSignIn={handleAppleSignIn}
+        handleSubmit={handleSubmit}
+        handleCodeSubmit={handleCodeSubmit}
+        setShowGoogle={setShowGoogle}
+        setSentEmail={setSentEmail}
+        setError={setError}
+        nonce={nonce}
+      />
+    );
   }
 
   // Modal mode: render with backdrop and positioning
@@ -550,17 +632,39 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/50"
+            className="fixed inset-0 bg-black/50"
             onClick={onClose}
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="relative z-10 w-full max-w-md"
+            className="relative w-full max-w-md"
           >
-            <Card className="border border-gray-200 p-8 rounded-lg bg-white">
-              <AuthContent />
+            <Card className="p-6">
+              <AuthContent
+                email={email}
+                setEmail={setEmail}
+                name={name}
+                setName={setName}
+                sentEmail={sentEmail}
+                onClose={onClose}
+                error={error}
+                showGoogle={showGoogle}
+                isOAuthLoading={isOAuthLoading}
+                isSubmittingMagic={isSubmittingMagic}
+                code={code}
+                setCode={setCode}
+                isVerifyingCode={isVerifyingCode}
+                isExistingUser={isExistingUser}
+                handleAppleSignIn={handleAppleSignIn}
+                handleSubmit={handleSubmit}
+                handleCodeSubmit={handleCodeSubmit}
+                setShowGoogle={setShowGoogle}
+                setSentEmail={setSentEmail}
+                setError={setError}
+                nonce={nonce}
+              />
             </Card>
           </motion.div>
         </div>

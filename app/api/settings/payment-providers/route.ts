@@ -15,7 +15,7 @@ const db = init({ appId: APP_ID, adminToken: ADMIN_TOKEN });
  */
 export async function GET() {
   try {
-    const { data } = await db.query({
+    const data = await db.query({
       appSettings: {},
     });
 
