@@ -375,20 +375,24 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
   useEffect(() => {
     if (typeof window !== 'undefined' && (window as any).AppleID && APPLE_SERVICE_ID) {
       const AppleID = (window as any).AppleID;
-      try {
-        AppleID.auth.init({
-          clientId: APPLE_SERVICE_ID,
-          scope: 'name email',
-          redirectURI: window.location.origin + '/api/auth/apple/callback',
-          state: crypto.randomUUID(),
-          nonce: nonce,
-          usePopup: true
-        });
-      } catch (err) {
-        console.debug('Apple Sign-In initialization:', err);
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+      // Don't initialize on localhost as Apple doesn't support it
+      if (!isLocalhost) {
+        try {
+          AppleID.auth.init({
+            clientId: APPLE_SERVICE_ID,
+            scope: 'name email',
+            redirectURI: window.location.origin,
+            usePopup: true
+          });
+          console.debug('Apple Sign-In SDK initialized on mount');
+        } catch (err) {
+          console.debug('Apple Sign-In initialization:', err);
+        }
       }
     }
-  }, [nonce]);
+  }, []);
 
   // Apple Sign In handler
   const handleAppleSignIn = async () => {
@@ -403,89 +407,120 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
         return;
       }
 
-      const AppleID = (window as any).AppleID;
+      // Check if Services ID is configured
+      if (!APPLE_SERVICE_ID) {
+        setError('Apple Sign In is not configured. Please add NEXT_PUBLIC_APPLE_SERVICE_ID to your environment variables.');
+        setIsOAuthLoading(false);
+        return;
+      }
 
-      // Try to initialize if not already done (fallback)
+      // Check if client name is configured
+      if (!APPLE_CLIENT_NAME) {
+        setError('Apple Sign In is not configured. Please add NEXT_PUBLIC_APPLE_CLIENT_NAME to your environment variables.');
+        setIsOAuthLoading(false);
+        return;
+      }
+
+      // Check for localhost
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocalhost) {
+        setError('Apple Sign In is not available on localhost. Please use ngrok tunnel, or test on your deployed environment.');
+        setIsOAuthLoading(false);
+        return;
+      }
+
+      const AppleID = (window as any).AppleID;
+      const redirectURI = window.location.origin;
+
+      console.log('🍎 Initializing Apple Sign In with:', {
+        clientId: APPLE_SERVICE_ID,
+        redirectURI,
+        clientName: APPLE_CLIENT_NAME,
+      });
+
+      // Initialize Apple ID
       try {
         await AppleID.auth.init({
           clientId: APPLE_SERVICE_ID,
           scope: 'name email',
-          redirectURI: window.location.origin + '/api/auth/apple/callback',
-          state: crypto.randomUUID(),
-          nonce: nonce,
-          usePopup: true
+          redirectURI: redirectURI,
+          usePopup: true,
         });
-      } catch (initError) {
-        // Already initialized, continue
-        console.debug('AppleID init:', initError);
+        console.log('✅ Apple SDK initialized successfully');
+      } catch (initErr) {
+        console.error('❌ Failed to initialize Apple SDK:', initErr);
+        throw new Error('Failed to initialize Apple Sign In. Please check your configuration.');
       }
 
-      // Sign in needs to be called with the config
-      const response = await AppleID.auth.signIn({
-        clientId: APPLE_SERVICE_ID,
-        scope: 'name email',
-        redirectURI: window.location.origin + '/api/auth/apple/callback',
-        state: crypto.randomUUID(),
-        nonce: nonce,
-        usePopup: true
-      });
+      console.log('🔐 Generated nonce:', nonce);
+      console.log('🚀 Calling Apple Sign In...');
 
-      if (response && response.authorization) {
-        // Send the authorization data to our backend
-        const authResponse = await fetch('/api/auth/apple', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            id_token: response.authorization.id_token,
-            code: response.authorization.code,
-            state: response.authorization.state,
-            nonce: response.authorization.nonce,
-            user: response.user
-          }),
+      // Call Apple Sign In with minimal config
+      let response;
+      try {
+        response = await AppleID.auth.signIn({
+          nonce: nonce,
+          usePopup: true,
         });
-
-        const authData = await authResponse.json();
-
-        if (!authResponse.ok) {
-          throw new Error(authData.error || 'Apple Sign In failed');
+        console.log('✅ Apple Sign In response received:', JSON.stringify(response, null, 2));
+      } catch (signInErr: any) {
+        // Check if it's a user cancellation
+        if (signInErr?.error === 'popup_closed_by_user' || signInErr?.error === 'user_cancelled_authorize') {
+          console.log('ℹ️  Apple Sign In popup was closed');
+          setIsOAuthLoading(false);
+          return;
         }
 
-        // Sign in with InstantDB using the verified token
-        await db.auth.signInWithIdToken({
-          clientName: APPLE_CLIENT_NAME,
-          idToken: authData.idToken,
-          nonce: nonce
-        });
-
-        onClose();
-        // Reset form
-        setEmail('');
-        setName('');
-        setCode('');
-        setSentEmail(false);
-      } else {
-        throw new Error('No authorization data received from Apple');
+        console.error('❌ Apple signIn() failed:', signInErr);
+        throw signInErr;
       }
-    } catch (err: unknown) {
-      console.error('Apple Sign In error details:', {
-        error: err,
-        message: err instanceof Error ? err.message : 'Unknown error',
-        type: typeof err,
-        stringified: JSON.stringify(err)
-      });
+
+      // Check if user cancelled or missing data
+      if (!response || !response.authorization || !response.authorization.id_token) {
+        console.log('❌ Apple Sign In cancelled by user or missing data. Response:', response);
+        setError('Apple Sign In was not completed. This may be due to domain configuration. Please try Magic Link authentication instead.');
+        setIsOAuthLoading(false);
+        return;
+      }
+
+      console.log('✅ Got ID token from Apple');
+      console.log('🔄 Signing in with InstantDB...');
+
+      // Sign in directly with InstantDB using the ID token
+      try {
+        const result = await db.auth.signInWithIdToken({
+          clientName: APPLE_CLIENT_NAME,
+          idToken: response.authorization.id_token,
+          nonce: nonce,
+        });
+        console.log('✅ InstantDB sign in result:', result);
+      } catch (dbErr) {
+        console.error('❌ InstantDB sign in failed:', dbErr);
+        throw dbErr;
+      }
+
+      onClose();
+      // Reset form
+      setEmail('');
+      setName('');
+      setCode('');
+      setSentEmail(false);
+    } catch (err: any) {
+      console.error('❌ Apple Sign In error:', err);
+      console.error('❌ Error type:', typeof err);
+      console.error('❌ Error keys:', err ? Object.keys(err) : 'null');
+      console.error('❌ Error.error value:', err?.error);
+      console.error('❌ Full error structure:', JSON.stringify(err, null, 2));
 
       // Check if it's a user cancellation
-      if (err && typeof err === 'object' && 'error' in err) {
-        const appleError = err as { error: string };
-        if (appleError.error === 'popup_closed_by_user') {
-          setError('Sign in was cancelled');
-        } else {
-          setError('Apple Sign In failed. Please try again.');
-        }
+      if (err?.error === 'popup_closed_by_user' || err?.error === 'user_cancelled_authorize') {
+        setError('Sign in was cancelled');
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else if (err?.error) {
+        setError('Apple Sign In failed. Please try again.');
       } else {
-        setError(err instanceof Error ? err.message : 'Apple Sign In failed. Please try again.');
+        setError('Apple Sign In failed. Please try again.');
       }
     } finally {
       setIsOAuthLoading(false);
