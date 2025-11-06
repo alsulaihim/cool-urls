@@ -410,7 +410,7 @@ export function DeviceStats({ clicks }: DeviceStatsProps) {
                   </Pie>
                   <Tooltip
                     content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
+                      if (active && payload && payload.length && payload[0]?.name) {
                         const deviceType = payload[0].name.toLowerCase();
                         return (
                           <Card className="bg-background/95 backdrop-blur-sm border px-3 py-2">
