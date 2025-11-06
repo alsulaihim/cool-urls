@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { db } from '@/lib/instant';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,16 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
   const [code, setCode] = useState('');
   const [isExistingUser, setIsExistingUser] = useState(false);
   const [nonce] = useState(crypto.randomUUID());
+
+  // If loading gets toggled unintentionally (e.g., by third-party widgets),
+  // ensure typing re-enables inputs before submission. Once email is sent,
+  // we do not override loading (sentEmail === true indicates submit in-flight/completed).
+  useEffect(() => {
+    if (isLoading && !sentEmail) {
+      setIsLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email, name]);
 
   // Apple Sign In handler
   const handleAppleSignIn = async () => {
@@ -176,6 +186,13 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate email before proceeding
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
     setError('');
     setIsLoading(true);
 
@@ -345,7 +362,19 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                   )}
 
                   {/* Magic Link Form */}
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  <form
+                    onSubmit={handleSubmit}
+                    className="space-y-4"
+                    onKeyDown={(e) => {
+                      // Prevent form submission on Enter key unless the submit button is focused
+                      if (e.key === 'Enter' && e.target !== e.currentTarget) {
+                        const target = e.target as HTMLElement;
+                        if (target.tagName !== 'BUTTON') {
+                          e.preventDefault();
+                        }
+                      }
+                    }}
+                  >
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       What shall we call you? <span className="text-gray-400 font-normal">(optional)</span>
@@ -357,6 +386,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Your first name"
+                        disabled={isLoading}
                         className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
                       />
                     </div>
@@ -377,6 +407,7 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@example.com"
                         required
+                        disabled={isLoading}
                         className="pl-10 h-11 border-gray-300 rounded-md focus-visible:ring-1 focus-visible:ring-black focus-visible:border-black transition-colors"
                       />
                     </div>
