@@ -101,7 +101,7 @@ const AuthContent = memo(({
 
     {!sentEmail ? (
       <>
-        <div className="space-y-3">
+        <div className="space-y-3 px-0.5">
           <Button
             type="button"
             variant="outline"
@@ -201,7 +201,7 @@ const AuthContent = memo(({
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 px-0.5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               What shall we call you? <span className="text-gray-400 font-normal">(optional)</span>
