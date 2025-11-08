@@ -557,15 +557,6 @@ export function AuthModal({ isOpen, onClose, inline = false }: AuthModalProps) {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/check-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-      setIsExistingUser(data.exists);
-
       // Send magic code using InstantDB
       await db.auth.sendMagicCode({ email });
       setSentEmail(true);
