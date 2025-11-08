@@ -43,7 +43,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     clicksLimit: 1000,
     isBranded: true,
     stripePriceId: 'price_1SOPDNFslEt6ImixLcKFinPI',
-    paypalPlanId: 'P-4WR29071861086255NEDRAZA',
+    paypalPlanId: 'P-94925411K0419954DNEHXMCA',
     features: [
       'Up to 1,000 clicks per month',
       'Custom branded URLs with -go suffix',
@@ -64,7 +64,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     isBranded: true,
     isPopular: true,
     stripePriceId: 'price_1SOPDOFslEt6ImixxImtx2i1',
-    paypalPlanId: 'P-0NL797317C096192DNEDRAZQ',
+    paypalPlanId: 'P-9C028795705271644NEHXMCA',
     features: [
       'Up to 25,000 clicks per month',
       'Custom branded URLs with -go suffix',
@@ -86,7 +86,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     clicksLimit: 50000,
     isBranded: true,
     stripePriceId: 'price_1SOPDOFslEt6ImixfrTHqjSm',
-    paypalPlanId: 'P-1JP3304933369332PNEDRAZY',
+    paypalPlanId: 'P-8DJ67175DP7873343NEHXMCA',
     features: [
       'Up to 50,000 clicks per month',
       'Custom branded URLs with -go suffix',
@@ -110,7 +110,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     clicksLimit: 100000,
     isBranded: true,
     stripePriceId: 'price_1SOPDPFslEt6Imixj3qEg0un',
-    paypalPlanId: 'P-211250920K272762ENEDRAZY',
+    paypalPlanId: 'P-8B316019T3596072GNEHXMCI',
     features: [
       'Up to 100,000 clicks per month',
       'Custom branded URLs with -go suffix',
@@ -136,7 +136,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     clicksLimit: 500000,
     isBranded: true,
     stripePriceId: 'price_1SOPDQFslEt6ImixxgeKln1a',
-    paypalPlanId: 'P-3WH93136UP459172KNEDRA2A',
+    paypalPlanId: 'P-4XC4123014557840DNEHXMCI',
     features: [
       'Up to 500,000 clicks per month',
       'Custom branded URLs with -go suffix',
@@ -164,7 +164,7 @@ export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
     clicksLimit: 1000000,
     isBranded: true,
     stripePriceId: 'price_1SOPDRFslEt6ImixU0B7ohJd',
-    paypalPlanId: 'P-1R81717797901360SNEDRA2I',
+    paypalPlanId: 'P-980262486M853280NNEHXMCQ',
     features: [
       'Up to 1,000,000+ clicks per month',
       'Custom branded URLs with -go suffix',
