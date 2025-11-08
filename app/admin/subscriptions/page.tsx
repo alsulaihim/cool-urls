@@ -77,8 +77,8 @@ export default function SubscriptionsPage() {
     const profiles = data.userProfiles || [];
 
     // Map subscriptions with user info
-    const enrichedSubs = subs.map((sub) => {
-      const user = profiles.find((p) => p.userId === sub.userId);
+    const enrichedSubs = subs.map((sub: any) => {
+      const user = profiles.find((p: any) => p.userId === sub.userId);
       const plan = PRICING_PLANS[sub.planId as keyof typeof PRICING_PLANS] || PRICING_PLANS.free;
 
       return {
@@ -90,23 +90,23 @@ export default function SubscriptionsPage() {
     });
 
     // Calculate metrics
-    const activeCount = subs.filter(s => s.status === 'active').length;
+    const activeCount = subs.filter((s: any) => s.status === 'active').length;
     const mrr = subs
-      .filter(s => s.status === 'active' && s.provider !== 'none')
-      .reduce((sum, s) => {
+      .filter((s: any) => s.status === 'active' && s.provider !== 'none')
+      .reduce((sum: number, s: any) => {
         const plan = PRICING_PLANS[s.planId as keyof typeof PRICING_PLANS];
         return sum + (plan?.price || 0);
       }, 0);
 
-    const stripeCount = subs.filter(s => s.provider === 'stripe').length;
-    const paypalCount = subs.filter(s => s.provider === 'paypal').length;
-    const pastDueCount = subs.filter(s => s.status === 'past_due').length;
+    const stripeCount = subs.filter((s: any) => s.provider === 'stripe').length;
+    const paypalCount = subs.filter((s: any) => s.provider === 'paypal').length;
+    const pastDueCount = subs.filter((s: any) => s.status === 'past_due').length;
 
     // Simple churn calculation (cancelled in last 30 days / total)
     const now = Date.now();
     const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
     const recentCancellations = subs.filter(
-      s => s.status === 'cancelled' && s.cancelledAt && s.cancelledAt >= thirtyDaysAgo
+      (s: any) => s.status === 'cancelled' && s.cancelledAt && s.cancelledAt >= thirtyDaysAgo
     ).length;
     const churnRate = subs.length > 0 ? (recentCancellations / subs.length) * 100 : 0;
 
@@ -132,7 +132,7 @@ export default function SubscriptionsPage() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        (sub) =>
+        (sub: any) =>
           sub.userName?.toLowerCase().includes(query) ||
           sub.userId?.toLowerCase().includes(query)
       );
@@ -140,16 +140,16 @@ export default function SubscriptionsPage() {
 
     // Status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter((sub) => sub.status === statusFilter);
+      filtered = filtered.filter((sub: any) => sub.status === statusFilter);
     }
 
     // Provider filter
     if (providerFilter !== 'all') {
-      filtered = filtered.filter((sub) => sub.provider === providerFilter);
+      filtered = filtered.filter((sub: any) => sub.provider === providerFilter);
     }
 
     // Sort by creation date (newest first)
-    return filtered.sort((a, b) => b.createdAt - a.createdAt);
+    return filtered.sort((a: any, b: any) => b.createdAt - a.createdAt);
   }, [subscriptions, searchQuery, statusFilter, providerFilter]);
 
   if (isLoading) {
@@ -356,7 +356,7 @@ export default function SubscriptionsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredSubscriptions.map((sub) => {
+                  filteredSubscriptions.map((sub: any) => {
                     const usagePercent = (sub.clicksUsed / sub.clicksLimit) * 100;
 
                     return (
