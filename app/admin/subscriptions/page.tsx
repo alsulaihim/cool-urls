@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { db } from '@/lib/instant';
+import { useState, useMemo, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -33,12 +32,29 @@ export default function SubscriptionsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'cancelled' | 'past_due' | 'expired'>('all');
   const [providerFilter, setProviderFilter] = useState<'all' | 'stripe' | 'paypal' | 'none'>('all');
+  const [data, setData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Query all subscriptions with user data
-  const { data, isLoading } = db.useQuery({
-    subscriptions: {},
-    userProfiles: {},
-  });
+  // Fetch all subscriptions via admin API (bypasses client permissions)
+  useEffect(() => {
+    async function fetchSubscriptions() {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/admin/subscriptions');
+        if (!response.ok) {
+          throw new Error('Failed to fetch subscriptions');
+        }
+        const result = await response.json();
+        setData(result);
+      } catch (error) {
+        console.error('Error fetching subscriptions:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchSubscriptions();
+  }, []);
 
   // Calculate metrics and process subscriptions
   const { subscriptions, metrics } = useMemo(() => {
