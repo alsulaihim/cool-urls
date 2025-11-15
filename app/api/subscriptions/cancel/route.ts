@@ -77,6 +77,9 @@ export async function POST(request: NextRequest) {
               db.tx.subscriptions[subscriptionId].update({
                 cancelAtPeriodEnd: true,
                 status: 'cancelled',
+                provider: null,
+                providerSubscriptionId: null,
+                providerCustomerId: null,
                 updatedAt: Date.now(),
               }),
             ]);
@@ -102,6 +105,9 @@ export async function POST(request: NextRequest) {
           await db.transact([
             db.tx.subscriptions[subscriptionId].update({
               cancelAtPeriodEnd: true,
+              provider: null,
+              providerSubscriptionId: null,
+              providerCustomerId: null,
               updatedAt: Date.now(),
             }),
           ]);
@@ -140,6 +146,9 @@ export async function POST(request: NextRequest) {
           await db.transact([
             db.tx.subscriptions[subscriptionId].update({
               cancelAtPeriodEnd: true,
+              provider: null,
+              providerSubscriptionId: null,
+              providerCustomerId: null,
               updatedAt: Date.now(),
             }),
           ]);
@@ -170,6 +179,9 @@ export async function POST(request: NextRequest) {
           await db.transact([
             db.tx.subscriptions[subscriptionId].update({
               cancelAtPeriodEnd: true,
+              provider: null,
+              providerSubscriptionId: null,
+              providerCustomerId: null,
               updatedAt: Date.now(),
             }),
           ]);
@@ -182,6 +194,10 @@ export async function POST(request: NextRequest) {
 
         throw new Error(`Failed to cancel PayPal subscription: ${paypalError.message}`);
       }
+    } else if (subscription.provider === 'myfatoorah') {
+      // MyFatoorah doesn't have a cancel API - just remove provider association
+      // This allows users to choose a different payment provider when re-subscribing
+      console.log('[Cancel Subscription] Removing MyFatoorah provider association...');
     } else {
       return NextResponse.json(
         { error: 'Invalid subscription provider or missing provider subscription ID' },
@@ -190,9 +206,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Update database to mark subscription as canceling at period end
+    // Remove provider association so user can choose a new provider when re-subscribing
+    // Preserve clicks and access until period ends
     await db.transact([
       db.tx.subscriptions[subscriptionId].update({
         cancelAtPeriodEnd: true,
+        provider: null,
+        providerSubscriptionId: null,
+        providerCustomerId: null,
         updatedAt: Date.now(),
       }),
     ]);

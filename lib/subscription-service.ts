@@ -36,9 +36,9 @@ export interface Subscription {
   userId: string;
   planId: PlanId;
   status: 'active' | 'cancelled' | 'past_due' | 'expired' | 'trialing';
-  provider: 'stripe' | 'paypal' | 'none';
-  providerSubscriptionId?: string;
-  providerCustomerId?: string;
+  provider: 'stripe' | 'paypal' | 'myfatoorah' | 'none' | null;
+  providerSubscriptionId?: string | null;
+  providerCustomerId?: string | null;
   currentPeriodStart: number;
   currentPeriodEnd: number;
   cancelAtPeriodEnd: boolean;
@@ -56,7 +56,7 @@ export interface Subscription {
 export async function createSubscription(params: {
   userId: string;
   planId: PlanId;
-  provider: 'stripe' | 'paypal';
+  provider: 'stripe' | 'paypal' | 'myfatoorah';
   providerSubscriptionId: string;
   providerCustomerId: string;
 }): Promise<void> {
@@ -242,7 +242,7 @@ export async function hasReachedLimit(userId: string): Promise<boolean> {
 export async function recordPayment(params: {
   userId: string;
   subscriptionId?: string;
-  provider: 'stripe' | 'paypal';
+  provider: 'stripe' | 'paypal' | 'myfatoorah';
   providerPaymentId: string;
   amount: number;
   currency: string;
