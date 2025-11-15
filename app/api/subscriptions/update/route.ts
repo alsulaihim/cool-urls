@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   // Dynamic import to avoid build-time evaluation
-  const { updateSubscription } = await import('@/lib/subscription-service');
+  const { updateSubscription, getSubscription } = await import('@/lib/subscription-service');
 
   try {
     const stripe = getStripe();
@@ -26,6 +26,25 @@ export async function POST(request: NextRequest) {
     if (!userId || !subscriptionId || !newPlanId) {
       return NextResponse.json(
         { error: 'Missing required fields: userId, subscriptionId, or newPlanId' },
+        { status: 400 }
+      );
+    }
+
+    // Get current subscription from database to check provider
+    const dbSubscription = await getSubscription(userId);
+    if (!dbSubscription) {
+      return NextResponse.json(
+        { error: 'Subscription not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if this is a MyFatoorah or PayPal subscription
+    if (dbSubscription.provider === 'myfatoorah' || dbSubscription.provider === 'paypal') {
+      return NextResponse.json(
+        {
+          error: `Plan changes are not supported for ${dbSubscription.provider} subscriptions. Please cancel your current subscription and subscribe to the new plan.`
+        },
         { status: 400 }
       );
     }
