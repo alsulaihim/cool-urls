@@ -177,6 +177,21 @@ export function MyFatoorahCheckout({
             console.log('🔵 Initializing MyFatoorah SDK with config:', config);
             window.myfatoorah.init(config);
             console.log('✅ MyFatoorah SDK initialized');
+
+            // Remove scrollbars from embedded form
+            setTimeout(() => {
+              const container = document.getElementById('myfatoorah-payment-container');
+              if (container) {
+                container.style.overflow = 'visible';
+                const allElements = container.querySelectorAll('*');
+                allElements.forEach((el) => {
+                  if (el instanceof HTMLElement) {
+                    el.style.overflow = 'visible';
+                  }
+                });
+              }
+            }, 1000);
+
             setIsLoading(false);
           } else if (retries > 10) {
             clearInterval(checkSDK);
@@ -254,10 +269,10 @@ export function MyFatoorahCheckout({
           </div>
 
           {/* MyFatoorah Embedded Payment Container */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
             <div
               id="myfatoorah-payment-container"
-              className="min-h-[450px] p-6"
+              className="min-h-[600px]"
               style={{ overflow: 'visible' }}
             />
           </div>
