@@ -59,10 +59,10 @@ export default function UnifiedCheckout({
         // Set initial payment method to the first enabled provider
         if (providers.stripe) {
           setPaymentMethod('stripe');
-        } else if (providers.paypal) {
-          setPaymentMethod('paypal');
         } else if (providers.myfatoorah) {
           setPaymentMethod('myfatoorah');
+        } else if (providers.paypal) {
+          setPaymentMethod('paypal');
         }
 
         setLoading(false);
@@ -109,6 +109,19 @@ export default function UnifiedCheckout({
             </button>
           )}
 
+          {enabledProviders.myfatoorah && (
+            <button
+              onClick={() => setPaymentMethod('myfatoorah')}
+              className={`flex-1 min-w-[140px] py-3 px-6 rounded-lg border-2 font-medium transition-all ${
+                paymentMethod === 'myfatoorah'
+                  ? 'border-black bg-black text-white'
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+              }`}
+            >
+              <span>Debit Card</span>
+            </button>
+          )}
+
           {enabledProviders.paypal && (
             <button
               onClick={() => setPaymentMethod('paypal')}
@@ -119,19 +132,6 @@ export default function UnifiedCheckout({
               }`}
             >
               <span>PayPal</span>
-            </button>
-          )}
-
-          {enabledProviders.myfatoorah && (
-            <button
-              onClick={() => setPaymentMethod('myfatoorah')}
-              className={`flex-1 min-w-[140px] py-3 px-6 rounded-lg border-2 font-medium transition-all ${
-                paymentMethod === 'myfatoorah'
-                  ? 'border-black bg-black text-white'
-                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-              }`}
-            >
-              <span>MyFatoorah</span>
             </button>
           )}
         </div>
