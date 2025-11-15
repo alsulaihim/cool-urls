@@ -92,6 +92,7 @@ export async function POST(request: Request) {
     const existing = subscriptions?.[0];
 
     const subscriptionData: any = {
+      userId, // Always include userId - required by InstantDB even for updates
       planId,
       status: 'active',
       provider: 'myfatoorah',
@@ -108,8 +109,6 @@ export async function POST(request: Request) {
       subscriptionData.clicksUsed = existing.clicksUsed;
       subscriptionData.createdAt = existing.createdAt;
     } else {
-      // For new subscriptions, userId must be included in data
-      subscriptionData.userId = userId;
       subscriptionData.clicksUsed = 0;
       subscriptionData.createdAt = now;
     }
