@@ -19,13 +19,15 @@ export async function GET() {
       appSettings: {},
     });
 
-    // Default to both enabled if no settings exist yet
+    // Default to Stripe and PayPal enabled, MyFatoorah disabled
     let stripeEnabled = true;
     let paypalEnabled = true;
+    let myFatoorahEnabled = false;
 
     if (data?.appSettings) {
-      const stripeSetting = data.appSettings.find(s => s.key === 'payment.stripe.enabled');
-      const paypalSetting = data.appSettings.find(s => s.key === 'payment.paypal.enabled');
+      const stripeSetting = data.appSettings.find((s: any) => s.key === 'payment.stripe.enabled');
+      const paypalSetting = data.appSettings.find((s: any) => s.key === 'payment.paypal.enabled');
+      const myFatoorahSetting = data.appSettings.find((s: any) => s.key === 'payment.myfatoorah.enabled');
 
       if (stripeSetting) {
         stripeEnabled = stripeSetting.value === 'true';
@@ -33,11 +35,15 @@ export async function GET() {
       if (paypalSetting) {
         paypalEnabled = paypalSetting.value === 'true';
       }
+      if (myFatoorahSetting) {
+        myFatoorahEnabled = myFatoorahSetting.value === 'true';
+      }
     }
 
     return NextResponse.json({
       stripe: stripeEnabled,
       paypal: paypalEnabled,
+      myfatoorah: myFatoorahEnabled,
       providers: {
         stripe: {
           enabled: stripeEnabled,
@@ -47,14 +53,19 @@ export async function GET() {
           enabled: paypalEnabled,
           label: 'PayPal',
         },
+        myfatoorah: {
+          enabled: myFatoorahEnabled,
+          label: 'MyFatoorah',
+        },
       },
     });
   } catch (error) {
     console.error('Get payment providers API error:', error);
-    // On error, default to all providers enabled to prevent checkout failures
+    // On error, default to Stripe and PayPal enabled
     return NextResponse.json({
       stripe: true,
       paypal: true,
+      myfatoorah: false,
       providers: {
         stripe: {
           enabled: true,
@@ -63,6 +74,10 @@ export async function GET() {
         paypal: {
           enabled: true,
           label: 'PayPal',
+        },
+        myfatoorah: {
+          enabled: false,
+          label: 'MyFatoorah',
         },
       },
     });

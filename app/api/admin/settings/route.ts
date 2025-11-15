@@ -43,14 +43,20 @@ export async function POST(request: NextRequest) {
     // Validate payment provider settings - at least one must be enabled
     const stripeEnabled = settings.find(s => s.key === 'payment.stripe.enabled');
     const paypalEnabled = settings.find(s => s.key === 'payment.paypal.enabled');
+    const myFatoorahEnabled = settings.find(s => s.key === 'payment.myfatoorah.enabled');
 
-    if (stripeEnabled && paypalEnabled) {
-      if (stripeEnabled.value === 'false' && paypalEnabled.value === 'false') {
-        return NextResponse.json(
-          { error: 'At least one payment provider must be enabled' },
-          { status: 400 }
-        );
-      }
+    // Check if at least one provider is enabled
+    const hasEnabledProvider = (
+      (stripeEnabled?.value === 'true' || !stripeEnabled) ||
+      (paypalEnabled?.value === 'true' || !paypalEnabled) ||
+      (myFatoorahEnabled?.value === 'true')
+    );
+
+    if (!hasEnabledProvider) {
+      return NextResponse.json(
+        { error: 'At least one payment provider must be enabled' },
+        { status: 400 }
+      );
     }
 
     // Get current settings to check if they exist

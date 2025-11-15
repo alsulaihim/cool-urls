@@ -79,6 +79,7 @@ const _schema = i.schema({
       createdAt: i.number(),
       currentPeriodEnd: i.number(),
       currentPeriodStart: i.number(),
+      myFatoorahSubscriptionId: i.string().indexed().optional(),
       paypalSubscriptionId: i.string().indexed().optional(),
       planId: i.string(),
       provider: i.string(),
