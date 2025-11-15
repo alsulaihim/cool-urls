@@ -77,11 +77,10 @@ export function MyFatoorahCheckout({
         const subscriptionData = await subscriptionResponse.json();
         console.log('✅ Subscription created:', subscriptionData);
 
-        if (subscriptionData.paymentURL && !subscriptionData.isDirectPayment) {
-          window.location.href = subscriptionData.paymentURL;
-        } else {
-          onSuccess();
-        }
+        // For embedded flow, payment is already complete - just call onSuccess
+        // For redirect flow, we would redirect to paymentURL
+        // Since we're in the callback handler, payment is already done
+        onSuccess();
       } catch (error) {
         console.error('❌ Subscription creation error:', error);
         onError(error instanceof Error ? error.message : 'Failed to create subscription');
