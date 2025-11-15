@@ -81,17 +81,18 @@ export function MyFatoorahCheckout({
           sessionId: data.sessionId,
           cardViewId: 'card-element',
           style: {
-            cardHeight: 180,
+            cardHeight: 300,
+            direction: 'ltr',
             input: {
-              color: 'black',
-              fontSize: '14px',
-              fontFamily: 'sans-serif',
-              inputHeight: '32px',
-              inputMargin: '8px',
-              borderColor: 'hsl(var(--border))',
+              color: '#000000',
+              fontSize: '15px',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              inputHeight: '42px',
+              inputMargin: '12px',
+              borderColor: '#e5e7eb',
               borderWidth: '1px',
-              borderRadius: '0.5rem',
-              boxShadow: 'none',
+              borderRadius: '8px',
+              boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
               placeHolder: {
                 holderName: 'Name on Card',
                 cardNumber: 'Card Number',
@@ -101,20 +102,20 @@ export function MyFatoorahCheckout({
             },
             label: {
               display: true,
-              color: 'hsl(var(--foreground))',
+              color: '#374151',
               fontSize: '14px',
               fontWeight: '500',
-              fontFamily: 'sans-serif',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
               text: {
-                holderName: 'Cardholder Name',
+                holderName: 'Name on Card',
                 cardNumber: 'Card Number',
                 expiryDate: 'Expiry Date',
-                securityCode: 'CVV',
+                securityCode: 'Security Code',
               },
             },
             error: {
-              borderColor: 'hsl(var(--destructive))',
-              borderRadius: '0.5rem',
+              borderColor: '#ef4444',
+              borderRadius: '8px',
             },
           },
         });
@@ -196,39 +197,51 @@ export function MyFatoorahCheckout({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <div className="text-sm font-medium text-gray-700 mb-2">
-          Payment Details
-        </div>
-        <div className="text-xs text-gray-500 mb-4">
-          Subscribing to {planName} - ${planPrice}/month
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Payment Details</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            Subscribing to {planName} - ${planPrice}/month
+          </p>
         </div>
 
         {/* MyFatoorah Embedded Payment Card */}
-        <div
-          id="card-element"
-          className="min-h-[200px] border border-gray-200 rounded-lg p-4"
-        />
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div
+            id="card-element"
+            className="min-h-[320px] p-6"
+          />
+        </div>
+
+        {!sessionId && isLoading && (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 text-gray-400 animate-spin mr-2" />
+            <span className="text-sm text-gray-600">Initializing payment form...</span>
+          </div>
+        )}
       </div>
 
       <Button
         type="submit"
         disabled={isLoading || !sessionId}
-        className="w-full h-11"
+        className="w-full h-12 text-base font-medium"
       >
         {isLoading ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Processing...
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Processing Payment...
           </>
         ) : (
           `Subscribe to ${planName}`
         )}
       </Button>
 
-      <p className="text-xs text-center text-gray-500">
-        Powered by MyFatoorah • Secure payment processing
-      </p>
+      <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <span>Powered by MyFatoorah • Secure payment processing</span>
+      </div>
     </form>
   );
 }
