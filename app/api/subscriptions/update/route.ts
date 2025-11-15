@@ -41,9 +41,21 @@ export async function POST(request: NextRequest) {
 
     // Check if this is a MyFatoorah or PayPal subscription
     if (dbSubscription.provider === 'myfatoorah' || dbSubscription.provider === 'paypal') {
+      console.log(`[Update Subscription] Blocked plan change for ${dbSubscription.provider} subscription`);
       return NextResponse.json(
         {
           error: `Plan changes are not supported for ${dbSubscription.provider} subscriptions. Please cancel your current subscription and subscribe to the new plan.`
+        },
+        { status: 400 }
+      );
+    }
+
+    // Also check if provider is 'none' (cancelled subscription)
+    if (dbSubscription.provider === 'none' || !dbSubscription.provider) {
+      console.log('[Update Subscription] Cannot change plan for cancelled subscription');
+      return NextResponse.json(
+        {
+          error: 'Cannot change plan for a cancelled subscription. Please subscribe to a new plan from the pricing page.'
         },
         { status: 400 }
       );
