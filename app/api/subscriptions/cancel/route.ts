@@ -77,9 +77,9 @@ export async function POST(request: NextRequest) {
               db.tx.subscriptions[subscriptionId].update({
                 cancelAtPeriodEnd: true,
                 status: 'cancelled',
-                provider: null,
-                providerSubscriptionId: null,
-                providerCustomerId: null,
+                provider: 'none',
+                providerSubscriptionId: undefined,
+                providerCustomerId: undefined,
                 updatedAt: Date.now(),
               }),
             ]);
@@ -105,9 +105,9 @@ export async function POST(request: NextRequest) {
           await db.transact([
             db.tx.subscriptions[subscriptionId].update({
               cancelAtPeriodEnd: true,
-              provider: null,
-              providerSubscriptionId: null,
-              providerCustomerId: null,
+              provider: 'none',
+              providerSubscriptionId: undefined,
+              providerCustomerId: undefined,
               updatedAt: Date.now(),
             }),
           ]);
@@ -146,9 +146,9 @@ export async function POST(request: NextRequest) {
           await db.transact([
             db.tx.subscriptions[subscriptionId].update({
               cancelAtPeriodEnd: true,
-              provider: null,
-              providerSubscriptionId: null,
-              providerCustomerId: null,
+              provider: 'none',
+              providerSubscriptionId: undefined,
+              providerCustomerId: undefined,
               updatedAt: Date.now(),
             }),
           ]);
@@ -179,9 +179,9 @@ export async function POST(request: NextRequest) {
           await db.transact([
             db.tx.subscriptions[subscriptionId].update({
               cancelAtPeriodEnd: true,
-              provider: null,
-              providerSubscriptionId: null,
-              providerCustomerId: null,
+              provider: 'none',
+              providerSubscriptionId: undefined,
+              providerCustomerId: undefined,
               updatedAt: Date.now(),
             }),
           ]);
@@ -211,9 +211,9 @@ export async function POST(request: NextRequest) {
     await db.transact([
       db.tx.subscriptions[subscriptionId].update({
         cancelAtPeriodEnd: true,
-        provider: null,
-        providerSubscriptionId: null,
-        providerCustomerId: null,
+        provider: 'none',
+        providerSubscriptionId: undefined,
+        providerCustomerId: undefined,
         updatedAt: Date.now(),
       }),
     ]);
