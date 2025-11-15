@@ -182,6 +182,7 @@ export function MyFatoorahCheckout({
                   },
                   button: {
                     height: '48px',
+                    width: '100%', // Full width button
                     borderRadius: '6px',
                   },
                 },
@@ -192,107 +193,97 @@ export function MyFatoorahCheckout({
             window.myfatoorah.init(config);
             console.log('✅ MyFatoorah SDK initialized');
 
-            // Remove scrollbars from embedded form with more aggressive approach
+            // Remove scrollbars from embedded form - MyFatoorah doesn't provide API for this
             const removeScrollbars = () => {
               const container = document.getElementById('myfatoorah-payment-container');
-              if (container) {
-                // Apply to container
-                container.style.setProperty('overflow', 'visible', 'important');
-                container.style.height = 'auto';
-                container.style.minHeight = '0';
-                container.style.maxHeight = 'none';
+              if (!container) return;
 
-                // Find and modify iframes
-                const iframes = container.querySelectorAll('iframe');
-                iframes.forEach((iframe) => {
-                  if (iframe instanceof HTMLIFrameElement) {
-                    iframe.style.setProperty('overflow', 'visible', 'important');
-                    iframe.style.height = 'auto';
-                    iframe.style.minHeight = '0';
+              console.log('🔧 Removing scrollbars from MyFatoorah container...');
 
-                    // Try to access iframe content (if same-origin)
-                    try {
-                      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-                      if (iframeDoc) {
-                        // Remove scrollbars from iframe body
-                        const iframeBody = iframeDoc.body;
-                        if (iframeBody) {
-                          iframeBody.style.setProperty('overflow', 'visible', 'important');
-                          iframeBody.style.height = 'auto';
-                          iframeBody.style.minHeight = '0';
-                        }
+              // Apply to container
+              container.style.setProperty('overflow', 'visible', 'important');
+              container.style.setProperty('height', 'auto', 'important');
 
-                        // Find and style the Pay Now button inside iframe
-                        const buttons = iframeDoc.querySelectorAll('button, input[type="submit"], .btn, .pay-button');
-                        buttons.forEach((btn) => {
-                          if (btn instanceof HTMLElement) {
-                            btn.style.setProperty('width', '100%', 'important');
-                            btn.style.setProperty('min-height', '48px', 'important');
-                            btn.style.setProperty('height', '48px', 'important');
-                            btn.style.setProperty('margin-left', '0', 'important');
-                            btn.style.setProperty('margin-right', '0', 'important');
-                          }
-                        });
+              // Find and modify iframes
+              const iframes = container.querySelectorAll('iframe');
+              console.log(`🔧 Found ${iframes.length} iframes`);
 
-                        // Inject CSS into iframe
-                        const iframeStyle = iframeDoc.createElement('style');
-                        iframeStyle.textContent = `
-                          * {
-                            overflow: visible !important;
-                          }
-                          body {
-                            overflow: visible !important;
-                            height: auto !important;
-                            min-height: 0 !important;
-                          }
-                          button, input[type="submit"], .btn, .pay-button {
-                            width: 100% !important;
-                            min-height: 48px !important;
-                            height: 48px !important;
-                            margin-left: 0 !important;
-                            margin-right: 0 !important;
-                          }
-                        `;
+              iframes.forEach((iframe, index) => {
+                if (iframe instanceof HTMLIFrameElement) {
+                  console.log(`🔧 Processing iframe ${index + 1}...`);
+
+                  // Remove scrollbars from iframe itself
+                  iframe.style.setProperty('overflow', 'hidden', 'important');
+                  iframe.setAttribute('scrolling', 'no');
+
+                  // Try to access iframe content (if same-origin)
+                  try {
+                    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                    if (iframeDoc) {
+                      console.log(`✅ Accessed iframe ${index + 1} content - applying styles`);
+
+                      // Inject CSS into iframe to remove all scrollbars
+                      const styleId = 'myfatoorah-no-scroll';
+                      let iframeStyle = iframeDoc.getElementById(styleId) as HTMLStyleElement;
+
+                      if (!iframeStyle) {
+                        iframeStyle = iframeDoc.createElement('style');
+                        iframeStyle.id = styleId;
                         iframeDoc.head.appendChild(iframeStyle);
                       }
-                    } catch (e) {
-                      console.log('Cannot access iframe content (cross-origin):', e);
+
+                      iframeStyle.textContent = `
+                        html, body {
+                          overflow: hidden !important;
+                          overflow-y: hidden !important;
+                          overflow-x: hidden !important;
+                        }
+                        * {
+                          overflow: visible !important;
+                        }
+                        *::-webkit-scrollbar {
+                          display: none !important;
+                          width: 0 !important;
+                          height: 0 !important;
+                        }
+                      `;
+
+                      // Apply directly to elements
+                      if (iframeDoc.documentElement) {
+                        iframeDoc.documentElement.style.setProperty('overflow', 'hidden', 'important');
+                      }
+                      if (iframeDoc.body) {
+                        iframeDoc.body.style.setProperty('overflow', 'hidden', 'important');
+                      }
                     }
+                  } catch (e) {
+                    console.warn(`⚠️ Cannot access iframe ${index + 1} content (cross-origin):`, e);
                   }
-                });
-
-                // Apply to all other child elements
-                const allElements = container.querySelectorAll('*');
-                allElements.forEach((el) => {
-                  if (el instanceof HTMLElement && el.tagName !== 'IFRAME') {
-                    el.style.setProperty('overflow', 'visible', 'important');
-                  }
-                });
-
-                // Add CSS override for parent container
-                const styleId = 'myfatoorah-custom-styles';
-                let style = document.getElementById(styleId) as HTMLStyleElement;
-                if (!style) {
-                  style = document.createElement('style');
-                  style.id = styleId;
-                  document.head.appendChild(style);
                 }
-                style.textContent = `
-                  #myfatoorah-payment-container {
-                    overflow: visible !important;
-                    height: auto !important;
-                    min-height: 0 !important;
-                  }
-                  #myfatoorah-payment-container * {
-                    overflow: visible !important;
-                  }
-                  #myfatoorah-payment-container iframe {
-                    overflow: visible !important;
-                    height: auto !important;
-                    min-height: 0 !important;
-                  }
-                `;
+              });
+
+              // Add CSS override for parent container
+              const styleId = 'myfatoorah-custom-styles';
+              let style = document.getElementById(styleId) as HTMLStyleElement;
+              if (!style) {
+                style = document.createElement('style');
+                style.id = styleId;
+                document.head.appendChild(style);
               }
+              style.textContent = `
+                #myfatoorah-payment-container {
+                  overflow: visible !important;
+                  height: auto !important;
+                }
+                #myfatoorah-payment-container iframe {
+                  overflow: hidden !important;
+                }
+                #myfatoorah-payment-container *::-webkit-scrollbar {
+                  display: none !important;
+                  width: 0 !important;
+                  height: 0 !important;
+                }
+              `;
             };
 
             // Run immediately and after delays to catch dynamically loaded content
@@ -504,6 +495,7 @@ declare global {
             };
             button?: {
               height?: string;
+              width?: string;
               borderRadius?: string;
               [key: string]: any;
             };
