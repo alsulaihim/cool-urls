@@ -91,8 +91,10 @@ export async function POST(request: Request) {
 
     const existing = subscriptions?.[0];
 
+    console.log('🔵 Existing subscription:', JSON.stringify(existing, null, 2));
+    console.log('🔵 User ID for transaction:', userId);
+
     const subscriptionData: any = {
-      userId, // Always include userId - required by InstantDB even for updates
       planId,
       status: 'active',
       provider: 'myfatoorah',
@@ -106,12 +108,17 @@ export async function POST(request: Request) {
 
     // Preserve existing data if updating, otherwise initialize
     if (existing) {
+      console.log('🔵 Updating existing subscription');
       subscriptionData.clicksUsed = existing.clicksUsed;
       subscriptionData.createdAt = existing.createdAt;
     } else {
+      console.log('🔵 Creating new subscription - including userId in data');
+      subscriptionData.userId = userId;
       subscriptionData.clicksUsed = 0;
       subscriptionData.createdAt = now;
     }
+
+    console.log('🔵 Subscription data to save:', JSON.stringify(subscriptionData, null, 2));
 
     await adminDb.transact([
       adminDb.tx.subscriptions[userId].update(subscriptionData),
