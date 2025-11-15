@@ -20,12 +20,12 @@ console.log('━━━━━━━━━━━━━━━━━━━━━━�
 console.log('📋 Create these plans in your MyFatoorah dashboard:\n');
 
 const plans = [
-  { id: 'starter', ...PRICING_PLANS.starter },
-  { id: 'growth', ...PRICING_PLANS.growth },
-  { id: 'business', ...PRICING_PLANS.business },
-  { id: 'enterprise', ...PRICING_PLANS.enterprise },
-  { id: 'scale', ...PRICING_PLANS.scale },
-  { id: 'premium', ...PRICING_PLANS.premium },
+  PRICING_PLANS.starter,
+  PRICING_PLANS.growth,
+  PRICING_PLANS.business,
+  PRICING_PLANS.enterprise,
+  PRICING_PLANS.scale,
+  PRICING_PLANS.premium,
 ];
 
 plans.forEach((plan, index) => {
