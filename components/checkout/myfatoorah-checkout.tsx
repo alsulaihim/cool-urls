@@ -126,6 +126,9 @@ export function MyFatoorahCheckout({
       try {
         setIsLoading(true);
         console.log('🔵 Initializing MyFatoorah embedded session...');
+        console.log('🔵 Current hostname:', window.location.hostname);
+        console.log('🔵 useEmbedded:', useEmbedded);
+        console.log('🔵 isScriptLoaded:', isScriptLoaded);
 
         const response = await fetch('/api/myfatoorah/session', {
           method: 'POST',
@@ -150,23 +153,35 @@ export function MyFatoorahCheckout({
         // Set up global callback
         (window as any).myFatoorahPaymentCallback = handlePaymentCallback;
 
-        // Initialize MyFatoorah embedded payment
-        if (window.myfatoorah) {
-          const config = {
-            sessionId: data.sessionId,
-            countryCode: data.countryCode,
-            currencyCode: data.countryCode === 'KWT' ? 'KWD' : 'USD',
-            amount: planPrice.toString(),
-            callback: (window as any).myFatoorahPaymentCallback,
-            containerId: 'myfatoorah-payment-container',
-          };
+        // Wait for SDK to be available
+        let retries = 0;
+        const checkSDK = setInterval(() => {
+          retries++;
+          console.log(`🔵 Checking for MyFatoorah SDK (attempt ${retries})...`);
 
-          console.log('🔵 Initializing MyFatoorah SDK with config:', config);
-          window.myfatoorah.init(config);
-          console.log('✅ MyFatoorah SDK initialized');
-        }
+          if (window.myfatoorah) {
+            clearInterval(checkSDK);
+            const config = {
+              sessionId: data.sessionId,
+              countryCode: data.countryCode,
+              currencyCode: data.countryCode === 'KWT' ? 'KWD' : 'USD',
+              amount: planPrice.toString(),
+              callback: (window as any).myFatoorahPaymentCallback,
+              containerId: 'myfatoorah-payment-container',
+            };
 
-        setIsLoading(false);
+            console.log('🔵 Initializing MyFatoorah SDK with config:', config);
+            window.myfatoorah.init(config);
+            console.log('✅ MyFatoorah SDK initialized');
+            setIsLoading(false);
+          } else if (retries > 10) {
+            clearInterval(checkSDK);
+            console.error('❌ MyFatoorah SDK not available after retries');
+            setUseEmbedded(false);
+            setIsLoading(false);
+          }
+        }, 500);
+
       } catch (error) {
         console.error('❌ Session error:', error);
         setUseEmbedded(false); // Fallback to redirect
@@ -175,6 +190,7 @@ export function MyFatoorahCheckout({
     };
 
     initializeSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [useEmbedded, isScriptLoaded, userEmail, userId, planPrice, planName]);
 
   // Redirect flow handler
