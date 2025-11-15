@@ -14,9 +14,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { sessionId, planId, userId, customerName, customerEmail, invoiceValue, recurringId } = body;
 
-    if (!sessionId || !planId || !userId) {
+    console.log('🔵 MyFatoorah subscription create request:', { sessionId, planId, userId, customerName, customerEmail, invoiceValue });
+
+    if (!planId || !userId || !customerEmail) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: planId, userId, and customerEmail are required' },
         { status: 400 }
       );
     }
@@ -30,13 +32,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Execute payment with MyFatoorah
+    // Execute payment with MyFatoorah (without sessionId for redirect flow)
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-    const paymentResult = await executePayment({
-      SessionId: sessionId,
+    const paymentRequest: any = {
       InvoiceValue: invoiceValue || plan.price,
-      CustomerName: customerName,
+      CustomerName: customerName || customerEmail,
       CustomerEmail: customerEmail,
       CallBackUrl: `${baseUrl}/api/myfatoorah/callback`,
       ErrorUrl: `${baseUrl}/pricing?error=payment_failed`,
@@ -44,7 +45,16 @@ export async function POST(request: Request) {
       CustomerReference: userId,
       UserDefinedField: planId,
       DisplayCurrencyIso: 'USD',
-    });
+    };
+
+    // Add SessionId only if provided (for embedded flow)
+    if (sessionId) {
+      paymentRequest.SessionId = sessionId;
+    }
+
+    console.log('🔵 Executing MyFatoorah payment with:', paymentRequest);
+
+    const paymentResult = await executePayment(paymentRequest);
 
     if (!paymentResult.IsSuccess) {
       return NextResponse.json(

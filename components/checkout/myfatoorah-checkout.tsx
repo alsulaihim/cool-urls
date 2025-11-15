@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CreditCard } from 'lucide-react';
 import type { PlanId } from '@/lib/pricing';
 
 interface MyFatoorahCheckoutProps {
@@ -26,177 +26,240 @@ export function MyFatoorahCheckout({
   onSuccess,
   onError,
 }: MyFatoorahCheckoutProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [countryCode, setCountryCode] = useState<string | null>(null);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [useEmbedded, setUseEmbedded] = useState(true);
 
-  // Load MyFatoorah SDK script
+  // Check if we should use embedded (not localhost)
   useEffect(() => {
-    if (isScriptLoaded) return;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const hasNgrok = window.location.hostname.includes('ngrok');
+    setUseEmbedded(!isLocalhost || hasNgrok);
+  }, []);
+
+  // Payment callback handler for embedded flow
+  const handlePaymentCallback = useCallback(async (response: any) => {
+    console.log('✅ MyFatoorah payment callback:', response);
+
+    if (response.IsSuccess || response.isSuccess) {
+      try {
+        setIsProcessing(true);
+        console.log('✅ Payment successful, creating subscription...');
+
+        const subscriptionResponse = await fetch('/api/myfatoorah/subscription/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sessionId: response.sessionId || response.SessionId || sessionId,
+            planId,
+            userId,
+            customerName: userName,
+            customerEmail: userEmail,
+            invoiceValue: planPrice,
+          }),
+        });
+
+        if (!subscriptionResponse.ok) {
+          const errorData = await subscriptionResponse.json();
+          throw new Error(errorData.error || 'Failed to create subscription');
+        }
+
+        const subscriptionData = await subscriptionResponse.json();
+        console.log('✅ Subscription created:', subscriptionData);
+
+        if (subscriptionData.paymentURL && !subscriptionData.isDirectPayment) {
+          window.location.href = subscriptionData.paymentURL;
+        } else {
+          onSuccess();
+        }
+      } catch (error) {
+        console.error('❌ Subscription creation error:', error);
+        onError(error instanceof Error ? error.message : 'Failed to create subscription');
+      } finally {
+        setIsProcessing(false);
+      }
+    } else {
+      console.error('❌ Payment failed:', response);
+      const errorMessage = response.Message || response.message || 'Payment failed';
+      onError(errorMessage);
+      setIsProcessing(false);
+    }
+  }, [planId, userId, userName, userEmail, planPrice, sessionId, onSuccess, onError]);
+
+  // Load MyFatoorah SDK script for embedded flow
+  useEffect(() => {
+    if (!useEmbedded || isScriptLoaded) return;
 
     const script = document.createElement('script');
-    script.src = 'https://demo.myfatoorah.com/cardview/v2/session.js';
+    script.src = 'https://demo.myfatoorah.com/payment/v1/session.js';
     script.async = true;
-    script.onload = () => setIsScriptLoaded(true);
+    script.onload = () => {
+      console.log('✅ MyFatoorah script loaded');
+      setIsScriptLoaded(true);
+    };
     script.onerror = () => {
-      onError('Failed to load MyFatoorah payment script');
+      console.error('❌ Failed to load MyFatoorah script');
+      setUseEmbedded(false); // Fallback to redirect
     };
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
-  }, [isScriptLoaded, onError]);
+  }, [useEmbedded, isScriptLoaded]);
 
-  const initializeSession = async () => {
+  // Initialize embedded payment session
+  useEffect(() => {
+    if (!useEmbedded || !isScriptLoaded) {
+      setIsLoading(false);
+      return;
+    }
+
+    const initializeSession = async () => {
+      try {
+        setIsLoading(true);
+        console.log('🔵 Initializing MyFatoorah embedded session...');
+
+        const response = await fetch('/api/myfatoorah/session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userEmail,
+            userId,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create session');
+        }
+
+        const data = await response.json();
+        console.log('✅ Session data:', data);
+        setSessionId(data.sessionId);
+        setCountryCode(data.countryCode);
+
+        // Set up global callback
+        (window as any).myFatoorahPaymentCallback = handlePaymentCallback;
+
+        // Initialize MyFatoorah embedded payment
+        if (window.myfatoorah) {
+          const config = {
+            sessionId: data.sessionId,
+            countryCode: data.countryCode,
+            currencyCode: data.countryCode === 'KWT' ? 'KWD' : 'USD',
+            amount: planPrice.toString(),
+            callback: (window as any).myFatoorahPaymentCallback,
+            containerId: 'myfatoorah-payment-container',
+          };
+
+          console.log('🔵 Initializing MyFatoorah SDK with config:', config);
+          window.myfatoorah.init(config);
+          console.log('✅ MyFatoorah SDK initialized');
+        }
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error('❌ Session error:', error);
+        setUseEmbedded(false); // Fallback to redirect
+        setIsLoading(false);
+      }
+    };
+
+    initializeSession();
+  }, [useEmbedded, isScriptLoaded, userEmail, userId, planPrice, planName]);
+
+  // Redirect flow handler
+  const handleRedirectPayment = async () => {
     try {
       setIsLoading(true);
+      console.log('🔵 Starting redirect payment...');
 
-      // Create payment session
-      const response = await fetch('/api/myfatoorah/session', {
+      const response = await fetch('/api/myfatoorah/subscription/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userEmail,
+          planId,
           userId,
+          customerName: userName,
+          customerEmail: userEmail,
+          invoiceValue: planPrice,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create payment session');
+        throw new Error(errorData.error || 'Failed to create payment');
       }
 
       const data = await response.json();
-      setSessionId(data.sessionId);
-      setCountryCode(data.countryCode);
 
-      // Initialize MyFatoorah embedded payment
-      if (window.myFatoorah) {
-        window.myFatoorah.init({
-          countryCode: data.countryCode,
-          sessionId: data.sessionId,
-          cardViewId: 'card-element',
-          style: {
-            cardHeight: 300,
-            direction: 'ltr',
-            input: {
-              color: '#000000',
-              fontSize: '15px',
-              fontFamily: 'system-ui, -apple-system, sans-serif',
-              inputHeight: '42px',
-              inputMargin: '12px',
-              borderColor: '#e5e7eb',
-              borderWidth: '1px',
-              borderRadius: '8px',
-              boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-              placeHolder: {
-                holderName: 'Name on Card',
-                cardNumber: 'Card Number',
-                expiryDate: 'MM/YY',
-                securityCode: 'CVV',
-              },
-            },
-            label: {
-              display: true,
-              color: '#374151',
-              fontSize: '14px',
-              fontWeight: '500',
-              fontFamily: 'system-ui, -apple-system, sans-serif',
-              text: {
-                holderName: 'Name on Card',
-                cardNumber: 'Card Number',
-                expiryDate: 'Expiry Date',
-                securityCode: 'Security Code',
-              },
-            },
-            error: {
-              borderColor: '#ef4444',
-              borderRadius: '8px',
-            },
-          },
-        });
+      if (data.paymentURL) {
+        window.location.href = data.paymentURL;
+      } else {
+        throw new Error('No payment URL received');
       }
-
     } catch (error) {
-      console.error('Session initialization error:', error);
-      onError(error instanceof Error ? error.message : 'Failed to initialize payment');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!sessionId || !isScriptLoaded || !window.myFatoorah) {
-      onError('Payment system not ready. Please try again.');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Submit payment to MyFatoorah
-      window.myFatoorah.submit().then(async (response: any) => {
-        if (response.IsSuccess) {
-          // Create subscription in our database
-          const subscriptionResponse = await fetch('/api/myfatoorah/subscription/create', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              sessionId,
-              planId,
-              userId,
-              customerName: userName,
-              customerEmail: userEmail,
-              invoiceValue: planPrice,
-              recurringId: response.Data.RecurringId,
-            }),
-          });
-
-          if (!subscriptionResponse.ok) {
-            throw new Error('Failed to create subscription');
-          }
-
-          const subscriptionData = await subscriptionResponse.json();
-
-          // If payment requires redirect (3DS), redirect user
-          if (subscriptionData.paymentURL && !subscriptionData.isDirectPayment) {
-            window.location.href = subscriptionData.paymentURL;
-          } else {
-            // Payment completed directly
-            onSuccess();
-          }
-        } else {
-          onError(response.Message || 'Payment failed');
-        }
-      }).catch((error: any) => {
-        console.error('Payment submission error:', error);
-        onError('Payment submission failed');
-      });
-
-    } catch (error) {
-      console.error('Payment error:', error);
+      console.error('❌ Payment error:', error);
       onError(error instanceof Error ? error.message : 'Payment failed');
-    } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (isScriptLoaded) {
-      initializeSession();
-    }
-  }, [isScriptLoaded]);
+  // Render embedded form
+  if (useEmbedded) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Payment Details</h3>
+            <p className="text-sm text-gray-600 mt-1">
+              Subscribing to {planName} - ${planPrice}/month
+            </p>
+          </div>
 
+          {/* MyFatoorah Embedded Payment Container */}
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div
+              id="myfatoorah-payment-container"
+              className="min-h-[450px] p-6"
+            />
+          </div>
+
+          {/* Loading State */}
+          {(isLoading || isProcessing) && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 text-gray-400 animate-spin mr-2" />
+              <span className="text-sm text-gray-600">
+                {isLoading ? 'Loading payment form...' : 'Processing payment...'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <span>Powered by MyFatoorah • PCI DSS Compliant</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Render redirect flow (fallback)
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6">
       <div className="space-y-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Payment Details</h3>
@@ -205,34 +268,58 @@ export function MyFatoorahCheckout({
           </p>
         </div>
 
-        {/* MyFatoorah Embedded Payment Card */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div
-            id="card-element"
-            className="min-h-[320px] p-6"
-          />
-        </div>
-
-        {!sessionId && isLoading && (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 text-gray-400 animate-spin mr-2" />
-            <span className="text-sm text-gray-600">Initializing payment form...</span>
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200 p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <CreditCard className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                Secure Payment with MyFatoorah
+              </h4>
+              <p className="text-sm text-gray-600 mb-4">
+                Click below to continue to our secure payment page where you can pay with:
+              </p>
+              <ul className="space-y-2 text-sm text-gray-700">
+                <li className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Credit & Debit Cards</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Apple Pay & Google Pay</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Local payment methods</span>
+                </li>
+              </ul>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       <Button
-        type="submit"
-        disabled={isLoading || !sessionId}
-        className="w-full h-12 text-base font-medium"
+        onClick={handleRedirectPayment}
+        disabled={isLoading}
+        className="w-full h-12 text-base font-medium bg-green-600 hover:bg-green-700"
       >
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            Processing Payment...
+            Redirecting...
           </>
         ) : (
-          `Subscribe to ${planName}`
+          <>
+            <CreditCard className="mr-2 h-5 w-5" />
+            Continue to Secure Payment
+          </>
         )}
       </Button>
 
@@ -240,18 +327,24 @@ export function MyFatoorahCheckout({
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
-        <span>Powered by MyFatoorah • Secure payment processing</span>
+        <span>Powered by MyFatoorah • PCI DSS Compliant</span>
       </div>
-    </form>
+    </div>
   );
 }
 
 // Extend Window interface for MyFatoorah
 declare global {
   interface Window {
-    myFatoorah?: {
-      init: (config: any) => void;
-      submit: () => Promise<any>;
+    myfatoorah?: {
+      init: (config: {
+        sessionId: string;
+        countryCode: string;
+        currencyCode: string;
+        amount: string;
+        callback: (response: any) => void;
+        containerId: string;
+      }) => void;
     };
   }
 }
