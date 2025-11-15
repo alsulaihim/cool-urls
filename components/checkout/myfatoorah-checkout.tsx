@@ -172,6 +172,20 @@ export function MyFatoorahCheckout({
               amount: planPrice.toString(),
               callback: (window as any).myFatoorahPaymentCallback,
               containerId: 'myfatoorah-payment-container',
+              style: {
+                cardHeight: 400, // Reduce card form height
+                card: {
+                  input: {
+                    inputHeight: '44px',
+                    inputMargin: '8px',
+                    borderRadius: '6px',
+                  },
+                  button: {
+                    height: '48px',
+                    borderRadius: '6px',
+                  },
+                },
+              },
             };
 
             console.log('🔵 Initializing MyFatoorah SDK with config:', config);
@@ -479,6 +493,24 @@ declare global {
         amount: string;
         callback: (response: any) => void;
         containerId: string;
+        style?: {
+          cardHeight?: number;
+          card?: {
+            input?: {
+              inputHeight?: string;
+              inputMargin?: string;
+              borderRadius?: string;
+              [key: string]: any;
+            };
+            button?: {
+              height?: string;
+              borderRadius?: string;
+              [key: string]: any;
+            };
+            [key: string]: any;
+          };
+          [key: string]: any;
+        };
       }) => void;
     };
   }
