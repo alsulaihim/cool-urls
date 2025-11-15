@@ -19,13 +19,14 @@ import { motion, AnimatePresence } from 'framer-motion';
  * Admin Settings Page
  *
  * Allows admins to configure:
- * - Payment provider availability (Stripe/PayPal)
+ * - Payment provider availability (Stripe/PayPal/MyFatoorah)
  * - Other app-wide settings
  */
 export default function AdminSettingsPage() {
   const { user } = db.useAuth();
   const [stripeEnabled, setStripeEnabled] = useState(true);
   const [paypalEnabled, setPaypalEnabled] = useState(true);
+  const [myFatoorahEnabled, setMyFatoorahEnabled] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +42,7 @@ export default function AdminSettingsPage() {
     if (data?.appSettings) {
       const stripeSetting = data.appSettings.find(s => s.key === 'payment.stripe.enabled');
       const paypalSetting = data.appSettings.find(s => s.key === 'payment.paypal.enabled');
+      const myFatoorahSetting = data.appSettings.find(s => s.key === 'payment.myfatoorah.enabled');
 
       if (stripeSetting) {
         setStripeEnabled(stripeSetting.value === 'true');
@@ -48,24 +50,37 @@ export default function AdminSettingsPage() {
       if (paypalSetting) {
         setPaypalEnabled(paypalSetting.value === 'true');
       }
+      if (myFatoorahSetting) {
+        setMyFatoorahEnabled(myFatoorahSetting.value === 'true');
+      }
     }
   }, [data]);
 
-  const handleToggle = (provider: 'stripe' | 'paypal') => {
+  const handleToggle = (provider: 'stripe' | 'paypal' | 'myfatoorah') => {
+    // Count currently enabled providers
+    const enabledCount = [stripeEnabled, paypalEnabled, myFatoorahEnabled].filter(Boolean).length;
+
     if (provider === 'stripe') {
-      // Prevent disabling both providers
-      if (stripeEnabled && !paypalEnabled) {
+      // Prevent disabling all providers
+      if (stripeEnabled && enabledCount === 1) {
         setError('At least one payment provider must be enabled');
         return;
       }
       setStripeEnabled(!stripeEnabled);
-    } else {
-      // Prevent disabling both providers
-      if (paypalEnabled && !stripeEnabled) {
+    } else if (provider === 'paypal') {
+      // Prevent disabling all providers
+      if (paypalEnabled && enabledCount === 1) {
         setError('At least one payment provider must be enabled');
         return;
       }
       setPaypalEnabled(!paypalEnabled);
+    } else if (provider === 'myfatoorah') {
+      // Prevent disabling all providers
+      if (myFatoorahEnabled && enabledCount === 1) {
+        setError('At least one payment provider must be enabled');
+        return;
+      }
+      setMyFatoorahEnabled(!myFatoorahEnabled);
     }
     setHasChanges(true);
     setError(null);
@@ -93,6 +108,10 @@ export default function AdminSettingsPage() {
             {
               key: 'payment.paypal.enabled',
               value: String(paypalEnabled),
+            },
+            {
+              key: 'payment.myfatoorah.enabled',
+              value: String(myFatoorahEnabled),
             },
           ],
         }),
@@ -298,6 +317,55 @@ export default function AdminSettingsPage() {
                       className={`
                         inline-block h-4 w-4 transform rounded-full bg-white transition-transform
                         ${paypalEnabled ? 'translate-x-6' : 'translate-x-1'}
+                      `}
+                    />
+                  </button>
+                </div>
+              </div>
+            </Card>
+
+            {/* MyFatoorah */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <CreditCard className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="text-lg font-semibold text-gray-900">MyFatoorah</h3>
+                      <Badge
+                        variant={myFatoorahEnabled ? 'default' : 'secondary'}
+                        className={myFatoorahEnabled ? 'bg-green-600' : 'bg-gray-400'}
+                      >
+                        {myFatoorahEnabled ? 'Enabled' : 'Disabled'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      MyFatoorah embedded payment gateway
+                    </p>
+                    {myFatoorahEnabled && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Customers will see the &quot;MyFatoorah&quot; option during checkout
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <button
+                    onClick={() => handleToggle('myfatoorah')}
+                    disabled={saving}
+                    className={`
+                      relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2
+                      ${myFatoorahEnabled ? 'bg-black' : 'bg-gray-300'}
+                      ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                    `}
+                    aria-label={`Toggle MyFatoorah ${myFatoorahEnabled ? 'off' : 'on'}`}
+                  >
+                    <span
+                      className={`
+                        inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                        ${myFatoorahEnabled ? 'translate-x-6' : 'translate-x-1'}
                       `}
                     />
                   </button>
