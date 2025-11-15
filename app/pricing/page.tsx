@@ -301,8 +301,8 @@ export default function PricingPage() {
                     </motion.button>
                   )}
 
-                  {/* Subscription Canceled Notice */}
-                  {user && subscription && subscription.cancelAtPeriodEnd && userCurrentPlan && (
+                  {/* Subscription Canceled Notice - only show if user has an active provider */}
+                  {user && subscription && subscription.cancelAtPeriodEnd && userCurrentPlan && subscription.provider && subscription.provider !== 'none' && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}

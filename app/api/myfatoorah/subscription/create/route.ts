@@ -56,9 +56,19 @@ export async function POST(request: Request) {
 
     const paymentResult = await executePayment(paymentRequest);
 
+    console.log('🔵 MyFatoorah payment result:', JSON.stringify(paymentResult, null, 2));
+
     if (!paymentResult.IsSuccess) {
+      console.error('❌ MyFatoorah payment failed:', {
+        message: paymentResult.Message,
+        validationErrors: paymentResult.ValidationErrors,
+        fullResponse: paymentResult,
+      });
       return NextResponse.json(
-        { error: paymentResult.Message || 'Payment failed' },
+        {
+          error: paymentResult.Message || 'Payment failed',
+          details: paymentResult.ValidationErrors || [],
+        },
         { status: 400 }
       );
     }

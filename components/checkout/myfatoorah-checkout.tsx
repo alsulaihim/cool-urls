@@ -66,7 +66,12 @@ export function MyFatoorahCheckout({
 
         if (!subscriptionResponse.ok) {
           const errorData = await subscriptionResponse.json();
-          throw new Error(errorData.error || 'Failed to create subscription');
+          console.error('❌ Subscription API error:', errorData);
+          const errorMsg = errorData.error || 'Failed to create subscription';
+          const details = errorData.details && errorData.details.length > 0
+            ? `\n${errorData.details.map((d: any) => d.Error || d.Name).join(', ')}`
+            : '';
+          throw new Error(errorMsg + details);
         }
 
         const subscriptionData = await subscriptionResponse.json();
@@ -215,7 +220,12 @@ export function MyFatoorahCheckout({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create payment');
+        console.error('❌ Payment API error:', errorData);
+        const errorMsg = errorData.error || 'Failed to create payment';
+        const details = errorData.details && errorData.details.length > 0
+          ? `\n${errorData.details.map((d: any) => d.Error || d.Name).join(', ')}`
+          : '';
+        throw new Error(errorMsg + details);
       }
 
       const data = await response.json();
