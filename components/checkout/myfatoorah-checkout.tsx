@@ -178,19 +178,52 @@ export function MyFatoorahCheckout({
             window.myfatoorah.init(config);
             console.log('✅ MyFatoorah SDK initialized');
 
-            // Remove scrollbars from embedded form
-            setTimeout(() => {
+            // Remove scrollbars from embedded form with more aggressive approach
+            const removeScrollbars = () => {
               const container = document.getElementById('myfatoorah-payment-container');
               if (container) {
-                container.style.overflow = 'visible';
+                // Apply to container
+                container.style.overflow = 'visible !important';
+                container.style.height = 'auto';
+                container.style.minHeight = 'auto';
+
+                // Apply to all child elements including iframes
                 const allElements = container.querySelectorAll('*');
                 allElements.forEach((el) => {
                   if (el instanceof HTMLElement) {
                     el.style.overflow = 'visible';
+                    el.style.overflowY = 'visible';
+                    el.style.overflowX = 'visible';
+
+                    // Special handling for iframes
+                    if (el.tagName === 'IFRAME') {
+                      el.style.height = 'auto';
+                      el.style.minHeight = '500px';
+                    }
                   }
                 });
+
+                // Add CSS override for deeply nested elements
+                const style = document.createElement('style');
+                style.textContent = `
+                  #myfatoorah-payment-container,
+                  #myfatoorah-payment-container * {
+                    overflow: visible !important;
+                  }
+                  #myfatoorah-payment-container iframe {
+                    min-height: 500px !important;
+                    height: auto !important;
+                  }
+                `;
+                document.head.appendChild(style);
               }
-            }, 1000);
+            };
+
+            // Run immediately and after delays to catch dynamically loaded content
+            removeScrollbars();
+            setTimeout(removeScrollbars, 500);
+            setTimeout(removeScrollbars, 1000);
+            setTimeout(removeScrollbars, 2000);
 
             setIsLoading(false);
           } else if (retries > 10) {
@@ -272,7 +305,7 @@ export function MyFatoorahCheckout({
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
             <div
               id="myfatoorah-payment-container"
-              className="min-h-[600px]"
+              className="min-h-[400px]"
               style={{ overflow: 'visible' }}
             />
           </div>
