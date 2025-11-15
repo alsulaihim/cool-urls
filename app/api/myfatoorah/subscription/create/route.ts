@@ -95,6 +95,7 @@ export async function POST(request: Request) {
     console.log('🔵 User ID for transaction:', userId);
 
     const subscriptionData: any = {
+      userId, // Always include - InstantDB requires this even for updates
       planId,
       status: 'active',
       provider: 'myfatoorah',
@@ -112,8 +113,7 @@ export async function POST(request: Request) {
       subscriptionData.clicksUsed = existing.clicksUsed;
       subscriptionData.createdAt = existing.createdAt;
     } else {
-      console.log('🔵 Creating new subscription - including userId in data');
-      subscriptionData.userId = userId;
+      console.log('🔵 Creating new subscription');
       subscriptionData.clicksUsed = 0;
       subscriptionData.createdAt = now;
     }
