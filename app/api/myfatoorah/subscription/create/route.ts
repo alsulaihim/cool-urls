@@ -68,22 +68,45 @@ export async function POST(request: Request) {
     const now = Date.now();
     const oneMonthFromNow = now + 30 * 24 * 60 * 60 * 1000;
 
+    // Check if subscription already exists to preserve some fields
+    const { subscriptions } = await adminDb.query({
+      subscriptions: {
+        $: {
+          where: {
+            userId,
+          },
+        },
+      },
+    });
+
+    const existing = subscriptions?.[0];
+
+    const subscriptionData: any = {
+      planId,
+      status: 'active',
+      provider: 'myfatoorah',
+      providerSubscriptionId: paymentResult.Data.InvoiceId.toString(),
+      currentPeriodStart: now,
+      currentPeriodEnd: oneMonthFromNow,
+      cancelAtPeriodEnd: false,
+      clicksLimit: plan.clicksLimit,
+      updatedAt: now,
+    };
+
+    // Preserve existing data if updating
+    if (existing) {
+      subscriptionData.clicksUsed = existing.clicksUsed;
+      subscriptionData.createdAt = existing.createdAt;
+    } else {
+      subscriptionData.clicksUsed = 0;
+      subscriptionData.createdAt = now;
+    }
+
     await adminDb.transact([
-      adminDb.tx.subscriptions[userId].update({
-        userId,
-        planId,
-        status: 'active',
-        provider: 'myfatoorah',
-        providerSubscriptionId: paymentResult.Data.InvoiceId.toString(),
-        currentPeriodStart: now,
-        currentPeriodEnd: oneMonthFromNow,
-        cancelAtPeriodEnd: false,
-        clicksUsed: 0,
-        clicksLimit: plan.clicksLimit,
-        createdAt: now,
-        updatedAt: now,
-      }),
+      adminDb.tx.subscriptions[userId].update(subscriptionData),
     ]);
+
+    console.log(`✅ ${existing ? 'Updated' : 'Created'} MyFatoorah subscription for user ${userId}`);
 
     return NextResponse.json({
       success: true,
