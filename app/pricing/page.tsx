@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronDown, ArrowLeft, AlertCircle, X } from 'lucide-react';
 import Link from 'next/link';
@@ -29,6 +29,31 @@ export default function PricingPage() {
   const userCurrentPlan = subscription ? getPlanById(subscription.planId) : getPlanById('free');
 
   const currentPlan = plans.find(p => p.id === selectedPlan) || plans[0];
+
+  // Handle plan upgrade from query params (after MyFatoorah/PayPal plan change)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const planParam = params.get('plan') as PlanId | null;
+      const upgradeParam = params.get('upgrade');
+
+      if (planParam && upgradeParam === 'true') {
+        setSelectedPlan(planParam);
+        setShowCheckout(true);
+
+        // Scroll to checkout
+        setTimeout(() => {
+          document.getElementById('checkout-section')?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        }, 100);
+
+        // Clean up URL
+        window.history.replaceState({}, '', '/pricing');
+      }
+    }
+  }, []);
 
   const handleSubscribe = () => {
     // Prevent subscribing to current plan

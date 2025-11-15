@@ -34,7 +34,20 @@
       "Bash(git pull:*)",
       "Bash(git fetch:*)",
       "Bash(npx tsc:*)",
-      "Bash(yes:*)"
+      "Bash(yes:*)",
+      "Bash(git checkout:*)",
+      "Bash(git stash:*)",
+      "Bash(if [ -f .env.production ])",
+      "Bash(then cat .env.production)",
+      "Bash(else echo \"No .env.production file found\")",
+      "Bash(fi)",
+      "Bash(CREDS=\"AfxBeULNoaujT0qYFmMsAgWaKKm5eBfKm7LCENcTsQ1jZuzJf66gz6xcvUslSxl7_X1T27G7bnlp48Rq:ENtPtKaC3_vum-0vKDzZUaus46H7gU4RRGfntVYhrD4BP8uw7HzrquSI61LSRS4-iaPVOQqAtzBlL5C4\")",
+      "Bash(git restore:*)",
+      "Bash(if [ -f .env.local ])",
+      "Bash(then grep -E \"^MYFATOORAH\" .env.local)",
+      "Bash(else echo \".env.local not found\")",
+      "Bash(then grep \"NEXT_PUBLIC_APP_URL\" .env.local)",
+      "Bash(else echo \"No .env.local file found\")"
     ],
     "deny": [],
     "ask": []

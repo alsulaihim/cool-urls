@@ -35,7 +35,7 @@ export default function PlanChangeModal({
     setError(null);
 
     try {
-      const response = await fetch('/api/subscriptions/update', {
+      const response = await fetch('/api/subscriptions/change-plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +53,16 @@ export default function PlanChangeModal({
         throw new Error(data.error || 'Failed to update subscription');
       }
 
-      // Success!
+      // Check if checkout is required (for MyFatoorah/PayPal)
+      if (data.requiresCheckout) {
+        console.log('Plan change requires checkout:', data);
+        // Close modal and redirect to pricing page with the new plan selected
+        onClose();
+        window.location.href = `/pricing?plan=${newPlan.id}&upgrade=true`;
+        return;
+      }
+
+      // Success! (Stripe plan change)
       onSuccess();
       onClose();
     } catch (err) {
