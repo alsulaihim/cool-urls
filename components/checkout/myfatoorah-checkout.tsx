@@ -204,7 +204,13 @@ export function MyFatoorahCheckout({
                 });
 
                 // Add CSS override for deeply nested elements
-                const style = document.createElement('style');
+                const styleId = 'myfatoorah-custom-styles';
+                let style = document.getElementById(styleId) as HTMLStyleElement;
+                if (!style) {
+                  style = document.createElement('style');
+                  style.id = styleId;
+                  document.head.appendChild(style);
+                }
                 style.textContent = `
                   #myfatoorah-payment-container,
                   #myfatoorah-payment-container * {
@@ -214,8 +220,18 @@ export function MyFatoorahCheckout({
                     min-height: 500px !important;
                     height: auto !important;
                   }
+                  /* Style the Pay Now button */
+                  #myfatoorah-payment-container button[type="submit"],
+                  #myfatoorah-payment-container .btn-primary,
+                  #myfatoorah-payment-container button.pay-now,
+                  #myfatoorah-payment-container input[type="submit"] {
+                    width: 100% !important;
+                    min-height: 48px !important;
+                    height: 48px !important;
+                    margin-left: 0 !important;
+                    margin-right: 0 !important;
+                  }
                 `;
-                document.head.appendChild(style);
               }
             };
 
@@ -305,7 +321,6 @@ export function MyFatoorahCheckout({
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
             <div
               id="myfatoorah-payment-container"
-              className="min-h-[400px]"
               style={{ overflow: 'visible' }}
             />
           </div>
