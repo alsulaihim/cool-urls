@@ -15,6 +15,8 @@ export interface PricingPlan {
   stripeYearlyPriceId?: string;
   paypalPlanId?: string; // PayPal plan ID (to be set after creating products in PayPal)
   paypalYearlyPlanId?: string;
+  myFatoorahPlanId?: string; // MyFatoorah plan ID (to be set after creating products in MyFatoorah)
+  myFatoorahYearlyPlanId?: string;
 }
 
 export const PRICING_PLANS: Record<PlanId, PricingPlan> = {
@@ -207,6 +209,15 @@ export function getPlanByPayPalPlanId(paypalPlanId: string): PricingPlan | null 
   return plans.find(plan =>
     plan.paypalPlanId === paypalPlanId ||
     plan.paypalYearlyPlanId === paypalPlanId
+  ) || null;
+}
+
+// Helper function to get plan by MyFatoorah plan ID
+export function getPlanByMyFatoorahPlanId(myFatoorahPlanId: string): PricingPlan | null {
+  const plans = getAllPlans();
+  return plans.find(plan =>
+    plan.myFatoorahPlanId === myFatoorahPlanId ||
+    plan.myFatoorahYearlyPlanId === myFatoorahPlanId
   ) || null;
 }
 
