@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { CreditCard } from 'lucide-react';
 
 interface ProviderBadgeProps {
-  provider: 'stripe' | 'paypal' | 'none';
+  provider: 'stripe' | 'paypal' | 'myfatoorah' | 'none';
   className?: string;
 }
 
@@ -15,6 +15,10 @@ export function ProviderBadge({ provider, className }: ProviderBadgeProps) {
     paypal: {
       label: 'PayPal',
       className: 'bg-blue-100 text-blue-700 hover:bg-blue-100',
+    },
+    myfatoorah: {
+      label: 'MyFatoorah',
+      className: 'bg-green-100 text-green-700 hover:bg-green-100',
     },
     none: {
       label: 'Free',
