@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { initiateSession } from '@/lib/myfatoorah';
-import { db } from '@/lib/instant';
 
 /**
  * POST /api/myfatoorah/session
@@ -9,17 +8,18 @@ import { db } from '@/lib/instant';
  */
 export async function POST(request: Request) {
   try {
-    const { user } = await db.auth.verifyToken({ token: request.headers.get('authorization')?.replace('Bearer ', '') || '' });
+    const body = await request.json();
+    const { userEmail, userId } = body;
 
-    if (!user) {
+    if (!userEmail && !userId) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'User email or ID required' },
+        { status: 400 }
       );
     }
 
     // Get user email as customer identifier
-    const customerIdentifier = user.email || user.id;
+    const customerIdentifier = userEmail || userId;
 
     // Initiate session with MyFatoorah
     const sessionData = await initiateSession(customerIdentifier);
