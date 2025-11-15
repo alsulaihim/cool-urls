@@ -118,7 +118,7 @@ export default function UnifiedCheckout({
                   : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
               }`}
             >
-              <span>Debit Card</span>
+              <span>Debit or Credit Card</span>
             </button>
           )}
 
