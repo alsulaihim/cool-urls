@@ -246,6 +246,13 @@ export function MyFatoorahCheckout({
                           width: 0 !important;
                           height: 0 !important;
                         }
+                        /* Force Pay Now button to be full width */
+                        button, input[type="submit"], .btn, .pay-button, [type="button"] {
+                          width: 100% !important;
+                          max-width: 100% !important;
+                          margin-left: 0 !important;
+                          margin-right: 0 !important;
+                        }
                       `;
 
                       // Apply directly to elements
@@ -255,6 +262,17 @@ export function MyFatoorahCheckout({
                       if (iframeDoc.body) {
                         iframeDoc.body.style.setProperty('overflow', 'hidden', 'important');
                       }
+
+                      // Force all buttons to be full width
+                      const buttons = iframeDoc.querySelectorAll('button, input[type="submit"], .btn, .pay-button, [type="button"]');
+                      buttons.forEach((btn) => {
+                        if (btn instanceof HTMLElement) {
+                          btn.style.setProperty('width', '100%', 'important');
+                          btn.style.setProperty('max-width', '100%', 'important');
+                          btn.style.setProperty('margin-left', '0', 'important');
+                          btn.style.setProperty('margin-right', '0', 'important');
+                        }
+                      });
                     }
                   } catch (e) {
                     console.warn(`⚠️ Cannot access iframe ${index + 1} content (cross-origin):`, e);
