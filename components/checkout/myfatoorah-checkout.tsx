@@ -183,27 +183,79 @@ export function MyFatoorahCheckout({
               const container = document.getElementById('myfatoorah-payment-container');
               if (container) {
                 // Apply to container
-                container.style.overflow = 'visible !important';
+                container.style.setProperty('overflow', 'visible', 'important');
                 container.style.height = 'auto';
-                container.style.minHeight = 'auto';
+                container.style.minHeight = '0';
+                container.style.maxHeight = 'none';
 
-                // Apply to all child elements including iframes
-                const allElements = container.querySelectorAll('*');
-                allElements.forEach((el) => {
-                  if (el instanceof HTMLElement) {
-                    el.style.overflow = 'visible';
-                    el.style.overflowY = 'visible';
-                    el.style.overflowX = 'visible';
+                // Find and modify iframes
+                const iframes = container.querySelectorAll('iframe');
+                iframes.forEach((iframe) => {
+                  if (iframe instanceof HTMLIFrameElement) {
+                    iframe.style.setProperty('overflow', 'visible', 'important');
+                    iframe.style.height = 'auto';
+                    iframe.style.minHeight = '0';
 
-                    // Special handling for iframes
-                    if (el.tagName === 'IFRAME') {
-                      el.style.height = 'auto';
-                      el.style.minHeight = '500px';
+                    // Try to access iframe content (if same-origin)
+                    try {
+                      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                      if (iframeDoc) {
+                        // Remove scrollbars from iframe body
+                        const iframeBody = iframeDoc.body;
+                        if (iframeBody) {
+                          iframeBody.style.setProperty('overflow', 'visible', 'important');
+                          iframeBody.style.height = 'auto';
+                          iframeBody.style.minHeight = '0';
+                        }
+
+                        // Find and style the Pay Now button inside iframe
+                        const buttons = iframeDoc.querySelectorAll('button, input[type="submit"], .btn, .pay-button');
+                        buttons.forEach((btn) => {
+                          if (btn instanceof HTMLElement) {
+                            btn.style.setProperty('width', '100%', 'important');
+                            btn.style.setProperty('min-height', '48px', 'important');
+                            btn.style.setProperty('height', '48px', 'important');
+                            btn.style.setProperty('margin-left', '0', 'important');
+                            btn.style.setProperty('margin-right', '0', 'important');
+                          }
+                        });
+
+                        // Inject CSS into iframe
+                        const iframeStyle = iframeDoc.createElement('style');
+                        iframeStyle.textContent = `
+                          * {
+                            overflow: visible !important;
+                          }
+                          body {
+                            overflow: visible !important;
+                            height: auto !important;
+                            min-height: 0 !important;
+                          }
+                          button, input[type="submit"], .btn, .pay-button {
+                            width: 100% !important;
+                            min-height: 48px !important;
+                            height: 48px !important;
+                            margin-left: 0 !important;
+                            margin-right: 0 !important;
+                          }
+                        `;
+                        iframeDoc.head.appendChild(iframeStyle);
+                      }
+                    } catch (e) {
+                      console.log('Cannot access iframe content (cross-origin):', e);
                     }
                   }
                 });
 
-                // Add CSS override for deeply nested elements
+                // Apply to all other child elements
+                const allElements = container.querySelectorAll('*');
+                allElements.forEach((el) => {
+                  if (el instanceof HTMLElement && el.tagName !== 'IFRAME') {
+                    el.style.setProperty('overflow', 'visible', 'important');
+                  }
+                });
+
+                // Add CSS override for parent container
                 const styleId = 'myfatoorah-custom-styles';
                 let style = document.getElementById(styleId) as HTMLStyleElement;
                 if (!style) {
@@ -212,24 +264,18 @@ export function MyFatoorahCheckout({
                   document.head.appendChild(style);
                 }
                 style.textContent = `
-                  #myfatoorah-payment-container,
+                  #myfatoorah-payment-container {
+                    overflow: visible !important;
+                    height: auto !important;
+                    min-height: 0 !important;
+                  }
                   #myfatoorah-payment-container * {
                     overflow: visible !important;
                   }
                   #myfatoorah-payment-container iframe {
-                    min-height: 500px !important;
+                    overflow: visible !important;
                     height: auto !important;
-                  }
-                  /* Style the Pay Now button */
-                  #myfatoorah-payment-container button[type="submit"],
-                  #myfatoorah-payment-container .btn-primary,
-                  #myfatoorah-payment-container button.pay-now,
-                  #myfatoorah-payment-container input[type="submit"] {
-                    width: 100% !important;
-                    min-height: 48px !important;
-                    height: 48px !important;
-                    margin-left: 0 !important;
-                    margin-right: 0 !important;
+                    min-height: 0 !important;
                   }
                 `;
               }
