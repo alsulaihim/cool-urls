@@ -245,10 +245,11 @@ export function MyFatoorahCheckout({
           </div>
 
           {/* MyFatoorah Embedded Payment Container */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
             <div
               id="myfatoorah-payment-container"
               className="min-h-[450px] p-6"
+              style={{ overflow: 'visible' }}
             />
           </div>
 

@@ -93,11 +93,12 @@ export async function POST(request: Request) {
       updatedAt: now,
     };
 
-    // Preserve existing data if updating
+    // Preserve existing data if updating, add userId if creating
     if (existing) {
       subscriptionData.clicksUsed = existing.clicksUsed;
       subscriptionData.createdAt = existing.createdAt;
     } else {
+      subscriptionData.userId = userId; // Required for new subscriptions
       subscriptionData.clicksUsed = 0;
       subscriptionData.createdAt = now;
     }
