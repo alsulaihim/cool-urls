@@ -103,7 +103,7 @@ const AuthContent = memo(({
           </Button>
 
           {showGoogle ? (
-            <div className="flex-1">
+            <div className="flex-1 overflow-hidden">
               <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
                 {isOAuthLoading ? (
                   <Button
@@ -122,7 +122,7 @@ const AuthContent = memo(({
                     Google
                   </Button>
                 ) : (
-                  <>
+                  <div className="w-full">
                     <style dangerouslySetInnerHTML={{
                       __html: `
                         .nsm7Bb-HzV7m-LgbsSe {
@@ -131,6 +131,7 @@ const AuthContent = memo(({
                           max-height: 42px !important;
                           border-radius: 0.375rem !important;
                           width: 100% !important;
+                          max-width: 100% !important;
                         }
                         .nsm7Bb-HzV7m-LgbsSe-MJoBVe {
                           border-radius: 0.375rem !important;
@@ -175,7 +176,7 @@ const AuthContent = memo(({
                       locale="en"
                       width="400"
                     />
-                  </>
+                  </div>
                 )}
               </GoogleOAuthProvider>
             </div>
