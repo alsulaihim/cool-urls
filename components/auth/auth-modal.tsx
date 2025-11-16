@@ -155,7 +155,7 @@ const AuthContent = memo(({
                   shape="rectangular"
                   logo_alignment="left"
                   locale="en"
-                  width="640"
+                  width="400"
                 />
               )}
             </GoogleOAuthProvider>
