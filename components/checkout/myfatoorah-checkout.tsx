@@ -172,6 +172,7 @@ export function MyFatoorahCheckout({
               amount: planPrice.toString(),
               callback: (window as any).myFatoorahPaymentCallback,
               containerId: 'myfatoorah-payment-container',
+              paymentOptions: ['ApplePay', 'Card'], // Enable Apple Pay and Card payment
               style: {
                 cardHeight: 400, // Reduce card form height
                 card: {
@@ -185,6 +186,11 @@ export function MyFatoorahCheckout({
                     width: '100%', // Full width button
                     borderRadius: '6px',
                   },
+                },
+                applePay: {
+                  buttonHeight: '48px', // Match card button height
+                  buttonType: 'buy', // 'buy', 'plain', 'check-out', etc.
+                  borderRadius: '6px',
                 },
               },
             };
@@ -502,6 +508,7 @@ declare global {
         amount: string;
         callback: (response: any) => void;
         containerId: string;
+        paymentOptions?: string[];
         style?: {
           cardHeight?: number;
           card?: {
@@ -517,6 +524,12 @@ declare global {
               borderRadius?: string;
               [key: string]: any;
             };
+            [key: string]: any;
+          };
+          applePay?: {
+            buttonHeight?: string;
+            buttonType?: string;
+            borderRadius?: string;
             [key: string]: any;
           };
           [key: string]: any;
