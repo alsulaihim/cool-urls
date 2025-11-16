@@ -76,6 +76,14 @@ const AuthContent = memo(({
       .custom-google-btn {
         width: 100%;
       }
+      .custom-google-btn > div {
+        width: 100% !important;
+        height: 44px !important;
+      }
+      .custom-google-btn iframe {
+        width: 100% !important;
+        height: 44px !important;
+      }
     `}</style>
     <div className="flex justify-between items-center mb-6">
       <h2 className="text-2xl font-bold text-black">
@@ -161,7 +169,6 @@ const AuthContent = memo(({
                     shape="rectangular"
                     logo_alignment="left"
                     locale="en"
-                    width="400"
                   />
                 </div>
               )}
