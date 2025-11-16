@@ -130,18 +130,9 @@ const AuthContent = memo(({
                           min-height: 44px !important;
                           max-height: 44px !important;
                           border-radius: 0.375rem !important;
-                          padding: 0 !important;
-                          box-sizing: border-box !important;
                         }
                         .nsm7Bb-HzV7m-LgbsSe-MJoBVe {
                           border-radius: 0.375rem !important;
-                        }
-                        .nsm7Bb-HzV7m-LgbsSe .nsm7Bb-HzV7m-LgbsSe-Bz112c {
-                          height: 44px !important;
-                          line-height: 44px !important;
-                        }
-                        .nsm7Bb-HzV7m-LgbsSe-Bz112c-haAclf {
-                          height: 44px !important;
                         }
                       `
                     }} />
