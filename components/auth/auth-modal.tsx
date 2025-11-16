@@ -87,13 +87,14 @@ const AuthContent = memo(({
 
     {!sentEmail ? (
       <>
-        <div className="flex items-center gap-3 px-0.5">
+        <div className="flex gap-3 px-0.5">
           <Button
             type="button"
             variant="outline"
             onClick={handleAppleSignIn}
             disabled={isOAuthLoading}
-            className="flex-1 h-11 border-gray-300 flex items-center justify-center gap-2 rounded-md"
+            className="flex-1 h-11 border-gray-300 flex items-center justify-center gap-2"
+            style={{ borderRadius: '0.375rem' }}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17.05 20.28c-.98.95-2.05.89-3.08.42-1.09-.48-2.09-.49-3.24 0-1.44.62-2.2.51-3.06-.42C2.79 15.26 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.74.78 0 2.24-.91 3.78-.79 1.04.06 1.98.45 2.68 1.39-2.44 1.45-2.08 4.63.44 5.54-.52 1.36-.74 1.88-1.98 3.09zM11.89 7.15c-.04-2.01 1.64-3.64 3.62-3.82.22 2.19-2 3.82-3.62 3.82z"/>
@@ -102,14 +103,15 @@ const AuthContent = memo(({
           </Button>
 
           {showGoogle ? (
-            <div className="flex-1 h-11 flex items-center">
+            <div className="flex-1">
               <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
                 {isOAuthLoading ? (
                   <Button
                     type="button"
                     variant="outline"
                     disabled={true}
-                    className="w-full h-full border-gray-300 flex items-center justify-center gap-2 rounded-md"
+                    className="w-full h-11 border-gray-300 flex items-center justify-center gap-2"
+                    style={{ borderRadius: '0.375rem' }}
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -120,7 +122,7 @@ const AuthContent = memo(({
                     Google
                   </Button>
                 ) : (
-                  <div className="w-full">
+                  <>
                     <style dangerouslySetInnerHTML={{
                       __html: `
                         .nsm7Bb-HzV7m-LgbsSe {
@@ -172,7 +174,7 @@ const AuthContent = memo(({
                       locale="en"
                       width="190"
                     />
-                  </div>
+                  </>
                 )}
               </GoogleOAuthProvider>
             </div>
@@ -182,7 +184,8 @@ const AuthContent = memo(({
                 type="button"
                 variant="outline"
                 disabled={true}
-                className="w-full h-11 border-gray-300 opacity-50 rounded-md"
+                className="w-full h-11 border-gray-300 opacity-50"
+                style={{ borderRadius: '0.375rem' }}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
