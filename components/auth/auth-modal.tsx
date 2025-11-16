@@ -72,19 +72,6 @@ const AuthContent = memo(({
   nonce
 }: AuthContentProps) => (
   <>
-    <style jsx global>{`
-      .custom-google-btn {
-        width: 100%;
-      }
-      .custom-google-btn > div {
-        width: 100% !important;
-        height: 44px !important;
-      }
-      .custom-google-btn iframe {
-        width: 100% !important;
-        height: 44px !important;
-      }
-    `}</style>
     <div className="flex justify-between items-center mb-6">
       <h2 className="text-2xl font-bold text-black">
         {sentEmail ? 'Check your email' : 'Sign In / Sign Up'}
@@ -132,45 +119,44 @@ const AuthContent = memo(({
                   Google
                 </Button>
               ) : (
-                <div className="w-full custom-google-btn">
-                  <GoogleLogin
-                    nonce={nonce}
-                    onSuccess={async (credentialResponse) => {
-                      if (!credentialResponse.credential) {
-                        setError('No credentials received');
-                        return;
-                      }
+                <GoogleLogin
+                  nonce={nonce}
+                  onSuccess={async (credentialResponse) => {
+                    if (!credentialResponse.credential) {
+                      setError('No credentials received');
+                      return;
+                    }
 
-                      try {
-                        await db.auth.signInWithIdToken({
-                          clientName: GOOGLE_CLIENT_NAME,
-                          idToken: credentialResponse.credential,
-                          nonce: nonce,
-                        });
+                    try {
+                      await db.auth.signInWithIdToken({
+                        clientName: GOOGLE_CLIENT_NAME,
+                        idToken: credentialResponse.credential,
+                        nonce: nonce,
+                      });
 
-                        onClose();
-                        setEmail('');
-                        setName('');
-                        setCode('');
-                        setSentEmail(false);
-                      } catch (err) {
-                        console.error('Google auth error:', err);
-                        setError('Authentication failed. Please try again.');
-                      }
-                    }}
-                    onError={() => {
-                      setError('Google Sign-In failed');
-                    }}
-                    useOneTap={false}
-                    auto_select={false}
-                    text="continue_with"
-                    theme="outline"
-                    size="large"
-                    shape="rectangular"
-                    logo_alignment="left"
-                    locale="en"
-                  />
-                </div>
+                      onClose();
+                      setEmail('');
+                      setName('');
+                      setCode('');
+                      setSentEmail(false);
+                    } catch (err) {
+                      console.error('Google auth error:', err);
+                      setError('Authentication failed. Please try again.');
+                    }
+                  }}
+                  onError={() => {
+                    setError('Google Sign-In failed');
+                  }}
+                  useOneTap={false}
+                  auto_select={false}
+                  text="continue_with"
+                  theme="outline"
+                  size="large"
+                  shape="rectangular"
+                  logo_alignment="left"
+                  locale="en"
+                  width="640"
+                />
               )}
             </GoogleOAuthProvider>
           ) : (
