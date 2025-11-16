@@ -102,14 +102,14 @@ const AuthContent = memo(({
           </Button>
 
           {showGoogle ? (
-            <div className="flex-1">
+            <div className="flex-1 h-11">
               <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
                 {isOAuthLoading ? (
                   <Button
                     type="button"
                     variant="outline"
                     disabled={true}
-                    className="w-full h-11 border-gray-300 flex items-center justify-center gap-2"
+                    className="w-full h-full border-gray-300 flex items-center justify-center gap-2"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -120,44 +120,46 @@ const AuthContent = memo(({
                     Google
                   </Button>
                 ) : (
-                  <GoogleLogin
-                    nonce={nonce}
-                    onSuccess={async (credentialResponse) => {
-                      if (!credentialResponse.credential) {
-                        setError('No credentials received');
-                        return;
-                      }
+                  <div className="h-full flex items-center">
+                    <GoogleLogin
+                      nonce={nonce}
+                      onSuccess={async (credentialResponse) => {
+                        if (!credentialResponse.credential) {
+                          setError('No credentials received');
+                          return;
+                        }
 
-                      try {
-                        await db.auth.signInWithIdToken({
-                          clientName: GOOGLE_CLIENT_NAME,
-                          idToken: credentialResponse.credential,
-                          nonce: nonce,
-                        });
+                        try {
+                          await db.auth.signInWithIdToken({
+                            clientName: GOOGLE_CLIENT_NAME,
+                            idToken: credentialResponse.credential,
+                            nonce: nonce,
+                          });
 
-                        onClose();
-                        setEmail('');
-                        setName('');
-                        setCode('');
-                        setSentEmail(false);
-                      } catch (err) {
-                        console.error('Google auth error:', err);
-                        setError('Authentication failed. Please try again.');
-                      }
-                    }}
-                    onError={() => {
-                      setError('Google Sign-In failed');
-                    }}
-                    useOneTap={false}
-                    auto_select={false}
-                    text="continue_with"
-                    theme="outline"
-                    size="large"
-                    shape="rectangular"
-                    logo_alignment="left"
-                    locale="en"
-                    width="190"
-                  />
+                          onClose();
+                          setEmail('');
+                          setName('');
+                          setCode('');
+                          setSentEmail(false);
+                        } catch (err) {
+                          console.error('Google auth error:', err);
+                          setError('Authentication failed. Please try again.');
+                        }
+                      }}
+                      onError={() => {
+                        setError('Google Sign-In failed');
+                      }}
+                      useOneTap={false}
+                      auto_select={false}
+                      text="continue_with"
+                      theme="outline"
+                      size="large"
+                      shape="rectangular"
+                      logo_alignment="left"
+                      locale="en"
+                      width="190"
+                    />
+                  </div>
                 )}
               </GoogleOAuthProvider>
             </div>
