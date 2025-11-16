@@ -121,6 +121,19 @@ const AuthContent = memo(({
                   </Button>
                 ) : (
                   <div className="h-full flex items-center">
+                    <style dangerouslySetInnerHTML={{
+                      __html: `
+                        .nsm7Bb-HzV7m-LgbsSe {
+                          height: 44px !important;
+                          min-height: 44px !important;
+                          max-height: 44px !important;
+                          border-radius: 6px !important;
+                        }
+                        .nsm7Bb-HzV7m-LgbsSe-MJoBVe {
+                          border-radius: 6px !important;
+                        }
+                      `
+                    }} />
                     <GoogleLogin
                       nonce={nonce}
                       onSuccess={async (credentialResponse) => {
