@@ -130,6 +130,7 @@ const AuthContent = memo(({
                           min-height: 44px !important;
                           max-height: 44px !important;
                           border-radius: 0.375rem !important;
+                          width: 100% !important;
                         }
                         .nsm7Bb-HzV7m-LgbsSe-MJoBVe {
                           border-radius: 0.375rem !important;
@@ -172,7 +173,7 @@ const AuthContent = memo(({
                       shape="rectangular"
                       logo_alignment="left"
                       locale="en"
-                      width="190"
+                      width="400"
                     />
                   </>
                 )}
