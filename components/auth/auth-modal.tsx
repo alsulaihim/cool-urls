@@ -78,7 +78,7 @@ const AuthContent = memo(({
         align-items: center;
         justify-content: center;
       }
-      .custom-google-btn > div {
+      .custom-google-btn div {
         width: 100% !important;
       }
       .custom-google-btn iframe {
