@@ -304,7 +304,7 @@ export default function PricingPage() {
                       <button
                         type="button"
                         onClick={() => handleSubscribe(plan.id)}
-                        disabled={isCurrentPlan}
+                        disabled={isCurrentPlan || undefined}
                         className={`w-full py-3 px-6 rounded-lg font-semibold text-sm transition-all mb-6 ${
                           isCurrentPlan
                             ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
