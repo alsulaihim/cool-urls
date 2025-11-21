@@ -15,6 +15,7 @@ import { useUserProfile } from '@/lib/useUserProfile';
 import { ClickSparkline } from '@/components/analytics/click-sparkline';
 import { ClickMap } from '@/components/analytics/click-map';
 import { DeviceStats } from '@/components/analytics/device-stats';
+import { DeviceStatsTabs } from '@/components/analytics/device-stats-tabs';
 import { LinksTable } from '@/components/analytics/links-table';
 import { OverviewSparklines } from '@/components/analytics/overview-sparklines';
 import { useSubscription } from '@/lib/useSubscription';
@@ -446,7 +447,7 @@ export default function Dashboard() {
 
                                         {/* Device & Browser Stats */}
                                         <div>
-                                          <DeviceStats clicks={urlAnalytics} />
+                                          <DeviceStatsTabs clicks={urlAnalytics} />
                                         </div>
                                       </div>
                                     </motion.div>
@@ -598,7 +599,7 @@ export default function Dashboard() {
 
                                 {/* Device Stats */}
                                 <div>
-                                  <DeviceStats clicks={urlAnalytics} />
+                                  <DeviceStatsTabs clicks={urlAnalytics} />
                                 </div>
                               </div>
                             </motion.div>

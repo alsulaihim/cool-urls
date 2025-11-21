@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronDown, ArrowLeft, AlertCircle, X } from 'lucide-react';
+import { Check, ArrowLeft, AlertCircle, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { getAllPlans, formatPrice, type PlanId } from '@/lib/pricing';
 import { db } from '@/lib/instant';
@@ -18,52 +18,70 @@ export default function PricingPage() {
   const { user } = db.useAuth();
   const { subscription } = useSubscription(user?.id);
   const router = useRouter();
-  const [selectedPlan, setSelectedPlan] = useState<PlanId>('growth');
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanId | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [showPlanChangeModal, setShowPlanChangeModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const plans = getAllPlans();
   const userCurrentPlan = subscription ? getPlanById(subscription.planId) : getPlanById('free');
 
-  const currentPlan = plans.find(p => p.id === selectedPlan) || plans[0];
+  // Update arrow visibility based on scroll position
+  const updateArrowVisibility = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
-  // Handle plan upgrade from query params (after MyFatoorah/PayPal plan change)
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    setShowLeftArrow(scrollLeft > 0);
+    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+  };
+
+  // Scroll left/right
+  const scroll = (direction: 'left' | 'right') => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const scrollAmount = 350; // Slightly more than one card width
+    const newScrollLeft = direction === 'left'
+      ? container.scrollLeft - scrollAmount
+      : container.scrollLeft + scrollAmount;
+
+    container.scrollTo({
+      left: newScrollLeft,
+      behavior: 'smooth'
+    });
+  };
+
+  // Listen for scroll events to update arrow visibility
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const planParam = params.get('plan') as PlanId | null;
-      const upgradeParam = params.get('upgrade');
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
-      if (planParam && upgradeParam === 'true') {
-        setSelectedPlan(planParam);
-        setShowCheckout(true);
+    updateArrowVisibility();
+    container.addEventListener('scroll', updateArrowVisibility);
+    window.addEventListener('resize', updateArrowVisibility);
 
-        // Scroll to checkout
-        setTimeout(() => {
-          document.getElementById('checkout-section')?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-          });
-        }, 100);
-
-        // Clean up URL
-        window.history.replaceState({}, '', '/pricing');
-      }
-    }
+    return () => {
+      container.removeEventListener('scroll', updateArrowVisibility);
+      window.removeEventListener('resize', updateArrowVisibility);
+    };
   }, []);
 
-  const handleSubscribe = () => {
+  const handleSubscribe = (planId: PlanId) => {
+    const plan = getPlanById(planId);
+
     // Prevent subscribing to current plan
-    if (user && userCurrentPlan && selectedPlan === userCurrentPlan.id) {
+    if (user && userCurrentPlan && planId === userCurrentPlan.id) {
       alert(`You are already on the ${userCurrentPlan.name} plan!`);
       return;
     }
 
     // Free plan doesn't need payment
-    if (selectedPlan === 'free') {
+    if (planId === 'free') {
       if (!user) {
         router.push('/');
         return;
@@ -76,19 +94,22 @@ export default function PricingPage() {
     // Require login for paid plans
     if (!user) {
       // Save selected plan in sessionStorage
-      sessionStorage.setItem('selectedPlan', selectedPlan);
+      sessionStorage.setItem('selectedPlan', planId);
       // Show login prompt instead of silently redirecting
       setShowLoginPrompt(true);
+      setSelectedPlan(planId);
       return;
     }
 
     // If user has an active subscription (not cancelled), show plan change modal instead of checkout
     if (subscription && subscription.providerSubscriptionId && userCurrentPlan && userCurrentPlan.id !== 'free' && !subscription.cancelAtPeriodEnd) {
+      setSelectedPlan(planId);
       setShowPlanChangeModal(true);
       return;
     }
 
     // Show checkout form inline for new subscriptions
+    setSelectedPlan(planId);
     setShowCheckout(true);
 
     // Smooth scroll to checkout form
@@ -108,14 +129,14 @@ export default function PricingPage() {
 
   const handleCheckoutSuccess = () => {
     setShowCheckout(false);
-    setSelectedPlan('free');
+    setSelectedPlan(null);
     // Show success message and redirect to dashboard
     router.push('/dashboard?upgraded=true');
   };
 
   const handleCheckoutCancel = () => {
     setShowCheckout(false);
-    setSelectedPlan('free');
+    setSelectedPlan(null);
   };
 
   const handleCancelSuccess = () => {
@@ -125,11 +146,35 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation Header */}
-      <AuthHeader />
+    <>
+      {/* Global styles for scrollbar hiding and snap scrolling */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .pricing-scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+          scroll-behavior: smooth;
+        }
+        .pricing-scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .pricing-snap-x {
+          scroll-snap-type: x mandatory;
+        }
+        .pricing-snap-start {
+          scroll-snap-align: start;
+        }
+        @media (max-width: 768px) {
+          .pricing-snap-x {
+            scroll-snap-type: x proximity;
+          }
+        }
+      `}} />
 
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <div className="min-h-screen bg-white">
+        {/* Navigation Header */}
+        <AuthHeader />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Back Navigation */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -147,201 +192,186 @@ export default function PricingPage() {
         </motion.div>
 
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <h1 className="text-3xl sm:text-4xl font-bold text-black mb-2">
+            <h1 className="text-3xl sm:text-4xl font-bold text-black mb-3">
               Choose Your Plan
             </h1>
-            <p className="text-sm text-gray-600">
-              Select the perfect plan for your needs
+            <p className="text-base text-gray-600">
+              Compare plans and find the perfect fit for your needs
             </p>
           </motion.div>
         </div>
 
-        {/* Main Pricing Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <div className="bg-white border border-gray-200 rounded-lg">
-            {/* Plan Selector Dropdown */}
-            <div className="p-4 border-b border-gray-200">
-              <div className="relative z-10">
-                <button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-black">{currentPlan.name}</span>
-                        {currentPlan.isPopular && (
-                          <span className="px-1.5 py-0.5 bg-black text-white text-xs rounded">
-                            Popular
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs text-gray-600">{currentPlan.clicksLimit?.toLocaleString()} clicks/month</span>
-                    </div>
-                  </div>
-                  <ChevronDown
-                    className={`w-4 h-4 text-gray-600 transition-transform ${showDropdown ? 'rotate-180' : ''}`}
-                  />
-                </button>
+        {/* Pricing Comparison Table */}
+        <div className="w-full pb-8">
+          {/* Scroll hint */}
+          <div className="text-center mb-4">
+            <p className="text-xs text-gray-500">← Scroll to see all plans →</p>
+          </div>
 
-                {/* Dropdown Menu */}
-                <AnimatePresence>
-                  {showDropdown && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 right-0 mt-1 bg-white rounded-md border border-gray-200 z-50 overflow-hidden"
-                    >
-                      {plans.map((plan) => (
-                        <button
-                          key={plan.id}
-                          onClick={() => {
-                            setSelectedPlan(plan.id);
-                            setShowDropdown(false);
-                            setShowCheckout(false);
-                          }}
-                          className={`w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors text-left ${
-                            selectedPlan === plan.id ? 'bg-gray-50' : ''
-                          }`}
-                        >
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-black">{plan.name}</span>
-                              {plan.isPopular && (
-                                <span className="px-1.5 py-0.5 bg-black text-white text-xs rounded">
-                                  Popular
-                                </span>
-                              )}
-                              {user && userCurrentPlan && plan.id === userCurrentPlan.id && (
-                                <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded font-medium">
-                                  Current Plan
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-xs text-gray-600">{plan.clicksLimit?.toLocaleString()} clicks/mo</span>
-                          </div>
-                          <span className="text-sm font-semibold text-black">{formatPrice(plan.price)}</span>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-
-            {/* Pricing Display */}
-            <div className="p-6 text-center border-b border-gray-200">
-              <motion.div
-                key={selectedPlan}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
+          {/* All Plans - Single Horizontal Scroll */}
+          <div className="relative px-12">
+            {/* Left Arrow */}
+            {showLeftArrow && (
+              <button
+                type="button"
+                onClick={() => scroll('left')}
+                className="absolute -left-0 top-1/2 -translate-y-1/2 z-10 bg-white/95 hover:bg-white shadow-xl rounded-full p-3 transition-all hover:scale-110 border-2 border-gray-300"
+                aria-label="Scroll left"
               >
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl font-bold text-black">
-                    {formatPrice(currentPlan.price)}
-                  </span>
-                  {currentPlan.price > 0 && (
-                    <span className="text-lg text-gray-600">/month</span>
-                  )}
-                </div>
-              </motion.div>
-            </div>
+                <ChevronLeft className="w-6 h-6 text-gray-800" />
+              </button>
+            )}
 
-            {/* Features List */}
-            <div className="p-6">
-              <motion.div
-                key={selectedPlan}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
+            {/* Right Arrow */}
+            {showRightArrow && (
+              <button
+                type="button"
+                onClick={() => scroll('right')}
+                className="absolute -right-0 top-1/2 -translate-y-1/2 z-10 bg-white/95 hover:bg-white shadow-xl rounded-full p-3 transition-all hover:scale-110 border-2 border-gray-300"
+                aria-label="Scroll right"
               >
-                <ul className="space-y-2.5">
-                  {currentPlan.features.map((feature, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2.5"
-                    >
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.2, delay: i * 0.03 }}
-                        className="flex items-start gap-2.5 w-full"
-                      >
-                        <Check className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-700">{feature}</span>
-                      </motion.div>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
+                <ChevronRight className="w-6 h-6 text-gray-800" />
+              </button>
+            )}
 
-              {/* CTA Button */}
-              {!showCheckout && (
-                <>
-                  <motion.button
-                    key={`btn-${selectedPlan}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
-                    onClick={handleSubscribe}
-                    disabled={!!(user && userCurrentPlan && selectedPlan === userCurrentPlan.id)}
-                    className={`w-full mt-6 py-3 px-6 rounded-md font-medium text-sm transition-colors ${
-                      user && userCurrentPlan && selectedPlan === userCurrentPlan.id
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-black hover:bg-gray-800 text-white'
+            <div
+              ref={scrollContainerRef}
+              className="overflow-x-auto overflow-y-visible pb-4 pricing-scrollbar-hide pricing-snap-x"
+            >
+              <div className="flex gap-6 px-1 pt-6" style={{ width: 'max-content' }}>
+                {/* Show ALL plans in one row */}
+                {plans.map((plan, index) => {
+                const isCurrentPlan = user && userCurrentPlan && plan.id === userCurrentPlan.id;
+                const isPopular = plan.isPopular;
+
+                return (
+                  <motion.div
+                    key={plan.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 + (index % 7) * 0.05 }}
+                    className={`relative bg-white rounded-xl border-2 transition-all hover:shadow-xl flex-shrink-0 w-[320px] pricing-snap-start ${
+                      isPopular
+                        ? 'border-blue-600 shadow-lg'
+                        : isCurrentPlan
+                        ? 'border-green-500'
+                        : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    {user && userCurrentPlan && selectedPlan === userCurrentPlan.id
-                      ? 'Current Plan'
-                      : currentPlan.price === 0
-                      ? 'Get Started'
-                      : user && subscription && subscription.providerSubscriptionId && userCurrentPlan && userCurrentPlan.id !== 'free' && !subscription.cancelAtPeriodEnd
-                      ? (currentPlan.price > userCurrentPlan.price ? 'Upgrade Plan' : 'Downgrade Plan')
-                      : 'Continue'}
-                  </motion.button>
+                    {/* Popular Badge */}
+                    {isPopular && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wide shadow-lg">
+                          Most Popular
+                        </span>
+                      </div>
+                    )}
 
-                  {/* Cancel Subscription Button - show whenever user has active paid subscription */}
-                  {user && userCurrentPlan && userCurrentPlan.id !== 'free' && subscription && subscription.providerSubscriptionId && !subscription.cancelAtPeriodEnd && (
-                    <motion.button
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3, delay: 0.3 }}
-                      onClick={() => setShowCancelModal(true)}
-                      className="w-full mt-3 py-2.5 px-6 rounded-md font-medium text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors border border-red-200"
-                    >
-                      Cancel Subscription
-                    </motion.button>
-                  )}
+                    {/* Current Plan Badge */}
+                    {isCurrentPlan && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <span className="bg-green-600 text-white px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-wide shadow-lg">
+                          Current Plan
+                        </span>
+                      </div>
+                    )}
 
-                  {/* Subscription Canceled Notice - only show if user has an active provider */}
-                  {user && subscription && subscription.cancelAtPeriodEnd && userCurrentPlan && subscription.provider && subscription.provider !== 'none' && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3, delay: 0.3 }}
-                      className="w-full mt-3 py-2.5 px-4 rounded-md text-xs text-orange-700 bg-orange-50 border border-orange-200"
-                    >
-                      Your subscription will be canceled at the end of the billing period.
-                    </motion.div>
-                  )}
-                </>
-              )}
+                    <div className="p-6">
+                      {/* Plan Header */}
+                      <div className="text-center mb-6">
+                        <h3 className="text-2xl font-bold text-black mb-2">{plan.name}</h3>
+                        <p className="text-sm text-gray-600 mb-4">{plan.description}</p>
+                        <div className="flex items-baseline justify-center gap-1">
+                          <span className="text-4xl font-bold text-black">
+                            {formatPrice(plan.price)}
+                          </span>
+                          {plan.price > 0 && (
+                            <span className="text-gray-600">/mo</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {plan.clicksLimit?.toLocaleString()} clicks/month
+                        </p>
+                      </div>
+
+                      {/* CTA Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleSubscribe(plan.id)}
+                        disabled={isCurrentPlan}
+                        className={`w-full py-3 px-6 rounded-lg font-semibold text-sm transition-all mb-6 ${
+                          isCurrentPlan
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            : isPopular
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl'
+                            : 'bg-black hover:bg-gray-800 text-white'
+                        }`}
+                      >
+                        {isCurrentPlan
+                          ? 'Current Plan'
+                          : plan.price === 0
+                          ? 'Get Started Free'
+                          : user && subscription && subscription.providerSubscriptionId && userCurrentPlan && userCurrentPlan.id !== 'free' && !subscription.cancelAtPeriodEnd
+                          ? (plan.price > userCurrentPlan.price ? 'Upgrade' : 'Downgrade')
+                          : 'Get Started'}
+                      </button>
+
+                      {/* Features List */}
+                      <div className="space-y-3 border-t border-gray-200 pt-6">
+                        <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-4">
+                          Features
+                        </p>
+                        {plan.features.map((feature, i) => (
+                          <div key={i} className="flex items-start gap-2">
+                            <Check className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+                            <span className="text-sm text-gray-700 leading-snug">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+              </div>
             </div>
           </div>
-        </motion.div>
+        </div>
+
+        {/* Cancel Subscription Button - show when user has active paid subscription */}
+        {user && userCurrentPlan && userCurrentPlan.id !== 'free' && subscription && subscription.providerSubscriptionId && !subscription.cancelAtPeriodEnd && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.5 }}
+            className="text-center mt-8"
+          >
+            <button
+              type="button"
+              onClick={() => setShowCancelModal(true)}
+              className="inline-flex items-center gap-2 py-2.5 px-6 rounded-lg font-medium text-sm text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors border-2 border-red-200"
+            >
+              Cancel Current Subscription
+            </button>
+          </motion.div>
+        )}
+
+        {/* Subscription Canceled Notice */}
+        {user && subscription && subscription.cancelAtPeriodEnd && userCurrentPlan && subscription.provider && subscription.provider !== 'none' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
+            className="max-w-2xl mx-auto mt-6 py-3 px-4 rounded-lg text-sm text-orange-700 bg-orange-50 border-2 border-orange-200 text-center"
+          >
+            Your subscription will be canceled at the end of the billing period.
+          </motion.div>
+        )}
 
         {/* Inline Checkout Section */}
         <AnimatePresence>
@@ -352,15 +382,15 @@ export default function PricingPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="mt-6"
+              className="mt-8 max-w-2xl mx-auto"
             >
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="bg-white rounded-xl border-2 border-gray-200 p-8 shadow-lg">
                 <div className="mb-6">
-                  <h2 className="text-xl font-semibold text-black mb-1">
+                  <h2 className="text-2xl font-bold text-black mb-2">
                     Complete Subscription
                   </h2>
-                  <p className="text-sm text-gray-600">
-                    {currentPlan.name} • {formatPrice(currentPlan.price)}/month
+                  <p className="text-base text-gray-600">
+                    {getPlanById(selectedPlan).name} • {formatPrice(getPlanById(selectedPlan).price)}/month
                   </p>
                 </div>
 
@@ -400,12 +430,12 @@ export default function PricingPage() {
         </motion.div>
 
         {/* Plan Change Modal */}
-        {user && subscription && showPlanChangeModal && (
+        {user && subscription && showPlanChangeModal && selectedPlan && (
           <PlanChangeModal
             isOpen={showPlanChangeModal}
             onClose={() => setShowPlanChangeModal(false)}
             currentPlan={userCurrentPlan}
-            newPlan={currentPlan}
+            newPlan={getPlanById(selectedPlan)}
             userId={user.id}
             subscriptionId={subscription.providerSubscriptionId || ''}
             onSuccess={handlePlanChangeSuccess}
@@ -489,6 +519,7 @@ export default function PricingPage() {
           )}
         </AnimatePresence>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { LineChart, Line, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
+import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { TrendingUp, Users, Globe, Link2, MousePointerClick, Zap } from 'lucide-react';
 
 interface OverviewSparklinesProps {
@@ -253,10 +253,25 @@ export function OverviewSparklines({ urls }: OverviewSparklinesProps) {
 
       {/* Single Combined Chart */}
       <div className="mt-2">
-        <ResponsiveContainer width="100%" height={160} className="sm:h-[200px]">
-          <LineChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+        <ResponsiveContainer width="100%" height={240} className="sm:h-[280px]">
+          <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
+            <XAxis
+              dataKey="date"
+              tickFormatter={(dateStr) => {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+              }}
+              tick={{ fill: '#6B7280', fontSize: 10 }}
+              stroke="#D1D5DB"
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              tick={{ fill: '#6B7280', fontSize: 11 }}
+              stroke="#D1D5DB"
+              allowDecimals={false}
+            />
             <Tooltip content={<CustomTooltip />} />
-            <YAxis hide />
             <Line
               type="monotone"
               dataKey="clicks"
